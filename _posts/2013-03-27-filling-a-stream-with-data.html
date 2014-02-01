@@ -1,0 +1,1354 @@
+---
+title: 'Filling a Stream with Data'
+layout: post
+tags:
+    - article
+category: dartwatch
+published: '2013-03-27T19:11:00+00:00'
+
+---
+
+<blockquote class="tldr-embed-widget" data-align="center" data-show-title="true">
+<a class="link-to-tldr-page" href="http://tldr.io/tldrs/5153458a22232fff360002e6/dartwatch-filling-a-stream-with-data" target="_blank">Summary of "Dartwatch: Filling a Stream with Data"</a> (via <a href="http://tldr.io/" target="_blank">tldr.io</a>)      <br />
+<ul>
+<li style="line-height: 130%; margin-bottom: 10px;">Blog post describing how to post asynchronous data into a Stream with Google Dart's new Streams API</li>
+<li style="line-height: 130%; margin-bottom: 10px;">Demonstrates StreamController and StreamConsumer through a Web UI (web components) chat example.</li>
+<li style="line-height: 130%; margin-bottom: 10px;">Chat example takes some mock chat data to populate a stream and builds a web component to consumer the stream, with live data binding.</li>
+</ul>
+</blockquote>
+<script async="" charset="utf-8" src="//tldr.io/embed/widget-embed.js"></script>
+
+In <a href="http://blog.dartwatch.com/2013/03/getting-your-feet-wet-with-streams.html" target="_blank">my previous post</a>, I showed how you can consume Dart Streams, part of the <span style="font-family: Courier New, Courier, monospace;">dart:async</span> library, and are used across many Dart APIs for receiving data over time, for example, from a file system on the server-side, or from button click events in the client.<br />
+<br />
+In this post, I'm going to demonstrate how you can use the Stream APIs to send your own data to other consumers, and show some more advanced techniques to receive data from a stream. &nbsp;This allows to make use of an existing interface, already familiar to other Dart developers (and potential users of your code) to provide common method of accessing your data. <br />
+<br />
+Imagine that you are writing a chat application, where chat messages are received from the server. &nbsp;We can architect the client side to use Streams to output the various chat messages that are received from the server, and display them on the UI. &nbsp;The client-side architecture stack might look something like the diagram below:<br />
+<div class="separator" style="clear: both; text-align: center;">
+</div>
+<br />
+<div class="separator" style="clear: both; text-align: center;">
+</div>
+<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://3.bp.blogspot.com/-8rJhDL1TAWI/UVLCHWp2gJI/AAAAAAAADtM/4BTW_FHh0dw/s1600/streams_example_1.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" src="http://3.bp.blogspot.com/-8rJhDL1TAWI/UVLCHWp2gJI/AAAAAAAADtM/4BTW_FHh0dw/s1600/streams_example_1.png" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Possible architecture for our sample chat application.</td></tr>
+</tbody></table>
+<br />
+<br />
+As this blog post is primarily about Streams, what we will actually build is a mocked out Data Access layer, with the data being provided by a timer, Emitting messages at one per second. &nbsp;The modified diagram is shown below:<br />
+<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://1.bp.blogspot.com/-c77J0A2UUp8/UVLCHQLeNFI/AAAAAAAADtQ/3O9AJGi7Wck/s1600/streams_example_2.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" src="http://1.bp.blogspot.com/-c77J0A2UUp8/UVLCHQLeNFI/AAAAAAAADtQ/3O9AJGi7Wck/s1600/streams_example_2.png" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">For the purposes of demonstrating streams, the Data Access layer will be mocked out, and the data provided by a timer that populates the stream with messages</td></tr>
+</tbody></table>
+<br />
+Using this stack, we'll create an example that looks like the following (Hint: click <b>Start</b> to start the timer):<br />
+<br />
+<iframe frameborder="0" height="190px" seamless="seamless" src="http://dartwatch.github.com/examples/streams_client/streams_client.html" width="90%"></iframe>
+
+<br />
+But first, let's start with the basics - how do we get data into a stream?<br />
+<h2>
+Populating a Stream</h2>
+<div>
+In the previous blog post, we populated stream data from a static list of integers, using the <span style="font-family: Courier New, Courier, monospace;">Stream.fromIterable()</span> constructor. &nbsp; It looked something like this:</div>
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> data = [<span style="color: blue;">1</span>,<span style="color: blue;">2</span>,<span style="color: blue;">3</span>,<span style="color: blue;">4</span>,<span style="color: blue;">5</span>]; <span style="color: #008800; font-style: italic;">// some sample data</span>
+<span style="color: navy; font-weight: bold;">var</span> stream = <span style="color: navy; font-weight: bold;">new</span> Stream.fromIterable(data);  <span style="color: #008800; font-style: italic;">// create the stream</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+It would be if we could populate the stream dynamically. &nbsp;Fortunately, using the <span style="font-family: Courier New, Courier, monospace;"><a href="http://api.dartlang.org/dart_async/StreamController.html" target="_blank">StreamController</a></span> class, we can.<br />
+<br />
+<h3>
+The StreamController</h3>
+A <span style="font-family: Courier New, Courier, monospace;">StreamController</span> wraps a <span style="font-family: Courier New, Courier, monospace;">Stream</span> (single, or broadcast), and you use it to push events (data) onto that Stream. &nbsp;It provides methods such as <span style="font-family: Courier New, Courier, monospace;">add()</span>, <span style="font-family: Courier New, Courier, monospace;">addError()</span> and <span style="font-family: Courier New, Courier, monospace;">close()</span><span style="font-family: inherit;">, and provides callback handlers for subscriber and pause state events.</span><br />
+<span style="font-family: inherit;"><br /></span>
+<span style="font-family: inherit;">Lets take a look at a simple example, which adds the values 1 to 5 onto a stream, by using the&nbsp;</span><span style="font-family: Courier New, Courier, monospace;">StreamController</span><span style="font-family: inherit;">'s </span><span style="font-family: Courier New, Courier, monospace;">add()</span><span style="font-family: inherit;"> method. Note, you'd unlikely use this example in real-life, as you'll see in a minute.</span><br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:async'</span>;
+
+main() {
+  <span style="color: #008800; font-style: italic;">// create a StreamController</span>
+  <span style="color: navy; font-weight: bold;">var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController(); 
+ 
+  <span style="color: #008800; font-style: italic;">// add a listener to the underlying stream</span>
+  controller.stream.listen((item) =&gt; print(item));
+  
+  <span style="color: #008800; font-style: italic;">// populate the stream with data</span>
+  <span style="color: navy; font-weight: bold;">var</span> counter = <span style="color: blue;">0</span>;
+  <span style="color: navy; font-weight: bold;">while</span> (counter &lt; <span style="color: blue;">5</span>) {
+    counter++;
+    controller.add(counter); <span style="color: #008800; font-style: italic;">// add data to the controller </span>
+  }
+ 
+  controller.close(); <span style="color: #008800; font-style: italic;">// no more data, so close.</span>
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->When run, this outputs the following:<br />
+<pre>1
+2
+3
+4
+5
+</pre>
+This is purely synchronous code (ie, code that simply executes top-to-bottom in the same event loop), which means that you don't actually get much benefit from using a Stream. &nbsp;Streams are designed to push data to a subscriber that listens for data coming from the stream, with that data coming in an asynchronous fashion.<br />
+<h3>
+Real world streams are asynchronous</h3>
+In the real world, your stream subscribers would:<br />
+<ol>
+<li>get a reference to the stream</li>
+<li>subscribe to the stream to listen for data</li>
+<li>return control back to the event loop</li>
+</ol>
+<div>
+then, when your code receives some data, it would start publishing data onto the stream.</div>
+<div>
+<br /></div>
+<div>
+We can change our example to do this. &nbsp;We will create a <span style="font-family: Courier New, Courier, monospace;">getStream()</span> function that acts as our data producer. &nbsp;This returns a reference to a stream so that we can subscribe, and then return control back to the event loop (items 1-3 above). &nbsp;I've added a stopwatch so that you can see some timings between each item being received from the stream.</div>
+<div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:async'</span>;
+
+main() {
+  <span style="color: navy; font-weight: bold;">var</span> stopwatch = <span style="color: navy; font-weight: bold;">new</span> Stopwatch()..start();    
+  
+  <span style="color: navy; font-weight: bold;">var</span> stream = getStream(); <span style="color: #008800; font-style: italic;">// TODO: getStream() </span>
+  stream.listen(
+      <span style="color: #008800; font-style: italic;">// data item received from the stream</span>
+      (item) =&gt; print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: $</span>item<span style="color: blue;">"</span>),
+      <span style="color: #008800; font-style: italic;">// print any error</span>
+      onError: (err) =&gt; print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Error: $</span>err<span style="color: blue;">"</span>),
+      <span style="color: #008800; font-style: italic;">// when the stream is closed</span>
+      onDone: () =&gt; print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Done"</span>)  
+  );
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+</div>
+<div>
+<br />
+The <span style="font-family: Courier New, Courier, monospace;">getStream()</span> function itself returns a stream instance from a <span style="font-family: Courier New, Courier, monospace;">StreamController</span>. &nbsp;We'll use a <span style="font-family: Courier New, Courier, monospace;">Timer</span> to push data items onto the stream at a rate of one item per second. &nbsp;This function returns immediately, with the timer starting running after 1 second.</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;">// ... continued from previous listing</span>
+Stream getStream() {
+  <span style="color: navy; font-weight: bold;">var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController();
+  
+  <span style="color: navy; font-weight: bold;">var</span> counter = <span style="color: blue;">0</span>; <span style="color: #008800; font-style: italic;">// setup a counter</span>
+  
+  <span style="color: #008800; font-style: italic;">// The timer will start after 1 second elapsed, </span>
+  <span style="color: #008800; font-style: italic;">// and then repeat every second until cancelled</span>
+  <span style="color: navy; font-weight: bold;">new</span> Timer.periodic(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:<span style="color: blue;">1</span>), (timer) {
+    counter++;
+    <span style="color: navy; font-weight: bold;">if</span> (counter &lt;= <span style="color: blue;">5</span>) { 
+      controller.add(counter); <span style="color: #008800; font-style: italic;">// push data onto the stream</span>
+    }
+    <span style="color: navy; font-weight: bold;">else</span> {
+      controller.close(); <span style="color: #008800; font-style: italic;">// no more data</span>
+      timer.cancel(); <span style="color: #008800; font-style: italic;">// stop the timer running</span>
+    }
+  });
+  
+  <span style="color: navy; font-weight: bold;">return</span> controller.stream; <span style="color: #008800; font-style: italic;">// returns immediately, </span>
+                            <span style="color: #008800; font-style: italic;">// before the timer starts running</span>
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+
+
+<br />
+<div>
+We now have a <span style="font-family: Courier New, Courier, monospace;">StreamController</span>, wrapping a <span style="font-family: Courier New, Courier, monospace;">Stream</span> that uses a timer to push data asynchronously into that stream. <br />
+<br />
+<i><b>Note:&nbsp;</b>we are only using a timer to mock the asynchronous nature of our data. &nbsp;Real-world use cases might be data being received at intervals from a server, users clicking on UI elements, or <a href="https://plus.google.com/s/%23caturday" target="_blank">#caturday</a> photos appearing in a Google+ stream. &nbsp; This article will use timers regularly to simulate asynchronous events happening.</i><br />
+<i><br /></i>
+Running this code produces the following output (the milliseconds elapsed are on the left, the data items are on the right):<br />
+<pre>1003: 1
+2002: 2
+3002: 3
+4002: 4
+5002: 5
+6002: Done</pre>
+<br />
+<h3>
+StreamController is generic</h3>
+<div>
+Like all the stream classes, the <span style="font-family: Courier New, Courier, monospace;">StreamController</span> is a generic class. &nbsp;This means that you can strongly define the type of data that the <span style="font-family: Courier New, Courier, monospace;">StreamController</span> and underlying <span style="font-family: Courier New, Courier, monospace;">Stream</span> will accept and send to listeners. &nbsp;The code listing below shows how our <span style="font-family: Courier New, Courier, monospace;">getStream()</span> function would change if it were strongly typed with generics:<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37</pre>
+<pre style="line-height: 125%; margin: 0;">38</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;">// ... continued from previous listing</span>
+Stream&lt;<b>int</b>&gt; getStream() {
+  <span style="color: navy; font-weight: bold;">var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController&lt;<b>int</b>&gt;();
+  
+  <span style="color: navy; font-weight: bold;">var</span> counter = <span style="color: blue;">0</span>; <span style="color: #008800; font-style: italic;">// setup a counter</span>
+  
+  <span style="color: #008800; font-style: italic;">// The timer will start after 1 second elapsed, </span>
+  <span style="color: #008800; font-style: italic;">// and then repeat every second until cancelled</span>
+  <span style="color: navy; font-weight: bold;">new</span> Timer.periodic(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:<span style="color: blue;">1</span>), (timer) {
+    counter++;
+    <span style="color: navy; font-weight: bold;">if</span> (counter &lt;= <span style="color: blue;">5</span>) { 
+      controller.add(counter); <span style="color: #008800; font-style: italic;">// push data onto the stream</span></pre>
+<pre style="line-height: 125%; margin: 0;">                               <span style="color: #008800; font-style: italic; line-height: 125%;">// strongly typed as int</span>
+    }
+    <span style="color: navy; font-weight: bold;">else</span> {
+      controller.close(); <span style="color: #008800; font-style: italic;">// no more data</span>
+      timer.cancel(); <span style="color: #008800; font-style: italic;">// stop the timer running</span>
+    }
+  });
+  
+  <span style="color: navy; font-weight: bold;">return</span> controller.stream; <span style="color: #008800; font-style: italic;">// returns strongly typed stream immediately, </span>
+                            <span style="color: #008800; font-style: italic;">// before the timer starts running</span>
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+</div>
+When the <span style="font-family: Courier New, Courier, monospace;">controller.add()</span> method is called, the data that is added must be an <span style="font-family: Courier New, Courier, monospace;">int</span>.<br />
+<h3>
+Listening for Subscriber State Changes</h3>
+</div>
+<div>
+By default, the stream created by a&nbsp;<span style="font-family: Courier New, Courier, monospace;">StreamController</span>&nbsp;is a single subscriber stream, but you can use the named constructor&nbsp;<span style="font-family: Courier New, Courier, monospace;">new StreamController.broadcast();</span>&nbsp;to create a stream that allows multiple subscribers by default. &nbsp;</div>
+<div>
+<br /></div>
+<div>
+The <span style="font-family: Courier New, Courier, monospace;">StreamController</span> can be alerted when the subscription state changes by passing in an <span style="font-family: Courier New, Courier, monospace;">onSubscriptionStateChange</span> callback in the controller's constructor, in the form:</div>
+<div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController.broadcast(onSubscriptionStateChange: () {
+  print(<span style="color: blue;">"Controller: Subscriber state changed"</span>);    
+});
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end --></div>
+<div>
+<b>Note</b>: both single and broadcast forms of StreamController constructor have the same parameter lists.<br />
+<br /></div>
+<div>
+There are only two subscriber states: no subscribers, or has subscribers. &nbsp;Adding the first subscriber will call the <span style="font-family: Courier New, Courier, monospace;">onSubscriptionStateChange</span> callback, as will losing its last subscriber. &nbsp;Adding and removing other subscribers have no effect.</div>
+<div>
+<h4>
+Populating the stream</h4>
+</div>
+<div>
+On the stream population side, the&nbsp;<span style="font-family: Courier New, Courier, monospace;">getStream()</span> function is modifed to use the <span style="font-family: Courier New, Courier, monospace;">StreamController.broadcast()</span> constructor as shown above, passing in the <span style="font-family: Courier New, Courier, monospace;">onSubscriptionStateChange</span> callback, which prints to the console. &nbsp;This function still emits integers at the rate of 1 per second, for a total of 5 seconds.<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3</pre>
+<pre style="line-height: 125%; margin: 0;">4</pre>
+<pre style="line-height: 125%; margin: 0;">5</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">StreamController </span>getStream() {</pre>
+<pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">  var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController.broadcast(onSubscriptionStateChange: () {
+    print(<span style="color: blue;">"Controller: Subscriber state changed"</span>);    
+  });
+</pre>
+<pre style="line-height: 125%; margin: 0;">  <span style="color: #6aa84f;">// snip rest of function, unchanged</span></pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<span style="font-weight: normal;"><br /></span>
+<span style="font-weight: normal;">The stream <span style="font-family: Courier New, Courier, monospace;">controller</span> also has a <span style="font-family: Courier New, Courier, monospace;">hasSubscribers</span> boolean property that can be checked at any point to determine whether there are subscribers.</span><br />
+<h4>
+Consuming the stream</h4>
+On the consuming side, we are going to use some timers to represent events happening. &nbsp;In the real world, this might be users activating or de-activating parts of a web page (such as turning chat notifications on or off). &nbsp;The timers will follow the following time line, demonstrating the asynchronous nature:<br />
+<br />
+<pre><b>Seconds </b>|  <b>StreamController</b>            |  <b>Consumer / subscribers</b>
+  0     |  Create and return stream    |  receive stream, don't listen yet
+  1     |  add value 1 to the stream   |  nothing
+  2     |  add value 2 to the stream   |  add first subscriber
+  3     |  add value 3 to the stream   |  add second subscriber
+  4     |  add value 4 to the stream   |  remove all subscribers
+  5     |  add value 5 to the stream   |  nothing
+  6     |  close the stream            |  nothing
+  7     |  nothing                     |  nothing
+  8     |  nothing                     |  add a third subscriber
+</pre>
+<br /></div>
+<div>
+The <span style="font-family: Courier New, Courier, monospace;">StreamController</span> will be emiting values at a steady rate of one value per second, but the consumers of the stream will be attaching and detaching at various intervals. &nbsp;Only values put on the stream when there are actually subscribers listening will be received &nbsp;(in other words, if there is no-one listening, the value will be lost). &nbsp;The third subscriber, added long after the stream is closed, will only receive an event on the onDone handler.<br />
+<br />
+To make the code easier to manage and reuse, the timer and <span style="font-family: Courier New, Courier, monospace;">stream.listen</span> code is wrapped up in the following <span style="font-family: Courier New, Courier, monospace;">listenAfter()</span> function, which starts listening to the stream after some seconds. &nbsp;The <span style="font-family: Courier New, Courier, monospace;">StreamSubscription</span> (returned from the <span style="font-family: Courier New, Courier, monospace;">listen()</span> function) is added to a <span style="font-family: Courier New, Courier, monospace;">subscriptionList</span> object that we will use at second 4 to unsubscribe from the stream.<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;">// Start listening to the stream after a number of seconds.</span>
+<span style="color: #008800; font-style: italic;">// Add the stream subscription to the passed in subscriptionList.</span>
+<span style="color: navy; font-weight: bold;">void</span> listenAfter(stream, subscriptionList, {seconds, id}) {
+  <span style="color: navy; font-weight: bold;">var</span> stopwatch = <span style="color: navy; font-weight: bold;">new</span> Stopwatch()..start();
+  <span style="color: navy; font-weight: bold;">new</span> Timer(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:seconds), () {    
+    <span style="color: navy; font-weight: bold;">var</span> subscription = stream.listen(
+        (item) =&gt; print(<span style="color: blue;">"Sub $</span>id<span style="color: blue;">: ${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: $</span>item<span style="color: blue;">"</span>),
+        onError: (err) =&gt; print(<span style="color: blue;">"Sub $</span>id<span style="color: blue;">: ${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Error: $</span>err<span style="color: blue;">"</span>), 
+        onDone: () =&gt; print(<span style="color: blue;">"Sub $</span>id<span style="color: blue;">: ${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Done"</span>));
+    
+    subscriptionList.add(subscription);
+  });
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+Now lets look at the code that adds and removes subscriptions according to the time line. &nbsp;This forms our "main" function.</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:async'</span>;
+
+main() {  
+  <span style="color: navy; font-weight: bold;">var</span> stream = getStream();
+  
+  <span style="color: navy; font-weight: bold;">var</span> subscriptionList = <span style="color: navy; font-weight: bold;">new</span> List();
+  
+  <span style="color: #008800; font-style: italic;">// after 2 seconds add the first subscriber</span>
+  <span style="color: navy; font-weight: bold;">var</span> subscription1 = listenAfter(stream, subscriptionList, seconds:<span style="color: blue;">2</span>, id:<span style="color: blue;">1</span>);
+    
+  <span style="color: #008800; font-style: italic;">// after 3 seconds, add a second subscriber</span>
+  <span style="color: navy; font-weight: bold;">var</span> subscription2 = listenAfter(stream, subscriptionList, seconds:<span style="color: blue;">3</span>, id:<span style="color: blue;">2</span>);
+    
+  <span style="color: #008800; font-style: italic;">// after 4 seconds, remove both (all) existing subscribers.</span>
+  <span style="color: navy; font-weight: bold;">new</span> Timer(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:<span style="color: blue;">4</span>), () {
+    subscriptionList.forEach((subscriber) =&gt; subscriber.cancel());
+  });
+  
+  <span style="color: #008800; font-style: italic;">// after 8 seconds, add a new subscriber.  The stream is done now.</span>
+  <span style="color: navy; font-weight: bold;">var</span> subscription3 = listenAfter(stream, subscriptionList, seconds:<span style="color: blue;">8</span>, id:<span style="color: blue;">3</span>);
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<div>
+<br />
+The actual output we get is as follows<br />
+<pre>Controller: Subscriber state changed
+Sub 1: 3000: 3
+Sub 1: 4000: 4
+Sub 2: 3999: 4
+Controller: Subscriber state changed
+Sub 3: 8000: Done
+</pre>
+<br />
+The subscriber state changes at two points, after the first subscriber is added, and after the first and second subscribers are both removed. &nbsp;By the time the third subscriber is added, the stream is already closed, so no&nbsp;<span style="font-family: Courier New, Courier, monospace;">onSubscriptionStateChange</span>&nbsp;event is raised. &nbsp;The third subscriber receives the "Done" message, &nbsp; even though the stream closed 3 seconds earlier (but no-one was listening then).<br />
+<h3>
+Listening for Pause and Resume changes</h3>
+</div>
+<div>
+In addition to the&nbsp;<span style="font-family: Courier New, Courier, monospace;">onSubscriptionStateChange</span>&nbsp;callback in the StreamController's constructor, you can provide another optional callback for <span style="font-family: Courier New, Courier, monospace;">onPauseStateChange</span><span style="font-family: inherit;">, which is raised when a subscriber toggles between pausing and resuming the stream of data. &nbsp;This is supplied in the same way as the </span><span style="font-family: Courier New, Courier, monospace;">onSubscriptionStateChange</span><span style="font-family: inherit;"> callback, for example:</span>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController(onPauseStateChange: () {
+  print(<span style="color: blue;">"Controller: Pause state changed"</span>);    
+});
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+</div>
+<div>
+<div>
+<span style="font-family: inherit;"><br /></span></div>
+<div>
+<span style="font-family: inherit;">When a subscriber </span><span style="font-family: Courier New, Courier, monospace;">pause</span><span style="font-family: inherit;">s a stream, the data is still be added to the stream, but the subscriber won't be notified about that data until they </span><span style="font-family: Courier New, Courier, monospace;">resume</span><span style="font-family: inherit;"> the stream, at which point, they will be alerted to all the waiting data.</span><br />
+<h4>
+<span style="font-family: inherit;">Populating the stream</span></h4>
+<span style="font-family: inherit;">On the stream population &nbsp;The </span><span style="font-family: Courier New, Courier, monospace;">getStream()</span><span style="font-family: inherit;"> function is modified to add the </span><span style="font-family: Courier New, Courier, monospace;">onPauseStateChange</span><span style="font-family: inherit;"> handler into the constructor.</span></div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3</pre>
+<pre style="line-height: 125%; margin: 0;">4</pre>
+<pre style="line-height: 125%; margin: 0;">5</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">StreamController </span>getStream() {</pre>
+<pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">  var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController(onPauseStateChange: () {
+    print(<span style="color: blue;">"Controller: Pause state changed"</span>);    
+  });
+</pre>
+<pre style="line-height: 125%; margin: 0;">  <span style="color: #38761d;">// snip rest of function, unchanged.</span></pre>
+</td></tr>
+</tbody></table>
+</div>
+The stream <span style="font-family: Courier New, Courier, monospace;">controller</span>&nbsp;also has an <span style="font-family: Courier New, Courier, monospace;">isPaused</span> boolean property that can be checked at any point to see if the underlying stream is paused.<br />
+<h4>
+Consuming the stream</h4>
+</div>
+<div>
+We will use timers again to simulate the stream being paused and resumed. &nbsp;This time, we only have a single subscriber, and we use a timer to pause after 3 seconds, and a second timer to resume after 8 seconds (after the stream has finished and is closed). &nbsp; Our "main" function is shown below:</div>
+<div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:async'</span>;
+
+main() { 
+  <span style="color: navy; font-weight: bold;">var</span> stopwatch = <span style="color: navy; font-weight: bold;">new</span> Stopwatch()..start();
+  
+  <span style="color: #008800; font-style: italic;">// get the stream</span>
+  <span style="color: navy; font-weight: bold;">var</span> stream = getStream();
+  
+  <span style="color: #008800; font-style: italic;">// listen to the stream</span>
+  <span style="color: navy; font-weight: bold;">var</span> subscription = stream.listen(
+      (item) =&gt; print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: $</span>item<span style="color: blue;">"</span>),
+      onError: (err) =&gt; print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Error: $</span>err<span style="color: blue;">"</span>),
+      onDone: () =&gt; print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Done"</span>));
+  
+  <span style="color: #008800; font-style: italic;">// after 3 seconds, pause the stream</span>
+  <span style="color: navy; font-weight: bold;">new</span> Timer(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:<span style="color: blue;">3</span>), () {
+    print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Subscriber Pausing"</span>);
+    subscription.pause();
+  });
+  
+  <span style="color: #008800; font-style: italic;">// after 8 seconds, resume the stream</span>
+  <span style="color: navy; font-weight: bold;">new</span> Timer(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:<span style="color: blue;">8</span>), () {
+    print(<span style="color: blue;">"${</span>stopwatch.elapsedMilliseconds<span style="color: blue;">}: Subscriber Resuming"</span>);
+    subscription.resume();
+  });
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+We receive data items until the 3 second pause. &nbsp;Then nothing is received until 8 seconds, when all the remaining data items and the <span style="font-family: Courier New, Courier, monospace;">onDone</span> handler are called as fast as possible. &nbsp; The output is shown below: (with the milliseconds from the stopwatch shown on the left). &nbsp;The <span style="font-family: Courier New, Courier, monospace;">onPauseStateChange</span> callback is only called when the stream is actually open, which is why there is only one controller notification (when the stream is paused); the stream is already closed when the subscriber resumes the stream.<br />
+<br />
+<pre>1000: 1
+2000: 2
+3000: Paused
+Controller: Pause state changed
+7999: Resumed
+8000: 3
+8000: 4
+8000: 5
+8000: Done
+</pre>
+<br />
+<h2>
+Advanced Consumption: Piping a stream</h2>
+Sometimes you get a stream from one place, and you simply want to transfer that data directly into another consumer of that stream. &nbsp;A typical example of this might be reading a file from disk, and sending it to an <span style="font-family: Courier New, Courier, monospace;">HttpResponse</span> stream. &nbsp;This is known as <span style="font-family: Courier New, Courier, monospace;">pipe</span>ing the data from one place to another.<br />
+<br />
+So far, we have been writing code physically attaches a listener to a stream. &nbsp; It is fairly easy to write this as a class method that takes a stream as a parameter and let the class instance attach to the stream, and we will do exactly that in a moment. &nbsp;By implementing the <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span> interface, that is also in the <span style="font-family: Courier New, Courier, monospace;">dart:async</span> library, you can let your class receive data from a stream automatically from a <span style="font-family: Courier New, Courier, monospace;">pipe()</span> function call.<br />
+<br />
+A <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span> allows a class to receive data from a stream, for whatever reason, and consume that stream data. &nbsp;It allows us to write code such as:<br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6
+7</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> stream = getStream(); 
+
+<span style="color: navy; font-weight: bold;">var</span> consumer = <span style="color: navy; font-weight: bold;">new</span> DemoConsumer();
+
+<span style="color: #008800; font-style: italic;">// pipe the data from the stream</span>
+<span style="color: #008800; font-style: italic;">// into the consumer</span>
+stream.pipe(consumer); 
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+In a few paragraphs time, we will start to create our mock Chat application, and make our Web UI web component implement <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span>, so that the web component can receive Chat messages automatically. &nbsp;But first lets look at what a <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span> does, by examining our the <span style="font-family: Courier New, Courier, monospace;">DemoConsumer</span> used in the code example above.<br />
+<h3>
+Implementing StreamConsumer</h3>
+</div>
+<div>
+The <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span> interface requires you add a single method to your existing class. It's signature is: &nbsp;<span style="font-family: Courier New, Courier, monospace;">Function&lt;T&gt; consume(Stream s)</span><span style="font-family: inherit;">. &nbsp;This function listen to a stream, and return a future when it's done.</span><br />
+<span style="font-family: inherit;"><br /></span>
+<span style="font-family: inherit;">Let's suppose that we have the following class: </span><span style="font-family: Courier New, Courier, monospace;">DemoConsumer:</span></div>
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">class</span> DemoConsumer {
+  <span style="color: navy; font-weight: bold;">var</span> items = <span style="color: navy; font-weight: bold;">new</span> List&lt;<span style="color: navy; font-weight: bold;">String</span>&gt;();
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+We can turn that class into a consumer by implementing the <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span> interface as shown below:<br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6
+7
+8</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">class</span> DemoConsumer <span style="color: navy; font-weight: bold;">implements</span> StreamConsumer{
+  <span style="color: navy; font-weight: bold;">var</span> items = <span style="color: navy; font-weight: bold;">new</span> List&lt;<span style="color: navy; font-weight: bold;">String</span>&gt;();
+
+   
+  Future consume(Stream stream) {
+    <span style="color: #008800; font-style: italic;">// TODO</span>
+  }
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+We now implement the interface, and can pass our <span style="font-family: Courier New, Courier, monospace;">DemoConsumer</span> into a stream's <span style="font-family: Courier New, Courier, monospace;">pipe()</span> function. &nbsp;It doesn't do much yet, but we'll implement the <span style="font-family: Courier New, Courier, monospace;">consume()</span> function to add modify each item received from the stream and add it to the <span style="font-family: Georgia, Times New Roman, serif;">items</span> list. &nbsp;When we are done, we'll return that items list in the future.
+<br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<br /></div>
+The final version of the class is shown below:
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">class</span> DemoConsumer <span style="color: navy; font-weight: bold;">implements</span> StreamConsumer{
+  <span style="color: navy; font-weight: bold;">var</span> items = <span style="color: navy; font-weight: bold;">new</span> List&lt;<span style="color: navy; font-weight: bold;">String</span>&gt;();
+
+   
+  Future consume(Stream stream) {
+    <span style="color: navy; font-weight: bold;">var</span> completer = <span style="color: navy; font-weight: bold;">new</span> Completer();
+
+    stream.listen(
+        (item) {        
+          <span style="color: #008800; font-style: italic;">// when an item is received, add it to the </span>
+          <span style="color: #008800; font-style: italic;">// list of items  </span>
+          <span style="color: navy; font-weight: bold;">var</span> text=<span style="color: blue;">"data item: $</span>item<span style="color: blue;">"</span>;
+          items.add(text);
+        },
+        onError: (err) =&gt; print(<span style="color: blue;">"Error $</span>err<span style="color: blue;">"</span>),
+        <span style="color: #008800; font-style: italic;">// when the stream is finished, </span>
+        <span style="color: #008800; font-style: italic;">// complete the future, returning the demoConsumer instance</span>
+        onDone: () =&gt; completer.complete(this));
+  
+    <span style="color: navy; font-weight: bold;">return</span> completer.future; <span style="color: #008800; font-style: italic;">// return a future immediately</span>
+  }
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+The <span style="font-family: Courier New, Courier, monospace;">DemoConsumer</span> class can now be used to take the data from a Stream and make use of that data as it wishes. &nbsp;We can now write our code to use the DemoConsumer's items list as follows:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6
+7</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> stream = getStream(); 
+
+<span style="color: #008800; font-style: italic;">// pipe the data from the stream</span>
+<span style="color: #008800; font-style: italic;">// into the consumer</span>
+stream.pipe(<span style="color: navy; font-weight: bold;">new</span> DemoConsumer()).then((consumer) {
+  print(consumer.items); <span style="color: #008800; font-style: italic;">// print the list of items</span>
+});
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+In this simplistic example, it simply adds the stream items to a list, but next, you'll see how to us this to dynamically update a web component, issuing dispatch event notifications as data is received.<br />
+<h2>
+A Real-world demo with Web UI</h2>
+<div>
+Well done - you're nearly all finished. &nbsp;Now the fun part...<br />
+<br />
+You have seen how to populate a stream asynchronously, so lets pull this together into a more realistic use case. &nbsp;We'll receive a stream of chat messages from a data source, and display them in the UI, as shown below:<br />
+<br />
+<iframe frameborder="0" height="190px" seamless="seamless" src="http://dartwatch.github.com/examples/streams_client/streams_client.html" width="90%"></iframe>
+
+<br />
+<br />
+<h4>
+Note: <span style="font-weight: normal;">This does depend on a little knowledge about Web UI - it is advised that you at least read the <a href="http://www.dartlang.org/articles/web-ui/" target="_blank">introductory article</a>. &nbsp;Essentially, though, Web UI allows you create reusable UI components and templates that you link into your main web application, and take advantage of model-driven views with 2 way data binding.</span></h4>
+<div>
+<span style="font-weight: normal;"><br /></span></div>
+<h4>
+Model (domain) object</h4>
+We're going to be dealing with data in the form of a stream of <span style="font-family: Courier New, Courier, monospace;">ChatMessage</span><span style="font-family: inherit;"> instances.&nbsp;</span>The <span style="font-family: Courier New, Courier, monospace;">ChatMessage</span> class is straightforward, and is a model object for storing data:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6
+7</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">class</span> ChatMessage {
+  <span style="color: navy; font-weight: bold;">final</span> <span style="color: navy; font-weight: bold;">String</span> from;
+  <span style="color: navy; font-weight: bold;">final</span> <span style="color: navy; font-weight: bold;">String</span> message;
+  DateTime timestamp;
+ 
+  ChatMessage(<span style="color: navy; font-weight: bold;">this</span>.from, <span style="color: navy; font-weight: bold;">this</span>.message); <span style="color: #38761d;">// constructor</span>      
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<br />
+<h4>
+Data Access</h4>
+Our web application is going to call a <span style="font-family: Courier New, Courier, monospace;">getChatStream()</span> function, that will return a reference to a <span style="font-family: Courier New, Courier, monospace;">Stream&lt;ChatMessage&gt;</span>. &nbsp;Once we have that stream, we'll use it to populate our web component. <br />
+<br />
+We're going to still use a timer to push data onto our stream at 1 second intervals, but you could just as easily be receiving that data from a web service, either by polling the server, or via a websocket callback (both of which are out of scope for this article), or some other mechanism.<br />
+<br />
+The <span style="font-family: Courier New, Courier, monospace;">getChatStream()</span> function is shown below. &nbsp;The timer callback gets the next message off the list of waiting messages at 1 second intervals and adds it to the stream. &nbsp;When there are no messages left, the stream is closed. &nbsp;The actual messages are hard coded for demonstration.<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">Stream&lt;ChatMessage&gt; getChatStream() {
+  <span style="color: #008800; font-style: italic;">// just some sample messages.</span>
+  <span style="color: navy; font-weight: bold;">final</span> messages = [<span style="color: navy; font-weight: bold;">new</span> ChatMessage(<span style="color: blue;">"Tom"</span>, <span style="color: blue;">"My dog has no nose"</span>),
+                    <span style="color: navy; font-weight: bold;">new</span> ChatMessage(<span style="color: blue;">"Sally"</span>, <span style="color: blue;">"Really, how does he smell?"</span>),
+                    <span style="color: navy; font-weight: bold;">new</span> ChatMessage(<span style="color: blue;">"Tom"</span>, <span style="color: blue;">"Terrible!"</span>)];
+  
+  <span style="color: navy; font-weight: bold;">var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController&lt;ChatMessage&gt;();
+
+  <span style="color: #008800; font-style: italic;">// starts after 1 second</span>
+  <span style="color: navy; font-weight: bold;">new</span> Timer.periodic(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:<span style="color: blue;">1</span>), (timer) {
+    <span style="color: navy; font-weight: bold;">if</span> (messages.length &gt; <span style="color: blue;">0</span>) {
+      <span style="color: navy; font-weight: bold;">var</span> message = messages.removeAt(<span style="color: blue;">0</span>); <span style="color: #008800; font-style: italic;">// pull the first message of the list</span>
+      message.timestamp = <span style="color: navy; font-weight: bold;">new</span> DateTime.now(); 
+      controller.add(message); <span style="color: #008800; font-style: italic;">// add to the stream</span>
+    }
+    <span style="color: navy; font-weight: bold;">else</span> {
+      <span style="color: #008800; font-style: italic;">// no more messages</span>
+      controller.close(); <span style="color: #008800; font-style: italic;">// close the stream </span>
+      timer.cancel(); <span style="color: #008800; font-style: italic;">// cancel the timer</span>
+    }
+  });
+  
+  <span style="color: navy; font-weight: bold;">return</span> controller.stream; <span style="color: #008800; font-style: italic;">// returns immeditately</span>
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<br />
+<h4>
+Web Components (Web UI)&nbsp;</h4>
+Separately, we'll implement a web component using Dart's Web UI library that is able to consume a stream via its pipe command. &nbsp;As the stream publishes <span style="font-family: Courier New, Courier, monospace;">ChatMessage</span> data, the web component will automatically update.<br />
+<br />
+Let's start with the basic web component code, which I'm calling <span style="font-family: Courier New, Courier, monospace;">ChatBoxComponent</span><span style="font-family: inherit;">. &nbsp;This is just boilerplate code, and doesn't yet understand how to deal with streams. &nbsp;We'll add that in soon.</span><br />
+<span style="font-family: inherit;"><br /></span>
+<span style="font-family: inherit;">This is split between two files: <b>chatbox.html</b> and <b>chatbox.dart. </b>The comments describe the key features of each file.</span><br />
+<span style="font-family: Courier New, Courier, monospace;"><br /></span>
+<br />
+<span style="font-family: inherit;"><b>chatbox.html</b></span><br />
+<br />
+<br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: teal;">&lt;!DOCTYPE html&gt;</span>
+
+<span style="color: navy; font-weight: bold;">&lt;html&gt;</span>
+  <span style="color: navy; font-weight: bold;">&lt;body&gt;</span>
+    <span style="color: #008800; font-style: italic;">&lt;!-- associated code-behind file should contain a ChatBoxComponent class--&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;element</span> <span style="color: red;">name=</span><span style="color: blue;">"x-chatbox"</span> <span style="color: red;">constructor=</span><span style="color: blue;">"ChatBoxComponent"</span> <span style="color: navy; font-weight: bold;">&gt;</span>
+             
+      <span style="color: navy; font-weight: bold;">&lt;template&gt;</span> <span style="color: #008800; font-style: italic;">&lt;!-- main component template --&gt;</span>
+        
+        <span style="color: navy; font-weight: bold;">&lt;style&gt;</span> &lt;!<span style="color: navy; font-weight: bold;">--</span> <span style="color: navy; font-weight: bold;">style</span> <span style="color: navy; font-weight: bold;">information</span> <span style="color: navy; font-weight: bold;">--</span>&gt;
+          .from { <span style="color: navy; font-weight: bold;">font-weight</span>: <span style="color: navy; font-weight: bold;">bold</span> }
+          .timestamp { <span style="color: navy; font-weight: bold;">font-size</span>: small }
+          .message { <span style="color: navy; font-weight: bold;">color</span>: blue }
+        <span style="color: navy; font-weight: bold;">&lt;/style&gt;</span>
+        
+        <span style="color: #008800; font-style: italic;">&lt;!-- for each mesage in chatBoxComponent.messages, render</span>
+<span style="color: #008800; font-style: italic;">              this template --&gt;</span>
+        <span style="color: navy; font-weight: bold;">&lt;template</span> <span style="color: red;">iterate=</span><span style="color: blue;">'message in messages'</span><span style="color: navy; font-weight: bold;">&gt;</span>  
+        
+          <span style="color: navy; font-weight: bold;">&lt;div&gt;</span>
+            <span style="color: #008800; font-style: italic;">&lt;!-- bind to each of the fields in the message --&gt;</span>
+            <span style="color: navy; font-weight: bold;">&lt;span</span> <span style="color: red;">class=</span><span style="color: blue;">"timestamp"</span><span style="color: navy; font-weight: bold;">&gt;</span>{{message.timestamp}}<span style="color: navy; font-weight: bold;">&lt;/span&gt;</span>
+            <span style="color: navy; font-weight: bold;">&lt;span</span> <span style="color: red;">class=</span><span style="color: blue;">"from"</span><span style="color: navy; font-weight: bold;">&gt;</span>{{message.from}}<span style="color: navy; font-weight: bold;">&lt;/span&gt;</span>
+            <span style="color: navy; font-weight: bold;">&lt;span</span> <span style="color: red;">class=</span><span style="color: blue;">"message"</span><span style="color: navy; font-weight: bold;">&gt;</span>{{message.message}}<span style="color: navy; font-weight: bold;">&lt;/span&gt;</span>
+          <span style="color: navy; font-weight: bold;">&lt;/div&gt;</span>
+          
+        <span style="color: navy; font-weight: bold;">&lt;/template&gt;</span>
+        <span style="color: #008800; font-style: italic;">&lt;!-- only display this template if</span>
+<span style="color: #008800; font-style: italic;">             chatBoxComponent.completer.isCompleted == true --&gt;</span>
+        <span style="color: navy; font-weight: bold;">&lt;template</span> <span style="color: red;">instantiate=</span><span style="color: blue;">"if completer.isCompleted"</span><span style="color: navy; font-weight: bold;">&gt;</span>
+          <span style="color: navy; font-weight: bold;">&lt;div&gt;</span>No more messages<span style="color: navy; font-weight: bold;">&lt;/div&gt;</span>
+        <span style="color: navy; font-weight: bold;">&lt;/template&gt;</span>
+      <span style="color: navy; font-weight: bold;">&lt;/template&gt;</span> <span style="color: #008800; font-style: italic;">&lt;!-- end main component template --&gt;</span>
+        
+      <span style="color: #008800; font-style: italic;">&lt;!-- link the code-behind file --&gt;</span>  
+      <span style="color: navy; font-weight: bold;">&lt;script </span><span style="color: red;">type=</span><span style="color: blue;">"application/dart"</span> <span style="color: red;">src=</span><span style="color: blue;">"chatbox.dart"</span><span style="color: navy; font-weight: bold;">&gt;&lt;/script&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;/element&gt;</span>
+  <span style="color: navy; font-weight: bold;">&lt;/body&gt;</span>
+<span style="color: navy; font-weight: bold;">&lt;/html&gt;</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+And the code behind file: <b>chatbox.dart</b> that we will use as a starting point:
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'package:web_ui/web_ui.dart'</span>;
+import <span style="color: blue;">'dart:async'</span>;
+import <span style="color: blue;">'package:web_ui/watcher.dart'</span> as watchers;
+
+<span style="color: navy; font-weight: bold;">class</span> ChatBoxComponent <span style="color: navy; font-weight: bold;">extends</span> WebComponent {  
+  <span style="color: #008800; font-style: italic;">// list of ChatMessage</span>
+  List messages = <span style="color: navy; font-weight: bold;">new</span> List(); 
+
+  <span style="color: #008800; font-style: italic;">// when complete, there are no more messages</span>
+  <span style="color: navy; font-weight: bold;">var</span> completer = <span style="color: navy; font-weight: bold;">new</span> Completer();
+
+  ChatBoxComponent(); <span style="color: #008800; font-style: italic;">// empty constructor</span>
+  
+  <span style="color: #008800; font-style: italic;">// clear the list of messages, and create a new incomplete completer.</span>
+  <span style="color: navy; font-weight: bold;">void</span> reset() {
+    messages = <span style="color: navy; font-weight: bold;">new</span> List();
+    completer = <span style="color: navy; font-weight: bold;">new</span> Completer(); <span style="color: #008800; font-style: italic;">// sets completer.isComplete to false.</span>
+    watchers.dispatch;
+  }
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<h4>
+Application code</h4>
+Finally, there's our main application's HTML and code file, which I'm calling <b>streams_client.html</b> and <b>streams_client.dart</b>. <br />
+<br />
+The <b>streams_client.dart</b> file contains an empty <span style="font-family: Courier New, Courier, monospace;">main()</span> function, the <span style="font-family: Courier New, Courier, monospace;">ChatMessage</span> class and <span style="font-family: Courier New, Courier, monospace;">getChatStream()</span> function that you've already seen. &nbsp;The HTML file links in the chatbox web component an places it on the UI.<br />
+<br />
+<b>streams_client.html</b><br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: teal;">&lt;!DOCTYPE html&gt;</span>
+
+<span style="color: navy; font-weight: bold;">&lt;html&gt;</span>
+  <span style="color: navy; font-weight: bold;">&lt;head&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;meta</span> <span style="color: red;">charset=</span><span style="color: blue;">"utf-8"</span><span style="color: navy; font-weight: bold;">&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;title&gt;</span>Sample app<span style="color: navy; font-weight: bold;">&lt;/title&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;link</span> <span style="color: red;">rel=</span><span style="color: blue;">"stylesheet"</span> <span style="color: red;">href=</span><span style="color: blue;">"streams_client.css"</span><span style="color: navy; font-weight: bold;">&gt;</span>
+    
+    <span style="color: #008800; font-style: italic;">&lt;!-- import the chatbox component --&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;link</span> <span style="color: red;">rel=</span><span style="color: blue;">"components"</span> <span style="color: red;">href=</span><span style="color: blue;">"chatbox.html"</span><span style="color: navy; font-weight: bold;">&gt;</span>
+  <span style="color: navy; font-weight: bold;">&lt;/head&gt;</span>
+  <span style="color: navy; font-weight: bold;">&lt;body&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;button</span> <span style="color: red;">id=</span><span style="color: blue;">"start"</span><span style="color: navy; font-weight: bold;">&gt;</span>Start<span style="color: navy; font-weight: bold;">&lt;/button&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;div</span> <span style="color: red;">id=</span><span style="color: blue;">"sample_container_id"</span><span style="color: navy; font-weight: bold;">&gt;</span>
+      <span style="color: #008800; font-style: italic;">&lt;!-- display the chatbox component on the UI --&gt;</span>
+      <span style="color: navy; font-weight: bold;">&lt;div</span> <span style="color: red;">is=</span><span style="color: blue;">"x-chatbox"</span> <span style="color: red;">id=</span><span style="color: blue;">"chatbox"</span><span style="color: navy; font-weight: bold;">&gt;&lt;/div&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;/div&gt;</span>
+    
+    <span style="color: navy; font-weight: bold;">&lt;script </span><span style="color: red;">type=</span><span style="color: blue;">"application/dart"</span> <span style="color: red;">src=</span><span style="color: blue;">"streams_client.dart"</span><span style="color: navy; font-weight: bold;">&gt;&lt;/script&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;script </span><span style="color: red;">src=</span><span style="color: blue;">"packages/browser/dart.js"</span><span style="color: navy; font-weight: bold;">&gt;&lt;/script&gt;</span>
+  <span style="color: navy; font-weight: bold;">&lt;/body&gt;</span>
+<span style="color: navy; font-weight: bold;">&lt;/html&gt;</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+<h3>
+Adding stream consuming ability to our web component&nbsp;</h3>
+</div>
+<div>
+Remember, to enable a class to consume a stream, we can make it implement the <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span> interface by adding a <span style="font-family: Courier New, Courier, monospace;">consume()</span> method. &nbsp;So let's do that with our web component. &nbsp;</div>
+<div>
+<br /></div>
+<div>
+When we receive a message from the stream, we'll add it to the list of messages, and call the web ui function <span style="font-family: Courier New, Courier, monospace;">watchers.dispatch()</span><span style="font-family: inherit;">,&nbsp;which causes the web UI code to detect that our message list has changed and render the template appropriately (our template has a binding to the </span><span style="font-family: Courier New, Courier, monospace;">messages</span><span style="font-family: inherit;"> list).</span></div>
+<div>
+<span style="font-family: inherit;"><br /></span></div>
+<div>
+<span style="font-family: inherit;">When the message stream is closed, we'll receive an </span><span style="font-family: Courier New, Courier, monospace;">onDone</span><span style="font-family: inherit;"> notification, and at that point, we can complete our complete and call </span><span style="font-family: Courier New, Courier, monospace;">watchers.dispatch()</span><span style="font-family: inherit;"> again (as our web UI template has a binding on the </span><span style="font-family: Courier New, Courier, monospace;">completer.isComplete</span><span style="font-family: inherit;"> property.</span></div>
+<div>
+<span style="font-family: inherit;"><br /></span></div>
+<div>
+The updated code <span style="font-family: Courier New, Courier, monospace;">ChatBoxComponent</span> code, implementing <span style="font-family: Courier New, Courier, monospace;">StreamConsumer</span>, is shown below:</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'package:web_ui/web_ui.dart'</span>;
+import <span style="color: blue;">'dart:async'</span>;
+import <span style="color: blue;">'package:web_ui/watcher.dart'</span> as watchers;
+
+<span style="color: navy; font-weight: bold;">class</span> ChatBoxComponent <span style="color: navy; font-weight: bold;">extends</span> WebComponent <span style="color: navy; font-weight: bold;">implements</span> StreamConsumer {  
+  <span style="color: #008800; font-style: italic;">// list of ChatMessage</span>
+  List messages = <span style="color: navy; font-weight: bold;">new</span> List();
+  
+  <span style="color: #008800; font-style: italic;">// when complete, there are no more messages</span>
+  <span style="color: navy; font-weight: bold;">var</span> completer = <span style="color: navy; font-weight: bold;">new</span> Completer();
+  
+  ChatBoxComponent(); <span style="color: #008800; font-style: italic;">// empty constructor</span>
+  
+  <span style="color: #008800; font-style: italic;">// clear the list of messages, and create a new incomplete completer.</span>
+  <span style="color: navy; font-weight: bold;">void</span> reset() {
+    messages = <span style="color: navy; font-weight: bold;">new</span> List();
+    completer = <span style="color: navy; font-weight: bold;">new</span> Completer();
+    watchers.dispatch;
+  }
+  
+  <span style="color: #008800; font-style: italic;">/**</span>
+<span style="color: #008800; font-style: italic;">   * Returns the total number of messages received in the future</span>
+<span style="color: #008800; font-style: italic;">   */</span>
+  Future consume(Stream stream) {
+    stream.listen(_onMessage, 
+        onError: _onError, 
+        onDone: _onDone,
+        unsubscribeOnError: <span style="color: navy; font-weight: bold;">true</span>);
+    
+    <span style="color: navy; font-weight: bold;">return</span> completer.future;
+  }
+  
+  _onMessage(message) {
+    messages.add(message); <span style="color: #008800; font-style: italic;">// add a ChatMessage to the list</span>
+    watchers.dispatch(); <span style="color: #008800; font-style: italic;">// trigger Web UI to update the template</span>
+  }
+  
+  _onError(error) {
+    <span style="color: #008800; font-style: italic;">// TODO: render error notification</span>
+    print(<span style="color: blue;">"Error: $</span>error<span style="color: blue;">"</span>);
+  }
+  
+  _onDone() {
+    completer.complete(messages);
+    watchers.dispatch(); <span style="color: #008800; font-style: italic;">// trigger Web UI to update the template</span>
+  }
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<div>
+<br /></div>
+<div>
+Now our web component can consume a stream, and update UI with items from that stream via Web UI's data binding.<br />
+<br />
+<h4>
+The Final Step</h4>
+<br />
+The final step is plumbing - we join the chat stream to the web component in the applications <span style="font-family: Courier New, Courier, monospace;">main()</span> function. The complete streams_client.dart file is shown below for completeness:<br />
+<br />
+<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:html'</span>;
+import <span style="color: blue;">'package:web_ui/web_ui.dart'</span>;
+import <span style="color: blue;">'dart:async'</span>;
+
+<span style="color: navy; font-weight: bold;">void</span> main() {
+
+  query(<span style="color: blue;">"#start"</span>).onClick.listen((_) {
+    <span style="color: #008800; font-style: italic;">// when the button is clicked...</span>
+    
+    <span style="color: #008800; font-style: italic;">// get an the chatbox element from the page</span>
+    <span style="color: navy; font-weight: bold;">var</span> chatboxElement = query(<span style="color: blue;">"#chatbox"</span>);
+
+    <span style="color: #008800; font-style: italic;">// get the ChatBoxComponent instance from </span>
+    <span style="color: #008800; font-style: italic;">// the element using xtag</span>
+    var chatbox = chatboxElement.xtag;
+    
+    <span style="color: #008800; font-style: italic;">// reset its properties</span>
+    chatbox.reset();
+    
+    <span style="color: #008800; font-style: italic;">// get the chat stream, and pipe it to the chatbox</span>
+    <span style="color: navy; font-weight: bold;">var</span> stream = getChatStream();
+    stream.pipe(chatbox);
+  }); 
+}
+
+
+Stream&lt;ChatMessage&gt; getChatStream() {
+  <span style="color: #008800; font-style: italic;">// just some sample messages.</span>
+  <span style="color: navy; font-weight: bold;">final</span> messages = [<span style="color: navy; font-weight: bold;">new</span> ChatMessage(<span style="color: blue;">"Tom"</span>, <span style="color: blue;">"My dog has no nose"</span>),
+                    <span style="color: navy; font-weight: bold;">new</span> ChatMessage(<span style="color: blue;">"Sally"</span>, <span style="color: blue;">"Really, how does he smell?"</span>),
+                    <span style="color: navy; font-weight: bold;">new</span> ChatMessage(<span style="color: blue;">"Tom"</span>, <span style="color: blue;">"Terrible!"</span>)];
+  
+  <span style="color: navy; font-weight: bold;">var</span> controller = <span style="color: navy; font-weight: bold;">new</span> StreamController&lt;ChatMessage&gt;();
+
+  <span style="color: #008800; font-style: italic;">// starts after 1 second</span>
+  <span style="color: navy; font-weight: bold;">new</span> Timer.periodic(<span style="color: navy; font-weight: bold;">new</span> Duration(seconds:<span style="color: blue;">1</span>), (timer) {
+    <span style="color: navy; font-weight: bold;">if</span> (messages.length &gt; <span style="color: blue;">0</span>) {
+      <span style="color: navy; font-weight: bold;">var</span> message = messages.removeAt(<span style="color: blue;">0</span>); <span style="color: #008800; font-style: italic;">// pull the first message of the list</span>
+      message.timestamp = <span style="color: navy; font-weight: bold;">new</span> DateTime.now(); 
+      controller.add(message); <span style="color: #008800; font-style: italic;">// add to the stream</span>
+    }
+    <span style="color: navy; font-weight: bold;">else</span> {
+      <span style="color: #008800; font-style: italic;">// no more messages</span>
+      controller.close(); <span style="color: #008800; font-style: italic;">// close the stream </span>
+      timer.cancel(); <span style="color: #008800; font-style: italic;">// cancel the timer</span>
+    }
+  });
+  
+  <span style="color: navy; font-weight: bold;">return</span> controller.stream; <span style="color: #008800; font-style: italic;">// returns immeditately</span>
+}
+
+<span style="color: navy; font-weight: bold;">class</span> ChatMessage {
+  <span style="color: navy; font-weight: bold;">final</span> <span style="color: navy; font-weight: bold;">String</span> from;
+  <span style="color: navy; font-weight: bold;">final</span> <span style="color: navy; font-weight: bold;">String</span> message;
+  DateTime timestamp;
+ 
+  ChatMessage(<span style="color: navy; font-weight: bold;">this</span>.from, <span style="color: navy; font-weight: bold;">this</span>.message);      
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+</div>
+<div>
+<br />
+<h2>
+Conclusion</h2>
+</div>
+<div>
+Streams form the backbone of many APIs in Dart, and is is easy to use streams in your own applications too. &nbsp;When you expose a stream API, you allow easy access to other users of your code, enabling them to use a familiar API to manipulate your data, even allowing Web UI components to consume streams.</div>
+<div>
+<br /></div>
+<div>
+If you have any comments, or find any obvious errors, please don't hesitate to leave a comment or contact me via my <a href="https://plus.google.com/117571249567635877826/about" target="_blank">G+ profile</a></div>
+<div class="feedflare">
+<a href="http://feeds.feedburner.com/~ff/Dartwatch?a=m6nIpxWKIHU:-hVHr1reDTs:yIl2AUoC8zA"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=yIl2AUoC8zA" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=m6nIpxWKIHU:-hVHr1reDTs:V_sGLiPBpWU"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=m6nIpxWKIHU:-hVHr1reDTs:V_sGLiPBpWU" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=m6nIpxWKIHU:-hVHr1reDTs:qj6IDK7rITs"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=qj6IDK7rITs" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=m6nIpxWKIHU:-hVHr1reDTs:63t7Ie-LG7Y"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=63t7Ie-LG7Y" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=m6nIpxWKIHU:-hVHr1reDTs:F7zBnMyn0Lo"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=m6nIpxWKIHU:-hVHr1reDTs:F7zBnMyn0Lo" border="0"></img></a>
+</div><img src="http://feeds.feedburner.com/~r/Dartwatch/~4/m6nIpxWKIHU" height="1" width="1"/>

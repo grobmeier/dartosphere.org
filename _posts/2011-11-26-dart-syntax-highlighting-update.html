@@ -1,0 +1,31 @@
+---
+title: 'Dart syntax highlighting update'
+layout: post
+tags: {  }
+category: olov-lassus-dart-posts
+published: '2011-11-26T15:00:00+01:00'
+
+---
+
+<p>Here&#8217;s a short update on the <a href='http://pygments.org'>Pygments</a> Dart support I created <a href='http://blog.lassus.se/2011/10/dart-syntax-highlighting.html'>a month back</a>.</p>
+
+<p>I consider it good to go now and will submit it to the Pygments upstream and github shortly. The most notable addition is support for string interpolation. I&#8217;ve also created a custom color scheme (based on tango) that works well with at least Dart, JS and Diff.</p>
+
+<p>It looks like this:</p>
+<div class='highlight'><pre><code class='dart'><span class='cp'>#!/bin/dart</span>
+
+<span class='n'>main</span><span class='p'>()</span> <span class='p'>{</span>
+  <span class='kt'>String</span> <span class='n'>name</span> <span class='o'>=</span> <span class='s2'>&quot;Zoidberg&quot;</span><span class='p'>;</span>
+  <span class='kd'>const</span> <span class='n'>age</span> <span class='o'>=</span> <span class='m'>42</span><span class='p'>;</span>
+  <span class='kd'>var</span> <span class='n'>liar</span> <span class='o'>=</span> <span class='n'>Math</span><span class='p'>.</span><span class='n'>random</span><span class='p'>()</span> <span class='o'>&gt;</span> <span class='m'>0.5</span><span class='p'>;</span>
+
+  <span class='c1'>// Present ourselves</span>
+  <span class='n'>print</span><span class='p'>(</span><span class='s2'>&quot;Hi! My name is </span><span class='si'>$</span><span class='n'>name</span><span class='s2'> and I&#39;m </span><span class='si'>${</span><span class='n'>liar</span> <span class='o'>?</span> <span class='n'>age</span> <span class='o'>/</span> <span class='m'>2</span> <span class='o'>:</span> <span class='n'>age</span><span class='si'>}</span><span class='s2'> years old&quot;</span><span class='p'>);</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p>Source code is available at <a href='https://gist.github.com/1320163'>https://gist.github.com/1320163</a>. Install it by appending the gist to <a href='http://pygments.org'>Pygments</a>&#8217;s <code>agile.py</code> and add the following line to <code>_mapping.py</code>.</p>
+<div class='highlight'><pre><code class='python'>    <span class='s'>&#39;DartLexer&#39;</span><span class='p'>:</span> <span class='p'>(</span><span class='s'>&#39;pygments.lexers.agile&#39;</span><span class='p'>,</span> <span class='s'>&#39;Dart&#39;</span><span class='p'>,</span> <span class='p'>(</span><span class='s'>&#39;dart&#39;</span><span class='p'>),</span> <span class='p'>(</span><span class='s'>&#39;*.dart&#39;</span><span class='p'>,),</span> <span class='p'>(</span><span class='s'>&#39;text/x-dart&#39;</span><span class='p'>)),</span>
+</code></pre></div>
+<p>Then run <code>pygmentize -f html -o yourfile.html yourfile.dart</code> to generate markup from your source code. You&#8217;ll need to combine it with a style sheet. Feel free to copy my color scheme (<a href='http://blog.lassus.se/stylesheets/syntax.css'>syntax.css</a>) if you like it.</p>
+
+<p><a href='https://groups.google.com/a/dartlang.org/group/misc/browse_thread/thread/5a65d1625f9b98fb/c1723a3709964991'>Show comments (Dart misc)</a></p>

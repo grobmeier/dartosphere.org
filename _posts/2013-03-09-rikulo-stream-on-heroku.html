@@ -1,0 +1,235 @@
+---
+title: 'rikulo stream on heroku'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2013-03-09T07:16:00-08:00'
+
+---
+
+<p>Tonights hacking was with <a href="https://github.com/rikulo/stream">stream</a> and <a href="http://www.heroku.com/">heroku</a>. <em>Stream is a Dart web server supporting request routing, filtering, template technology, file-based static resources and MVC design pattern.</em> I just planned on serving static content from <a href="http://www.heroku.com/">heroku</a> using full dart based web server.</p>
+
+<p>First setup the dart build pack</p>
+
+<figure class='code'><figcaption><span>shell</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>adam@Adams-MacBook-Air:~/dart
+</span><span class='line'><span class="nv">$ </span>mkdir stream_todomvc
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span><span class="nb">cd </span>stream_todomvc
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>heroku create stream-todomvc
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>heroku config:add <span class="nv">BUILDPACK_URL</span><span class="o">=</span>https://github.com/igrigorik/heroku-buildpack-dart.git
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>git init
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>git remote add heroku git@heroku.com:stream-todomvc.git
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Creating a new project called <code>stream-todomvc</code>. Going to use the <a href="https://github.com/dart-lang/web-ui/tree/master/example/todomvc">todomvc</a> from the <a href="https://github.com/dart-lang/web-ui">web-ui</a> project as our content for the <a href="https://github.com/rikulo/stream">stream</a> server. First thing that should be done is adding the dependencies to the <code>pubspec.yaml</code> file.</p>
+
+<figure class='code'><figcaption><span>pubspec.yaml</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">stream_todomvc</span>
+</span><span class='line'><span class="l-Scalar-Plain">description</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">A sample WebUI application</span>
+</span><span class='line'><span class="l-Scalar-Plain">dependencies</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">browser</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">any</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">js</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">any</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">web_ui</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.4.1+7</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">stream</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.5.5+1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next I simply compied the existing <a href="https://github.com/dart-lang/web-ui/tree/master/example/todomvc">todomvc</a> project out into my <a href="http://stream-todomvc.herokuapp.com/out/index.html">stream-todomvc</a> project.</p>
+
+<figure class='code'><figcaption><span>shell</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>cp ~/dart/web-ui/example/todomvc/* ./web/
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p><a href="http://docs.rikulo.org/stream/latest/Getting_Started/Introduction.html">stream intro</a> documentation goes over some basic configurations and settings. I&#8217;m just going to use them for now to get something running right away. The key to note when serving code from the <code>web/</code> folder in dart projects is having the <a href="https://github.com/rikulo/stream">stream</a> server code in <code>web/webapp/</code>. That way <a href="https://github.com/rikulo/stream">stream</a> can find all your resources with little configuration. With very little dart code we can have static web server going.</p>
+
+<figure class='code'><figcaption><span>web/webapp/server.dart</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="n">library</span> <span class="n">server</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">import</span> <span class="s1">&#39;dart:io&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s2">&quot;package:stream/stream.dart&quot;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">port</span> <span class="o">=</span> <span class="n">Platform</span><span class="p">.</span><span class="n">environment</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s1">&#39;PORT&#39;</span><span class="p">)</span> <span class="o">?</span> <span class="kt">int</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">Platform</span><span class="p">.</span><span class="n">environment</span><span class="p">[</span><span class="s1">&#39;PORT&#39;</span><span class="p">])</span> <span class="o">:</span> <span class="m">8080</span><span class="p">;</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;0.0.0.0&#39;</span><span class="p">;</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">streamServer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StreamServer</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">streamServer</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">start</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since this was a <a href="https://github.com/dart-lang/web-ui">web-ui</a> project we need to have a <code>build.dart</code> file help us with transforming the polyfill web components.</p>
+
+<figure class='code'><figcaption><span>build.dart</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="n">import</span> <span class="s1">&#39;dart:io&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s1">&#39;package:web_ui/component_build.dart&#39;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">main</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">build</span><span class="p">(</span><span class="k">new</span> <span class="n">Options</span><span class="p">().</span><span class="n">arguments</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;web/index.html&#39;</span><span class="p">]);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <a href="http://www.heroku.com/">heroku</a> environment requires a <a href="https://devcenter.heroku.com/articles/procfile">procfile</a> configuration to let the service know the type of commands to run.</p>
+
+<figure class='code'><figcaption><span>Procfile</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>web: ./dart-sdk/bin/dart --package-root=./packages/ web/webapp/server.dart
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next we build all the static data for our webapp to function. This will include calling <code>build.dart</code> and <code>dart2js</code>. The second step of calling <code>dart2js</code> helps with clients that do not have the <code>dartvm</code> built in.</p>
+
+<figure class='code'><figcaption><span>shell</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>pub install
+</span><span class='line'>Resolving dependencies...
+</span><span class='line'>Dependencies installed!
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>dart build.dart
+</span><span class='line'>Total <span class="nb">time </span>spent on web/index.html                           -- 839 ms
+</span><span class='line'>Total <span class="nb">time</span>                                                   -- 863 ms
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>dart2js -oweb/out/index.html_bootstrap.dart.js web/out/index.html_bootstrap.dart
+</span><span class='line'>Using snapshot /Users/adam/Documents/DartEditor/dart/dart-sdk/lib/_internal/compiler/implementation/dart2js.dart.snapshot
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now everything should be ready for deployment.</p>
+
+<figure class='code'><figcaption><span>shell</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>git add -a -m <span class="s2">&quot;ready for deploy&quot;</span>
+</span><span class='line'>
+</span><span class='line'>adam@Adams-MacBook-Air:~/dart/stream_todomvc
+</span><span class='line'><span class="nv">$ </span>git push -v --set-upstream heroku master:master
+</span><span class='line'>Pushing to git@heroku.com:stream-todomvc.git
+</span><span class='line'>Counting objects: 5, <span class="k">done</span>.
+</span><span class='line'>Delta compression using up to 4 threads.
+</span><span class='line'>Compressing objects: 100% <span class="o">(</span>3/3<span class="o">)</span>, <span class="k">done</span>.
+</span><span class='line'>Writing objects: 100% <span class="o">(</span>3/3<span class="o">)</span>, 283 bytes, <span class="k">done</span>.
+</span><span class='line'>Total 3 <span class="o">(</span>delta 2<span class="o">)</span>, reused 0 <span class="o">(</span>delta 0<span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'>-----&gt; Fetching custom git buildpack... <span class="k">done</span>
+</span><span class='line'>-----&gt; Dart app detected
+</span><span class='line'>-----&gt; Installing Dart VM, build: latest
+</span><span class='line'>-----&gt; Copy Dart binaries to app root
+</span><span class='line'>-----&gt; Install packages
+</span><span class='line'>*** Found pubspec.yaml in .
+</span><span class='line'>Resolving dependencies...
+</span><span class='line'>Dependencies installed!
+</span><span class='line'>Fixed web symlink
+</span><span class='line'>-----&gt; Discovering process types
+</span><span class='line'>       Procfile declares types -&gt; web
+</span><span class='line'>
+</span><span class='line'>-----&gt; Compiled slug size: 8.9MB
+</span><span class='line'>-----&gt; Launching... <span class="k">done</span>, v7
+</span><span class='line'>       http://stream-todomvc.herokuapp.com deployed to Heroku
+</span><span class='line'>
+</span><span class='line'>To git@heroku.com:stream-todomvc.git
+</span><span class='line'>   042f1f4..b35984b  master -&gt; master
+</span><span class='line'>updating <span class="nb">local </span>tracking ref <span class="s1">&#39;refs/remotes/heroku/master&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Deploying to <a href="http://www.heroku.com/">heroku</a> in this style is just a good starting point. <a href="https://github.com/dart-lang/web-ui">web-ui</a> and <a href="http://www.dartlang.org">dart</a> in general is still working on a deployment story. The URL for the <a href="http://stream-todomvc.herokuapp.com/out/index.html">stream-todomvc</a> will contain <code>out</code> in its location, not very desirable. In the future a <a href="https://github.com/dart-lang/buildtool">buildtool</a> will aid the deployment story for <a href="http://www.dartlang.org">dart</a>.</p>
+
+<p>Check out the live version of <a href="http://stream-todomvc.herokuapp.com/out/index.html">stream-todomvc</a> with full source code available at the <a href="https://github.com/financeCoding/stream-todomvc">stream-todomvc github project</a>.</p>
+

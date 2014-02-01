@@ -1,0 +1,26 @@
+---
+title: 'Dart läuft native auf Chromium: Hallo Dartium! #dartlang'
+layout: post
+tags:
+    - Downloads
+    - Neues
+    - Binaries
+    - Browser
+    - JavaScript
+category: null
+published: '2012-02-15T18:18:41+00:00'
+
+---
+
+<p>UPDATE: <a href="http://www.dartlang.org/dartium/index.html" target="_blank">Dartium ist da</a>.</p>
+<p>Im heutigen Dart G+ Hangout mit dem Dart Team haben die Google Entwickler bekanntgegeben, das <a href="http://www.dartlang.org/dartium/index.html" target="_blank">Dartium fertig</a> ist <del>(und in ein paar Stunden auch zum Download angeboten wird. Bitte einfach öfter mal bei <a href="http://www.dartlang.org" target="_blank">Dartlang.org</a> vorbeisehen. Alternativ werde ich auch diesen Post mit einem Update versehen)</del>.</p>
+<p><strong>Was heißt das nun?</strong> Es bedeutet, Dart läuft jetzt auch native im Browser. Also ohne das man es vorher zu JavaScript kompilieren muss.</p>
+<p>Es ist ein wichtiger Schritt für das Dart Team denn Dartium ist der erste Browser, der Dart native unterstützt. Dart selbst ist ja noch sehr jung auch recht kompliziert, deswegen hat das Team entschieden die VM erst einen Fork von Chromium namens Dartium einzubauen, bevor es dann in die breite Öffentlichkeit entlassen wird.</p>
+<p>Dartium ist im technischen Preview. Der Browser wird nicht zum täglichen Einsatz empfohlen. Es könnte Sicherheitsprobleme und andere Unstimmigkeiten auftreten. Das Dart Team hat um Unterstützung von den Usern gebeten und wünscht sich, dass alle Bugs an die Entwickler herangetragen wird.</p>
+<p>Dartium kann gleichzeitig mit JavaScript und Dart umgehen.</p>
+<p>Jedes Dart Skript wird als eigenes Isolate laufen. Sogenannte Heavy Isolates in Dart werden sogar einen eigenen Prozess starten, während zu JavaScript generierte Heavy Isolates mit WebWorkern arbeiten.</p>
+<p>Um Dart im Dartium Browser zu aktivieren, muss lediglich ein script tag mit dem Typ &#8220;application/dart&#8221; eingefügt werden, alles zwischen diesem Tag wird als Dart ausgeführt, ähnlich wie bei JavaScript.</p>
+<p>Dartium unterstützt auch Debugging, ein Feature was bereits lange vermisst wurde. Sogar eine experimentelle Fassung einer Caching Lösung (Snapshots) ist vorhanden. Experimentell deswegen, weil es besonders sicherheitsbedenklich ist. Das Snapshot-Feature soll die Dart-Startzeit und die Skriptausführzeit deutlich reduzieren.</p>
+<p>Das Dart Team freut sich im besonderen über Erfahrungsberichte mit multiplen Skripttags und Isolates.</p>
+<p>Viel Spaß beim Darten!</p>
+

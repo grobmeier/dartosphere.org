@@ -1,0 +1,30 @@
+---
+title: 'Call for testing: Pygments Dart highlighter'
+layout: post
+tags: {  }
+category: olov-lassus-dart-posts
+published: '2012-04-22T13:30:00+02:00'
+
+---
+
+<p>As mentioned before, the Dart highlighter lives in the upstream Pygments repository now and is included in releases since 1.5 (released Mar 10, 2012). I will try to keep it correct and updated.</p>
+
+<p>Another milestone is that Github recently started using it! I found a few bugs just by clicking around in people&#8217;s repositories. The most obvious was keyword-detection on substrings, i.e. the <code>String</code> substring of <code>StringBuffer</code> got marked as a keyword. Another was failing to recognize escape characters inside string literals. Both are now fixed in my repo, so the example below renders fine.</p>
+<div class='highlight'><pre><code class='dart'><span class='n'>main</span><span class='p'>()</span> <span class='p'>{</span>
+  <span class='n'>StringBuffer</span> <span class='n'>sb</span><span class='p'>;</span> <span class='c1'>// String isn&#39;t a keyword</span>
+  <span class='kd'>var</span> <span class='n'>integer</span><span class='p'>;</span> <span class='c1'>// nor is int</span>
+  <span class='kd'>var</span> <span class='n'>str</span> <span class='o'>=</span> <span class='s2'>&quot;Escapes </span><span class='se'>\&quot;</span><span class='s2'>just works</span><span class='se'>\&quot;</span><span class='s2'> now&quot;</span><span class='p'>;</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p>I need help with testing the highlighter to find bugs or missing features. I&#8217;m maintaining the Dart highlighter in my <a href='https://bitbucket.org/olov/pygments-main'>bitbucket repo</a>. You can help by downloading it, trying it out on your own code and letting me know what works or not:</p>
+<div class='highlight'><pre><code class='text'>hg clone https://bitbucket.org/olov/pygments-main
+cd pygments-main
+./pygmentize -f html -o yourfile.html yourfile.dart
+</code></pre></div>
+<p>If you don&#8217;t have Mercurial (<code>hg</code>) installed then you can also click &#8220;get source&#8221; on <a href='https://bitbucket.org/olov/pygments-main'>bitbucket</a> to download the source as a zip-file. Running <code>pygmentize</code> will create markup from your source code, which you then need to combine with a style sheet to get some color going. Feel free to copy my color scheme (<a href='http://blog.lassus.se/stylesheets/syntax.css'>syntax.css</a>) if you like it. You can also run <code>pygmentize yourfile.dart</code> without <code>-f</code> and <code>-o</code> to get highlighted text directly on your console.</p>
+
+<p>To install the development version of pygments system-wide just run <code>sudo ./setup.py install</code>.</p>
+
+<p>File issues on <a href='https://bitbucket.org/olov/pygments-main'>bitbucket</a> or fire a mail to the <a href='https://groups.google.com/a/dartlang.org/group/misc/browse_thread/thread/5a65d1625f9b98fb/'>Dart misc thread</a> or me directly. Even better, submit a pull request! :)</p>
+
+<p><a href='https://groups.google.com/a/dartlang.org/group/misc/browse_thread/thread/5a65d1625f9b98fb/'>Show comments (Dart misc)</a></p>

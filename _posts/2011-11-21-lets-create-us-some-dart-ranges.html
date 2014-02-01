@@ -1,0 +1,72 @@
+---
+title: 'Let''s create us some Dart ranges'
+layout: post
+tags: {  }
+category: olov-lassus-dart-posts
+published: '2011-11-21T11:27:00+01:00'
+
+---
+
+<p>We recognize the good ol&#8217; <code>for</code> loop from the C-family of programming languages. It is available with the same familiar syntax and semantics in Dart, too:</p>
+<div class='highlight'><pre><code class='dart'><span class='k'>for</span> <span class='p'>(</span><span class='kt'>int</span> <span class='n'>i</span> <span class='o'>=</span> <span class='m'>0</span><span class='p'>;</span> <span class='n'>i</span> <span class='o'>&lt;</span> <span class='m'>10</span><span class='p'>;</span> <span class='n'>i</span><span class='o'>++</span><span class='p'>)</span> <span class='p'>{</span>
+  <span class='n'>print</span><span class='p'>(</span><span class='n'>i</span><span class='p'>);</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p>In addition to that, Dart has a <code>for-in</code> loop, similar to Java in semantics (<code>iterator()</code>, <code>hasNext()</code> and <code>next()</code>). <code>for-in</code> is used to conveniently loop over any <code>Iterable</code> sequence, such as a <code>List</code>.</p>
+<div class='highlight'><pre><code class='dart'><span class='k'>for</span> <span class='p'>(</span><span class='kt'>int</span> <span class='n'>i</span> <span class='k'>in</span> <span class='p'>[</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>1</span><span class='p'>,</span> <span class='m'>2</span><span class='p'>,</span> <span class='m'>3</span><span class='p'>,</span> <span class='m'>4</span><span class='p'>,</span> <span class='m'>5</span><span class='p'>,</span> <span class='m'>6</span><span class='p'>,</span> <span class='m'>7</span><span class='p'>,</span> <span class='m'>8</span><span class='p'>,</span> <span class='m'>9</span><span class='p'>])</span> <span class='p'>{</span>
+  <span class='n'>print</span><span class='p'>(</span><span class='n'>i</span><span class='p'>);</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p>If you&#8217;re into Python then you know that over there you <code>for</code> loop over sequences exclusively, and use <code>xrange</code> extensively.</p>
+<div class='highlight'><pre><code class='python'><span class='k'>for</span> <span class='n'>i</span> <span class='ow'>in</span> <span class='nb'>xrange</span><span class='p'>(</span><span class='mi'>0</span><span class='p'>,</span> <span class='mi'>10</span><span class='p'>):</span>
+    <span class='k'>print</span><span class='p'>(</span><span class='n'>i</span><span class='p'>)</span>
+</code></pre></div>
+<p><code>xrange</code> is quite convenient and prevents a lot of variable name stuttering. It takes up to three parameters: <code>start</code>, <code>stop</code> and <code>step</code>. Python <code>xrange</code>s exclude the <code>stop</code> endpoint and <code>step</code> is <code>1</code> by default. <code>start</code> is <code>0</code> by default so you&#8217;ll often see <code>xrange(len(seq))</code> used in Python code to iterate over sequence indices.</p>
+
+<p>Back to Dart. While good ol&#8217; <code>for</code> loops have been working fine for the last few decades or so, perhaps something <code>xrange</code>-like could be fun here too. We&#8217;ve already got <code>for-in</code> and iterators after all. Let&#8217;s create a <code>Range</code> class that implements the <code>Iterable</code> interface with a corresponding <code>RangeIterator</code> and we&#8217;ll be able to do <code>for-in range</code>, with top-level function <code>range</code> being a wrapper around the <code>Range</code> constructor. We&#8217;ll include both endpoints so <code>range(0, 9)</code> means <code>[0, 1, .. 9]</code>. Again <code>step</code> defaults to <code>1</code> so <code>range(0, 9)</code> is the same as <code>range(0, 9, 1)</code>.</p>
+<div class='highlight'><pre><code class='dart'><span class='k'>for</span> <span class='p'>(</span><span class='kt'>int</span> <span class='n'>i</span> <span class='k'>in</span> <span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>9</span><span class='p'>))</span> <span class='p'>{</span>
+  <span class='n'>print</span><span class='p'>(</span><span class='n'>i</span><span class='p'>);</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p>That looks swell. No surprise it has already been discussed on dart-misc. We can also pass a range to anything that expects an <code>Iterable</code>. Here&#8217;s how to generate the <code>List</code> <code>[0, 2, .. 8]</code> using the <code>List.from</code> constructor:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>var</span> <span class='n'>list</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>List</span><span class='o'>&lt;</span><span class='kt'>int</span><span class='o'>&gt;</span><span class='p'>.</span><span class='n'>from</span><span class='p'>(</span><span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>8</span><span class='p'>,</span> <span class='m'>2</span><span class='p'>));</span>
+</code></pre></div>
+<p>Iterating over indices is done like so:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>var</span> <span class='n'>str</span> <span class='o'>=</span> <span class='s2'>&quot;hellojed&quot;</span><span class='p'>;</span>
+<span class='k'>for</span> <span class='p'>(</span><span class='kt'>int</span> <span class='n'>i</span> <span class='k'>in</span> <span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='n'>str</span><span class='p'>.</span><span class='n'>length</span> <span class='o'>-</span> <span class='m'>1</span><span class='p'>))</span> <span class='p'>{</span>
+  <span class='n'>print</span><span class='p'>(</span><span class='s2'>&quot;</span><span class='si'>$</span><span class='n'>i</span><span class='s2'>: </span><span class='si'>${</span><span class='n'>str</span><span class='p'>[</span><span class='n'>i</span><span class='p'>]</span><span class='si'>}</span><span class='s2'>&quot;</span><span class='p'>);</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p>We&#8217;ll add a top-level function <code>indices</code> to sweeten it a bit:</p>
+<div class='highlight'><pre><code class='dart'><span class='k'>for</span> <span class='p'>(</span><span class='kt'>int</span> <span class='n'>i</span> <span class='k'>in</span> <span class='n'>indices</span><span class='p'>(</span><span class='n'>str</span><span class='p'>))</span> <span class='p'>{</span>
+  <span class='n'>print</span><span class='p'>(</span><span class='s2'>&quot;</span><span class='si'>$</span><span class='n'>i</span><span class='s2'>: </span><span class='si'>${</span><span class='n'>str</span><span class='p'>[</span><span class='n'>i</span><span class='p'>]</span><span class='si'>}</span><span class='s2'>&quot;</span><span class='p'>);</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p>We can make <code>range</code> more useful still. The <code>Collection</code> interface (implemented by <code>List</code> and <code>Set</code> among others) contains <code>length</code>, <code>every</code>, <code>filter</code>, <code>forEach</code>, <code>isEmpty</code> and <code>some</code>. Let&#8217;s implement those too. Now we can pass around <code>range</code>s anywhere a <code>Collection</code> is expected, for example to <code>addAll</code>:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>var</span> <span class='n'>queue</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Queue</span><span class='o'>&lt;</span><span class='kt'>int</span><span class='o'>&gt;</span><span class='p'>();</span>
+<span class='c1'>// ...</span>
+<span class='n'>queue</span><span class='p'>.</span><span class='n'>addAll</span><span class='p'>(</span><span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>9</span><span class='p'>));</span>
+</code></pre></div>
+<p>How about a <code>List</code> with the numbers <code>[0, 1, .. 50]</code> that are perfect squares:</p>
+<div class='highlight'><pre><code class='dart'><span class='kt'>bool</span> <span class='n'>isSquare</span><span class='p'>(</span><span class='kt'>int</span> <span class='n'>n</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>Math</span><span class='p'>.</span><span class='n'>pow</span><span class='p'>(</span><span class='n'>Math</span><span class='p'>.</span><span class='n'>sqrt</span><span class='p'>(</span><span class='n'>n</span><span class='p'>).</span><span class='n'>round</span><span class='p'>(),</span> <span class='m'>2</span><span class='p'>)</span> <span class='o'>==</span> <span class='n'>n</span><span class='p'>;</span>
+<span class='kd'>var</span> <span class='n'>squares</span> <span class='o'>=</span> <span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>50</span><span class='p'>).</span><span class='n'>filter</span><span class='p'>(</span><span class='n'>isSquare</span><span class='p'>);</span>
+</code></pre></div>
+<p>Or the other way around? <code>map</code> isn&#8217;t part of <code>Collection</code> but let&#8217;s add it anyways:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>var</span> <span class='n'>squares</span> <span class='o'>=</span> <span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>7</span><span class='p'>).</span><span class='n'>map</span><span class='p'>((</span><span class='n'>e</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>e</span> <span class='o'>*</span> <span class='n'>e</span><span class='p'>);</span>
+</code></pre></div>
+<p>The original example can also be rewritten like this, using <code>forEach</code>:</p>
+<div class='highlight'><pre><code class='dart'><span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>9</span><span class='p'>).</span><span class='n'>forEach</span><span class='p'>(</span><span class='n'>print</span><span class='p'>);</span>
+</code></pre></div>
+<p>Not too shabby, all in all. Good ol&#8217; <code>for</code> loops have less overhead than their <code>for-in range</code> equivalent but the difference is nothing to write home about, especially if your loop body does something useful. Your personal style is probably more important - as for myself I consider <code>range</code> a nice complement.</p>
+
+<p>Check out the <a href='http://github.com/olov/dart-range/blob/master/range_tests.dart'>tests</a> for more examples. The <a href='http://github.com/olov/dart-range/blob/master/range.dart'>implementation</a> should be easy to follow if you want to learn how to create a <code>Collection</code> of your own. If you want a little Dart exercise then change <code>Range</code> so that it only implements <code>Iterable&lt;int&gt;</code> and remove everything <code>Collection</code>-specific. Then add it back again guided by the unit tests, this time with your own code. Or start from scratch altogether.</p>
+
+<p>Oh and the Dart <code>for-in</code> loop is just (very convenient) syntactic sugar of something similar to this:</p>
+<div class='highlight'><pre><code class='dart'><span class='k'>for</span> <span class='p'>(</span><span class='n'>Iterator</span> <span class='n'>it</span> <span class='o'>=</span> <span class='n'>range</span><span class='p'>(</span><span class='m'>0</span><span class='p'>,</span> <span class='m'>9</span><span class='p'>).</span><span class='n'>iterator</span><span class='p'>();</span> <span class='n'>it</span><span class='p'>.</span><span class='n'>hasNext</span><span class='p'>();</span> <span class='p'>)</span> <span class='p'>{</span>
+  <span class='kt'>int</span> <span class='n'>i</span> <span class='o'>=</span> <span class='n'>it</span><span class='p'>.</span><span class='n'>next</span><span class='p'>();</span>
+  <span class='n'>print</span><span class='p'>(</span><span class='n'>i</span><span class='p'>);</span>
+<span class='p'>}</span>
+</code></pre></div>
+<p><a href='http://github.com/olov/dart-range'>dart-range source</a> available on github.</p>
+
+<p><a href='https://groups.google.com/a/dartlang.org/group/misc/browse_thread/thread/33d763479ceacda9#'>Show comments (Dart misc)</a></p>

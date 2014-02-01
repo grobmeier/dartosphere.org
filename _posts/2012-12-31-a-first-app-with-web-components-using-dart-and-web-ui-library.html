@@ -1,0 +1,263 @@
+---
+title: 'A first app with web components using Dart and Web UI library'
+layout: post
+tags: {  }
+category: shailen-tulis-blog-dart
+published: '2012-12-31T17:54:00-08:00'
+
+---
+
+<p>Its time to finally create a simple <code>hello world</code> app using web components and
+the dart Web UI library.</p>
+
+<p>There is already a ton of literature out there on why web components are a
+tremendously good idea and I won&#8217;t try to do a huge &#8216;sell&#8217; here.  If you are
+completely new to web components, I can recommend
+<a href="http://blog.sethladd.com/2012/11/your-first-web-component-with-dart.html">this really good introductory blog post by Seth Ladd</a></p>
+
+<p>Or, if you are impatient, here&#8217;s an (almost) tweet sized summary: web components
+allow developers to encapsulate their UI elements as easily reusable components.
+You can define <code>templates</code> with markup that is inert until activated later,
+apply <code>decorators</code> to enhance the look of those templates, create <code>custom
+elements</code> and play with the <code>shadow DOM</code>. In this little app, we will not be
+tikering with <code>decorators</code> or the <code>shadow DOM</code>; we <em>will</em> be creating
+<code>templates</code> and defining our own <code>custom element</code>.</p>
+
+<p>The app is called <code>bookstore</code> and you can find the code at
+<code>https://github.com/shailen/bookstore</code>.</p>
+
+<p>Since I am new to web components and the Dart <code>Web UI</code> library, I am going to
+keep this simple. In its current iteration, the app will show the user the list
+of books in the bookstore and let the user add books to the collection.
+The plan is to start with something minimal and over the next few weeks and
+months build something a little bit elaborate (add Authors, Publishers, more
+attributes to our Book class, reviews, etc) while preserving the <code>one-page</code> feel
+of the app.</p>
+
+<h2>Important Files</h2>
+
+<p>There are a few important files in <code>bookstore</code>&#8217;s web directory that are worth
+discussing now:</p>
+
+<p><code>lib/models.dart</code> contains code for a <code>Book</code> class</p>
+
+<p><code>web/books.html</code> contains the basic markup for the app</p>
+
+<p><code>web/books.dart</code> contains the Dart code that goes with that markup</p>
+
+<p><code>web/book_component.html</code> contains the markup for our web component</p>
+
+<p><code>web/book_component.dart</code> contains the Dart code for our web component</p>
+
+<p><code>build.dart</code> helps use compile our code so that it can be run</p>
+
+<p>We&#8217;ll discuss each of these files in detail soon.</p>
+
+<h2>lib/models.dart</h2>
+
+<p>We&#8217;re going to be creating books. This file defines a simple <code>Book</code> class. Our
+books only have 1 attribute for now, a title (I told you this was simple ;).</p>
+
+<pre><code>library models;
+
+class Book {
+  String title;
+  Book(this.title);
+}
+</code></pre>
+
+<h2>web/books.html</h2>
+
+<p>Here is the entirety of teh <code>web/books.html</code> file. Consider this an entry point
+into the app:</p>
+
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;title&gt;Books&lt;/title&gt;
+    &lt;link rel="components" href="book_component.html"&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Books&lt;/h1&gt;
+
+    &lt;input id="new-book" type="text" placeholder="add another title"&gt;
+    &lt;button on-click="createNewBook()"&gt;Add Book&lt;/button&gt;
+
+    &lt;ul id="books"&gt;
+      &lt;template iterate="book in books"&gt;
+        &lt;x-book-item book="{{ book }}"&gt;&lt;/x-book-item&gt;
+      &lt;/template&gt;
+    &lt;/ul&gt;
+
+    &lt;!-- this is the non web-component way to create the &lt;li&gt;s
+    &lt;ul&gt;
+      &lt;template iterate='book in books'&gt;
+        &lt;li&gt;{{ book.title }}&lt;/li&gt;
+      &lt;/template&gt;
+    &lt;/ul&gt;
+    --&gt;
+
+    &lt;script type="application/dart" src="books.dart"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="https://dart.googlecode.com/svn/branches/bleeding_edge/dart/client/dart.js"&gt;&lt;/script&gt;
+
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>A few things to notice here:</p>
+
+<pre><code>&lt;link rel="components" href="book_component.html"&gt;
+</code></pre>
+
+<p>is the way you access the contents of our web component from this file.</p>
+
+<p>We create an <code>input</code> where the user enters the name of a book and an
+accompanying <code>button</code>:</p>
+
+<pre><code>&lt;input id="new-book" type="text" placeholder="add another title"&gt;
+&lt;button on-click="createNewBook()"&gt;Add Book&lt;/button&gt;
+</code></pre>
+
+<p>Notice the <code>on-click</code>? That is the way we inline an event listener: when the
+button is clicked, <code>createNewBook()</code> fires (we&#8217;ll get to that function soon)</p>
+
+<p>And finally the code that actually deals with the web component:</p>
+
+<pre><code>&lt;ul id="books"&gt;
+  &lt;template iterate="book in books"&gt;
+    &lt;x-book-item book="{{ book }}"&gt;&lt;/x-book-item&gt;
+  &lt;/template&gt;
+&lt;/ul&gt;
+</code></pre>
+
+<p>A few things to note here. We define a <code>&lt;template&gt;</code> tag; we loop over our
+collection of books (stored in a variable <code>books</code> in <code>web/books.dart</code>); we
+instantiate our web component (<code>&lt;x-book-item&gt;&lt;/x-book-item&gt;</code>) and we pass each
+<code>book</code> in the loop as a template variable when we instantiate the web component.</p>
+
+<p>There&#8217;s a lot going on here. Make sure you understand the above paragraph!</p>
+
+<h2>web/books.dart</h2>
+
+<p><code>web/books.html</code> has a link to a Dart file at the bottom:</p>
+
+<pre><code>&lt;script type="application/dart" src="books.dart"&gt;&lt;/script&gt;
+</code></pre>
+
+<p>And here is what <code>books.dart</code> looks like:</p>
+
+<pre><code>import 'dart:html';
+import 'package:bookstore/models.dart';
+
+List&lt;Book&gt; books = [];
+
+// binding created auto-magically!
+void createNewBook() {
+  var input = query("#new-book");
+  books.add(new Book(input.value));
+  input.value = "";
+}
+
+main() {
+  // create some data so the page doesn't look empty
+  ["War and Peace", "The Idiot", "Crime and Punishment"].forEach((title) {
+    books.add(new Book(title));
+  });
+} 
+</code></pre>
+
+<p>It is pretty straightforward stuff: we import <code>models.dart</code>, the file that
+contains the <code>Book</code> class; we create a <code>books</code> variable to store our collection.
+We define <code>createNewBook()</code> to add a book to <code>books</code>, and we define a <code>main()</code>
+function.</p>
+
+<p>This Dart file MUST contain a <code>main()</code>, even an empty one will do.  In our case,
+we will add a few books to our <code>books</code> collection, so that there is some data to
+display.</p>
+
+<h2>web/book_component.html</h2>
+
+<p>This contains the code that defines our web component:</p>
+
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;element name="x-book-item" constructor="BookComponent" extends="li"&gt;
+      &lt;template&gt; 
+        &lt;li&gt;{{ book.title }}&lt;/li&gt;
+      &lt;/template&gt;
+
+      &lt;script type="application/dart" src="book_component.dart"&gt;&lt;/script&gt;
+    &lt;/element&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>A few things to understand here:  we create a custom <code>&lt;element&gt;</code>; we give it a
+name, <code>x-book-item</code> (all element names must begin with an <code>x-</code>); we call a
+constructor, <code>BookComponent</code> (defined in <code>web/book_componenet.dart</code>, we&#8217;ll get
+to that file shortly) and we declare that our custom element <code>extends</code> and <code>li</code>.</p>
+
+<p>Inside our <code>&lt;element&gt;</code>, we create a <code>&lt;template&gt;</code> that stores the <code>&lt;li&gt;</code> that
+contains a book&#8217;s title.</p>
+
+<p>And finally, we link to the accompanying Dart file, <code>book_component.dart</code>.</p>
+
+<h2>web/book_component.dart</h2>
+
+<p>Here we get to define our <code>BookComponent</code> class (remember that we declared that
+the <code>&lt;element&gt;</code> we created in <code>book_componenet.html</code> use this constructor?):</p>
+
+<pre><code>import 'package:web_ui/web_ui.dart';
+import 'package:bookstore/models.dart';
+
+class BookComponent extends WebComponent {
+  Book book;
+}
+</code></pre>
+
+<p><code>BookComponent</code> extends <code>WebComponent</code> (this is the only option for subclassing
+at the moment; that may change in the future) and contains a <code>book</code> attribute
+(this can be set using the <code>book =</code> syntax when the web component is
+initialized). That&#8217;s it.</p>
+
+<h2>build.dart</h2>
+
+<pre><code>import 'package:web_ui/component_build.dart';
+import 'dart:io';
+
+void main() {
+  build(new Options().arguments, ['web/books.html']);
+}
+</code></pre>
+
+<p>To actually build the project, <code>run</code> <code>build.dart</code> (this will create an <code>out</code>
+directory); then <code>run</code>  <code>web/out/books.html</code>.</p>
+
+<h2>pubspec.yaml</h2>
+
+<p>The app only has a single <code>pub</code> dependency, <code>web_ui</code>:</p>
+
+<pre><code>name: bookstore
+description: A sample app to demonstrate the use of a web component
+
+dependencies:
+    web_ui
+</code></pre>
+
+<h2>Summary</h2>
+
+<p>This is a fair bit of code for a simple hello-world caliber app. Is all this web
+component stuff really necessary, or is it overkill?</p>
+
+<p>We&#8217;re just starting out, so this may seem like too much of a production given
+what the needs of our app. But we have already established a
+pretty important development principle: our UI elements can be nicely
+ENCAPSULATED (!) and then used as necessary. We have taken the first baby steps
+towards creating a widget that displays the content of each book. As our
+application grows in complexity, our &#8216;widget&#8217; will become more elaborate and we
+will want to use it in all sorts of different contexts in our app. A composable,
+encapsulated UI component - a web component - that can be instantiated with
+varying arguments will then prove to be quite useful.</p>
+

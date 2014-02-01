@@ -1,0 +1,42 @@
+---
+title: 'Everything old is new again'
+layout: post
+tags:
+    - Dart
+    - updates
+category: null
+published: '2013-11-01T19:26:27+00:00'
+
+---
+
+<p>I was very recently asked to apply some updates to a project that I had last touched back in June 29th, 2012 (the project&#8217;s original start was May 7th of 2012). It has been running happily ever since. But as all things, there was a request to add a new feature to satisfy customers.</p>
+<p>However many things have changed in Dart since that script was first deployed. Significant library and language changes. Looking at the source I immediately realised that I would need to rewrite the application from scratch based on the old source code rather than simply trying to update the source directly. Since the script was running fine in the past there had never been a need to continually apply updates as they occurred in the language or libraries. I just left it run.</p>
+<p><span id="more-85"></span></p>
+<p>A day and a half later or so, I have reached parity with the old sources and am ready to start adding the new functionality. I decided before doing that I would document some of the changes to the source that I encountered with this project. Please note that this is a very small script by most reasonable standards and it does not do anything very fancy. The change I document will in no way be all inclusive to any updates that others may do, but only reflects the items I ran into personally on this one projects. Additionally, the project itself is not an open source project but rather something to address a specific need for the company, as such I cannot provide specific examples or source, but I can provide the gist of things.</p>
+<dl>
+<dt>No packages!</dt>
+<dd>So the first thing I noticed, at least reflecting back on it now, is that there was no packages. <a href="http://pub.dartlang.org/doc/package-layout.html" title="Package layout conventions" target="_blank">No Package layout conventions</a>, no pubspec.yaml file, nothing. Now normally you wouldn&#8217;t have those included anyways in a deployed application, however I could also see there the code was commented out from using the <a href="https://groups.google.com/a/dartlang.org/d/topic/misc/A7srGXHyeoQ/discussion" title="Breaking Change: dart.js moving to pub" target="_blank">Google Code hosted dart.js</a> file. I downloaded a local copy of dart.js around February of this year for the project.</dd>
+<dt>Dart.js filesize</dt>
+<dd>The dart.js file which was used in the project (as mentioned, a copy from around February) was around 8.2KB in size. The current one provided by the <a href="http://pub.dartlang.org/packages/browser" title="browser - Pub Package Manager" target="_blank">Browser package</a> weighs in at 1.5KB. Not a major factor with the old version but still an interesting comparison to see.</dd>
+<dt>Library, Import and Source</dt>
+<dd>First thing that I noticed when opening the original project was the <code>#library('myProject');</code> declarations. Followed of course by <code>#import('dart:html');</code> Now of course, gone are the hash signs, gone are the strings for library definitions, and of course the <code>#source()</code> tags are gone altogether, replaced with the <code>part</code> and <code>part of</code> declarations.</dd>
+<dt>$dom_xxxx methods and properties</dt>
+<dd>Another big item that popped out at me as I looked through my original sources, were the calls to the underlying <code>dart:dom</code> library. In particular one property I had to make use of was <code>$dom_scrollTop</code> as it&#8217;s <a href="http://api.dartlang.org/dart_html/Element.html#scrollTop" title="Element - scrollTop - Dart API" target="_blank">equivalent</a> wasn&#8217;t yet available in <code>dart:html</code> directly.</dd>
+<dt>window.setTimeout()</dt>
+<dd>At the time I wrote the original code, the <a href="http://api.dartlang.org/dart_async/Timer.html" title="Timer - Dart API" target="_blank">Timer class</a> wasn&#8217;t yet completed, and was primarily used for server-side timers. On the client side it was still really using the <code>window.setTimeout</code> and <code>window.setInterval</code>. Timers and Futures provide a much nicer way of delaying things now.</dd>
+<dt>Durations!</dt>
+<dd>Speaking of the Timeouts, all those calls in my original code were based on number of milliseconds to call the timeout. Now we have the <a href="http://api.dartlang.org/dart_core/Duration.html" title="Duration - Dart API" target="_blank">Duration class</a> to the rescue. Duration&#8217;s constructor with optional parameters makes life easy.</dd>
+<dt>XMLHttpRequest</dt>
+<dd>In particular, using the XMLHttpRequest.get constructor, was prevalent throughout the old code. This constructor takes a URL and a callback which will receive the completed XMLHttpRequest object. The current <a href="http://api.dartlang.org/dart_html/HttpRequest.html" title="HttpRequest - Dart API" target="_blank">HttpRequest class</a>, with it&#8217;s static methods like <a href="http://api.dartlang.org/dart_html/HttpRequest.html#getString" title="HttpRequest - getString - Dart API" target="_blank">getString</a> to provide a nice Future-based API for the most common functions.</dd>
+<dt>DateTime replaces Date</dt>
+<dd>While maintaining much of the original functionality, the <a href="http://api.dartlang.org/dart_core/DateTime.html" title="DateTime - Dart API" target="_blank">DateTime class</a> has replaced the old Date class. The <a href="http://api.dartlang.org/dart_core/DateTime.html#now" title="DateTime - now - Dart API" target="_blank">now named constructor</a> still functions much the same. However it apperas that the <a href="http://api.dartlang.org/dart_core/DateTime.html#weekday" title="DateTime - weekday - Dart API" target="_blank">DateTime.weekday</a> property is currently a 1-based index, whereas the old API appeared to be 0-based index.</dd>
+<dt>StringBuffer updates</dt>
+<dd>The good old <a href="http://api.dartlang.org/dart_core/StringBuffer.html" title="StringBuffer - Dart API" target="_blank">StringBuffer class</a> is still around, but it&#8217;s API has seen a few updates. In particular it&#8217;s less List like, and now more in line with the <a href="http://api.dartlang.org/dart_core/StringSink.html" title="StringSink - Dart API" target="_blank">StringSink interface</a>. Simply put, my <code>.add()</code> calls are now <code>.write()</code> calls.</dd>
+<dt>List APIs</dt>
+<dd>A few subtle changes also exist in the <a href="http://api.dartlang.org/dart_core/List.html" title="List - Dart API" target="_blank">List class</a>. For the most part in my code it was the change of some methods to be properties/getters, such as the <a href="http://api.dartlang.org/dart_core/List.html#isEmpty" title="List - isEmpty - Dart API" target="_blank">isEmpty</a> property.</dd>
+<dt>Cascades!</dt>
+<dd>At first I thought the absence of cascades from my old source was related to my programming style at that time, but a quick search revealed that <a href="https://groups.google.com/a/dartlang.org/d/topic/misc/CvPLXOlqmeo/discussion" title="Notes from 7/30 Language design meeting" target="_blank">cascades were not generally available</a> until after I had completed this project. I know it took me a little while to get used to using cascades when they were initially released but I love them now!</dd>
+</dl>
+<p>This list was just a few of the many many changes that have happened as Dart has matured in the last year and some. I left off a couple of more recent changes such as <code>querySelector</code> as I&#8217;ve already covered it briefly and is a very recent change. Additionally, I would like to compare file output sizes but I don&#8217;t believe the old Javascript output had been minified, but the new one is so I don&#8217;t know that it would make for a fair comparison. The non-minified version is actually slightly larger than the old version of code, but this may also be due to a few structural changes I made to the sources to prepare for adding the new requested feature.</p>
+<p>It&#8217;s been a fun look at the past of Dart, and I may do so again eventually for server side code if I get an opportunity to look at my Dart-based <a href="http://en.wikipedia.org/wiki/MUD" title="MUD - Wikipedia" target="_blank">MUD</a>. The source of which is still available in my <a href="https://github.com/butlermatt/Dart-mud" target="_blank">GitHub Repository</a>. <em><strong>Warning!</strong> It&#8217;s not pretty!</em></p>
+

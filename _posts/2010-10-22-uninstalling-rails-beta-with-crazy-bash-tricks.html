@@ -1,0 +1,12 @@
+---
+title: 'Uninstalling Rails beta–with crazy bash tricks'
+layout: post
+tags:
+    - bash
+    - rails
+category: kevinwork
+published: '2010-10-22T12:46:00-07:00'
+
+---
+
+<p>I'm know I could have done this by hand way faster than it took me to figure out.</p> <p>I’m sure there are better ways to do this than I figured out below.</p> <p>But still enjoyed figuring it out.</p> <p>Scenario: <br>Uninstall all gems with version 3.0.0.beta4. These map to one of the last Rails 3 betas.<br>…and do it in one bash command.</p> <p>This is what I ended up with.</p> <p><code>gem list | grep beta4 | awk '{print $1}' | xargs gem uninstall -v=3.0.0.beta4</code></p> <ul> <li><strong>gem list</strong> – lists all installed gems</li> <li><strong>grep beta4</strong> – filters the output to lines containing ‘beta4’</li> <li><strong>awk ‘{print $1'}’</strong> – takes each line and outputs only the gem name (not the version info)</li> <li><strong>xargs</strong> – takes the last output and appends it to the given command: <strong>gem uninstall -v=3.0.0.beta4</strong></li></ul> <p>Cool, huh?</p> <p>Well, if you know bash, maybe not. I’d love to see a “better” version of this.</p>  

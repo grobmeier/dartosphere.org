@@ -1,0 +1,122 @@
+---
+title: 'Determined to Iterate a Set'
+layout: post
+tags: {  }
+category: futureperfect.info
+published: '2013-09-22T00:00:00+00:00'
+
+---
+
+
+<p>Something funny started to happen in my Dart application this week. I was visually observing a problem on startup, but only on 50% of the launches. My code base is starting to get large, so I had to pause for a minute, but part of me already knew what was happening. What I later discovered with some experimentation surprised me.</p>
+
+<h2 id="a_nondeterministic_program">A Nondeterministic Program</h2>
+
+<p>Consider the following Dart program:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>class</span> <span class='nc'>Box</span> <span class='p'>{</span>
+  <span class='kd'>final</span> <span class='kt'>int</span> <span class='n'>i</span><span class='p'>;</span>
+  <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='k'>this</span><span class='p'>.</span><span class='n'>i</span><span class='p'>);</span>
+<span class='p'>}</span>
+
+<span class='n'>main</span><span class='p'>()</span> <span class='p'>{</span>     
+  <span class='kd'>var</span> <span class='kd'>set</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Set</span><span class='o'>&lt;</span><span class='n'>Box</span><span class='o'>&gt;</span><span class='p'>()</span>
+  <span class='p'>..</span><span class='n'>addAll</span><span class='p'>(</span>
+      <span class='p'>[</span> <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>1</span><span class='p'>),</span> 
+        <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>2</span><span class='p'>),</span> 
+        <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>3</span><span class='p'>)]);</span>  
+  <span class='kd'>set</span><span class='p'>.</span><span class='n'>forEach</span><span class='p'>((</span><span class='n'>box</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>${</span><span class='n'>box</span><span class='p'>.</span><span class='n'>i</span><span class='si'>}</span><span class='s1'>&#39;</span><span class='p'>));</span>
+<span class='p'>}</span>
+</code></pre>
+</div>
+<p>Which <em>might</em> yield the following output <em>(Dart SDK r27704)</em>:</p>
+
+<pre><code>2
+3
+1</code></pre>
+
+<p>Or it <em>might</em> yield the following output instead:</p>
+
+<pre><code>3
+2
+1</code></pre>
+
+<p>This kind of program is referred to as <em>nondeterministic</em> because for a given input it does not consistently yield the same output over multiple runs. This can lead to subtle bugs if it is not a conscious decision of the developer.</p>
+
+<h2 id="hashset_iteration_is_nondeterministic">HashSet Iteration is Nondeterministic</h2>
+
+<p>As we saw above, iteration over a <code>HashSet</code> is nondeterministic. This is spelled out pretty clearly in <a href="http://docs.oracle.com/javase/7/docs/api/java/util/HashSet.html#iterator()">Java</a> but not so much in the current <em>(r27704)</em> <a href="http://api.dartlang.org/docs/bleeding_edge/dart_collection/HashSet.html#iterator">Dart SDK</a>. If you know this and you are writing all of your own code, then you should be okay. If you are dealing with a large code base full of collections written by a variety of folks, then this might catch you by surprise.</p>
+
+<p>There is a remedy for this in Java with <a href="http://docs.oracle.com/javase/7/docs/api/java/util/LinkedHashSet.html">LinkedHashSet</a>:</p>
+
+<pre><code>Hash table and linked list implementation of the Set 
+interface, with predictable iteration order.</code></pre>
+
+<p>And in Dart we also have a <a href="http://api.dartlang.org/docs/bleeding_edge/dart_collection/LinkedHashSet.html">LinkedHashSet</a>:</p>
+
+<pre><code>The LinkedHashSet also keep track of the order that elements 
+were inserted in, and iteration happens in first-to-last 
+insertion order.</code></pre>
+
+<p>Let’s change our program to explicitly use a <code>LinkedHashSet</code> and see what happens:</p>
+<div class='highlight'><pre><code class='dart'><span class='k'>import</span> <span class='s1'>&#39;dart:collection&#39;</span><span class='p'>;</span>
+
+<span class='kd'>class</span> <span class='nc'>Box</span> <span class='p'>{</span>
+  <span class='kd'>final</span> <span class='kt'>int</span> <span class='n'>i</span><span class='p'>;</span>
+  <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='k'>this</span><span class='p'>.</span><span class='n'>i</span><span class='p'>);</span>
+<span class='p'>}</span>
+
+<span class='n'>main</span><span class='p'>()</span> <span class='p'>{</span>     
+  <span class='kd'>var</span> <span class='kd'>set</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>LinkedHashSet</span><span class='o'>&lt;</span><span class='n'>Box</span><span class='o'>&gt;</span><span class='p'>()</span>
+  <span class='p'>..</span><span class='n'>addAll</span><span class='p'>(</span>
+      <span class='p'>[</span> <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>1</span><span class='p'>),</span> 
+        <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>2</span><span class='p'>),</span> 
+        <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>3</span><span class='p'>)]);</span>  
+  <span class='kd'>set</span><span class='p'>.</span><span class='n'>forEach</span><span class='p'>((</span><span class='n'>box</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>${</span><span class='n'>box</span><span class='p'>.</span><span class='n'>i</span><span class='si'>}</span><span class='s1'>&#39;</span><span class='p'>));</span>
+<span class='p'>}</span>
+</code></pre>
+</div>
+<p>This new program <em>consistently</em> yields the following output:</p>
+
+<pre><code>1
+2
+3</code></pre>
+
+<p>So you may be asking yourself at this point, what <em>really</em> went wrong in the original program? I would assert that the <code>new Set</code> factory constructor gave us an instance of the wrong type.</p>
+
+<h2 id="asymmetric_factories">Asymmetric Factories</h2>
+
+<p>In order to make my case I need to first demonstrate the iteration behavior of Dart’s <code>Map</code> type:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>class</span> <span class='nc'>Box</span> <span class='p'>{</span>
+  <span class='kd'>final</span> <span class='kt'>int</span> <span class='n'>i</span><span class='p'>;</span>
+  <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='k'>this</span><span class='p'>.</span><span class='n'>i</span><span class='p'>);</span>
+<span class='p'>}</span>
+
+<span class='n'>main</span><span class='p'>()</span> <span class='p'>{</span>  
+  <span class='kd'>var</span> <span class='n'>map</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Map</span><span class='o'>&lt;</span><span class='n'>Box</span><span class='p'>,</span> <span class='n'>Box</span><span class='o'>&gt;</span><span class='p'>()</span>
+  <span class='p'>..</span><span class='n'>addAll</span><span class='p'>({</span> 
+    <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>1</span><span class='p'>)</span> <span class='o'>:</span> <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>1</span><span class='p'>),</span>
+    <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>2</span><span class='p'>)</span> <span class='o'>:</span> <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>2</span><span class='p'>),</span>
+    <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>3</span><span class='p'>)</span> <span class='o'>:</span> <span class='kd'>const</span> <span class='n'>Box</span><span class='p'>(</span><span class='m'>3</span><span class='p'>)</span>
+  <span class='p'>});</span>
+  <span class='n'>map</span><span class='p'>.</span><span class='n'>keys</span><span class='p'>.</span><span class='n'>forEach</span><span class='p'>((</span><span class='n'>box</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>${</span><span class='n'>box</span><span class='p'>.</span><span class='n'>i</span><span class='si'>}</span><span class='s1'>&#39;</span><span class='p'>));</span>
+<span class='p'>}</span>
+</code></pre>
+</div>
+<p>This program also consistently yields the following output:</p>
+
+<pre><code>1
+2
+3</code></pre>
+
+<p>This isn’t what I had expected after my experience with <code>Set</code>. As it turns out, the <code>new Map</code> factory constructor provides an instance of <code>LinkedHashMap</code>:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>factory</span> <span class='n'>Map</span><span class='p'>()</span> <span class='o'>=</span> <span class='n'>LinkedHashMap</span><span class='o'>&lt;</span><span class='n'>K</span><span class='p'>,</span> <span class='n'>V</span><span class='o'>&gt;</span><span class='p'>;</span>
+</code></pre>
+</div>
+<p>But the <code>new Set</code> factory constructor provides an instance of <code>HashSet</code> (instead of <code>LinkedHashSet</code>):</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>factory</span> <span class='n'>Set</span><span class='p'>()</span> <span class='o'>=&gt;</span> <span class='k'>new</span> <span class='n'>HashSet</span><span class='o'>&lt;</span><span class='n'>E</span><span class='o'>&gt;</span><span class='p'>();</span>
+</code></pre>
+</div>
+<p>I believe that this is both inconsistent and confusing. If users grow accustomed to reliable iteration order for the default <code>Map</code> objects, they will naturally expect a reliable iteration order for the default <code>Set</code> objects as well.</p>
+
+<p>I’ve opened a Dart <a href="https://code.google.com/p/dart/issues/detail?id=13491">issue</a> regarding this; please follow along there for the latest status.</p>
+

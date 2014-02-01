@@ -1,0 +1,54 @@
+---
+title: 'How to communicate with chrome.* API in Dart'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2012-12-10T00:00:00-08:00'
+
+---
+
+<p>I had the privilege to attend <a href="https://plus.google.com/+GoogleChromeDevelopers/posts/d8q3ffNhjBE">Chrome Apps Accelerated MTV</a> hackathon. The goal set out for my self was to create a bluetooth scanner via <a href="http://developer.chrome.com/apps/bluetooth.html">chrome.bluetooth</a> api.</p>
+
+<p>First I started off by reviewing the <a href="https://developers.google.com/chrome/apps/docs/developers_guide">Chrome app</a> developer guide. From a previous <a href="http://financecoding.github.com/2012/12/09/turning-solar3d-into-a-chrome-app/">post</a>, a patch for <a href="http://goo.gl/alaAK">7228</a> was needed at the time.</p>
+
+<p>Second was too communicate with the js defined context which Chrome Apps execute in. Some setup ceremony is needed such as a <a href="http://developer.chrome.com/extensions/manifest.html">manifest</a> file and <a href="https://developers.google.com/chrome/apps/docs/background">background window</a>. Creating the manifest file was easy, mostly choosing permissions and adding the entry Javascript background entry.</p>
+
+<script src="https://gist.github.com/4263547.js"><!-- gist --></script>
+
+
+<p>For dart we will need to create the background javascript that loads our dart application.</p>
+
+<script src="https://gist.github.com/4263559.js"><!-- gist --></script>
+
+
+<p>I stumbled with the communications between dart generated javascript and js-interop for some time. The first part of the stumbling blocks was <a href="http://developer.chrome.com/extensions/contentSecurityPolicy.html">CSP</a> (Content Security Policy) and how dart2js apps are loaded. Thanks to <a href="https://plus.google.com/114045999004646044580">Vijay Menon</a> and <a href="https://plus.google.com/102180419759627664875">Renato Mangini</a>, I was able to create successful call and callback from dart to javascript. This was non trivial since it required knowledge of <a href="https://dart.googlecode.com/svn/branches/bleeding_edge/dart/client/dart.js">dart.js</a> and loading of dart_interop.js/js.dart.</p>
+
+<p>The diff file below removes the reference to <a href="http://goo.gl/ojkEW">localStorage</a> and replaces it with a map.</p>
+
+<script src="https://gist.github.com/4263581.js"><!-- gist --></script>
+
+
+<p><a href="http://goo.gl/oYRFx">dart_interop.js</a> and <a href="http://goo.gl/g6qq6">js.dart</a> needed to be copied into the root folder of the project. Not sure exactly why this is, very possible that only dart_interop.js is needed since were compiling to js.</p>
+
+<script src="https://gist.github.com/4267476.js"><!-- gist --></script>
+
+
+<p>The first sanity check of being able to communicate with dart in a Chrome App was printing out the permissions from <a href="https://developer.chrome.com/apps/permissions.html">chrome.permissions.getAll</a></p>
+
+<script src="https://gist.github.com/4267502.js"><!-- gist --></script>
+
+
+<p>Google searches lead me to the wrong api docs for accessing the bluetooth device. Managed to land on <a href="http://developer.chrome.com/extensions/experimental.bluetooth.html">chrome.experimental.bluetooth</a> from <a href="https://developer.chrome.com/extensions/api_index.html">extensions api</a>, which is different from the <a href="http://developer.chrome.com/apps/api_index.html">Chrome Apps chrome.* api</a>. Bug was filed about how easy it was to land on the wrong api pages.</p>
+
+<p>Now that I&#8217;ve got the right context too loaded, calling the chrome.bluetooth api produced errors with bluetooth support on MacOSX. doh! Bluetooth is currently only supported on ChromeOS and Windows. This was not mentioned in any of the docs and bug was filed on that.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Error during bluetooth.isAvailable: This operation is not supported on your platform 
+</span><span class='line'>chromeHidden.handleResponse</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At this point I was glad to be able to make calls on chrome.* api, in a following post I will go over a more complete sample from start to finish. Feel free to browse code and project structure <a href="http://goo.gl/sDj6i">bluetooth_example_chrome_app</a>. Please note this is not a fully working sample and has bugs!</p>
+
+<p>By the end of the hackathon I decided my best bet was to package something that did not rely on the chrome.* api so heavily. An <a href="http://goo.gl/wDnql">ASCII camera capture app</a> was created and demoed. The application accesses the client&#8217;s video input device and converts images capture to <a href="http://en.wikipedia.org/wiki/ASCII_art">ascii images</a> based on a <a href="http://mattmik.com/articles/ascii/ascii.html">ascii art formula</a>. &#8220;videoCapture&#8221; permissions are required for accessing video input, this was set in the manifest file. The <a href="http://goo.gl/wDnql">ASCII camera capture app</a> code is available on the following branch <a href="http://goo.gl/45UDj">chrome_app_example</a>.</p>
+

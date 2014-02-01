@@ -1,0 +1,99 @@
+---
+title: 'character codes and strings in Dart'
+layout: post
+tags: {  }
+category: shailen-tulis-blog-dart
+published: '2012-11-15T15:29:00-08:00'
+
+---
+
+<p>In my Python programs, I found use for the <code>ord()</code> and <code>chr()</code> builtins to convert between string characters and their
+ASCII representations. Similar tools exist in Dart. To get a list of character codes for a string, use <code>charCodes</code>:</p>
+
+<pre><code>String s = "hello";
+print(s.charCodes);
+// [104, 101, 108, 108, 111]
+</code></pre>
+
+<p>To get a specific character code, you can either subscript <code>charCodes</code>:</p>
+
+<pre><code>print(s.charCodes[0]); 
+</code></pre>
+
+<p>or - this is the more common way - use <code>charCodeAt</code>:</p>
+
+<pre><code>print(s.charCodeAt(0));
+</code></pre>
+
+<p>To assemble a string from a list of character codes, use the <code>String</code> factory, <code>fromCharCodes</code>:</p>
+
+<pre><code>List&lt;int&gt; charCodes = [104, 101, 108, 108, 111];
+print(new String.fromCharCodes(charCodes));
+// "hello"
+</code></pre>
+
+<p>If you are using a StringBuffer to build up a string, you can add individual charCodes using <code>addCharCode</code>
+(use <code>add()</code> to add characters; use <code>addCharCode()</code> to add charCodes):</p>
+
+<pre><code>StringBuffer sb = new StringBuffer();
+charCodes.forEach((charCode) {
+  sb.addCharCode(charCode);
+});
+
+print(sb.toString());
+// "Hello" 
+</code></pre>
+
+<p>Here is an implementation of the <code>rot13</code> algorithm, using the tools described above. <code>rot13</code>
+is a simple letter substitution algorithm that rotates a string by 13 places by replacing each
+character in it by one that is 13 characters removed (&#8216;a&#8217; becomes &#8216;n&#8217;, &#8216;N&#8217; becomes &#8216;A&#8217;, etc.):</p>
+
+<pre><code>String rot13(String s) {
+  List&lt;int&gt; rotated = [];
+
+  s.charCodes.forEach((charCode) {
+    final int numLetters = 26;
+    final int A = 65;
+    final int a = 97;
+    final int Z = A + numLetters;
+    final int z = a + numLetters;
+
+    if (charCode &lt; A ||
+        charCode &gt; z ||
+        charCode &gt; Z &amp;&amp; charCode &lt; a) {
+      rotated.add(charCode);
+    }
+    else {
+      if ([A, a].some((item){
+        return item &lt;= charCode &amp;&amp; charCode &lt; item + 13;
+      })) {
+        rotated.add(charCode + 13);
+      } else {
+        rotated.add(charCode - 13);
+      }   
+    }
+  });
+
+  return (new String.fromCharCodes(rotated));
+}
+</code></pre>
+
+<p>Running the code:</p>
+
+<pre><code>var wordsList = [["Jung", "be", "purely", "barf"],
+                  ["aha", "nun"]];
+wordsList.forEach((word_list) {
+  print(word_list.map((word) {
+    return rot13(word);
+  }));
+});
+// ["What", "or", "cheryl", "ones"]
+// ["nun", "aha"] 
+</code></pre>
+
+<p>and:</p>
+
+<pre><code>String str = "aMz###AmZ";
+assert(rot13(rot13(str)) == str);
+</code></pre>
+

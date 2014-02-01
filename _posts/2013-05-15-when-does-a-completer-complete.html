@@ -1,0 +1,131 @@
+---
+title: 'When Does a Completer Complete?'
+layout: post
+tags: {  }
+category: futureperfect.info
+published: '2013-05-15T00:00:00+00:00'
+
+---
+
+
+<p>In the <em>future</em>, of course. It sounds obvious, but when this <a href="https://groups.google.com/a/dartlang.org/forum/#!topic/misc/quelTu3DzTw">change</a> was first announced, I wasn’t immediately sure how to cope with it in my <a href="http://pub.dartlang.org/packages/undone">undone</a> library.</p>
+
+<p><code>Undone</code> is an asynchronous library, as I talked about in my last <a href="2013/03/22/undone-not-a-song-about-sweaters.html">post</a>, so you may want to read that first for some background on <em>why</em> I’m working with <a href="http://api.dartlang.org/docs/bleeding_edge/dart_async/Completer.html">Completer</a>s. In developing my library I’ve sort of grown up with <code>dart:async</code> and things have started to stabilize now. It was non-trivial for me to do, and I have been responsible for the development of asynchronous processing libraries in other systems in the past. Many of the challenges to exposing an asynchronous API in Dart are well known and oft talked about in the community, so I don’t want to dwell on them in this post. I really <em>like</em> <code>dart:async</code> and I am confident the tools we’ll have for working with it will continue to advance and improve over time.</p>
+
+<h2 id="warning_dont_use_a_completer">Warning, Don’t Use a Completer!</h2>
+
+<p>Its true, you really don’t want to use these unless you need to. Knowing when to pull one out of your async toolbag can be tricky, especially when you are new to Dart. When I first started designing async APIs in Dart, I always started out with a function body skeleton like the following:</p>
+<div class='highlight'><pre><code class='dart'><span class='n'>Future</span> <span class='n'>task</span><span class='p'>()</span> <span class='p'>{</span>
+  <span class='kd'>final</span> <span class='n'>completer</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Completer</span><span class='p'>();</span>
+
+  <span class='c1'>// Complete some async task</span>
+
+  <span class='k'>return</span> <span class='n'>completer</span><span class='p'>.</span><span class='n'>future</span><span class='p'>;</span>
+<span class='p'>}</span>
+</code></pre>
+</div>
+<p>This is 100% legitimate Dart code, and a careful investigator of my <code>undone</code> library will tell me that the majority of its functions <em>still use</em> this pattern. It is true, but <code>undone</code> is somewhat exceptional when compared to the majority of async libraries I have written in Dart. The majority of them use futures in their signatures in order to make calls to <em>other</em> async functions. This is the contagion that is async programming. If your code is async mostly because of interoperation with other async code, then you likely can and should avoid using completers.</p>
+
+<p>There are a lot of ways to construct a <a href="http://api.dartlang.org/docs/bleeding_edge/dart_async/Future.html">Future</a> these days, which is a good thing. There weren’t always as many options, but the API has matured since its inception. I don’t want to try and break it all down here for fear of veering way off topic, and there is plenty of official documentation and examples to get you started. Returning futures directly from the different branches of your code means that all the plumbing of how the values (and errors) propagate through the chain is managed for you, which is very helpful. When you use a completer, you are breaking that chain and <em>you</em> are now responsible for the propagation of both values and errors from the async code you call into back to the callee of your code.</p>
+
+<h2 id="please_just_tell_me_when_they_complete">Please Just Tell Me When They Complete</h2>
+
+<p>Okay, so you’re using a completer and you’re pretty sure that you should be (or you just don’t believe me and want to see for yourself!). That’s cool, I use them too sometimes. Up until very recently I was abusing them though, and that is the subject of this post - when do they complete?</p>
+
+<p>Let’s consider the following small program:</p>
+<div class='highlight'><pre><code class='dart'><span class='k'>import</span> <span class='s1'>&#39;dart:async&#39;</span><span class='p'>;</span>
+
+<span class='n'>main</span><span class='p'>()</span> <span class='p'>{</span>
+  <span class='kt'>int</span> <span class='n'>i</span> <span class='o'>=</span> <span class='m'>42</span><span class='p'>;</span>  
+  <span class='n'>incrementAsync</span><span class='p'>(</span><span class='n'>i</span><span class='p'>)</span>
+    <span class='p'>.</span><span class='n'>then</span><span class='p'>((</span><span class='n'>result</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>squareAsync</span><span class='p'>(</span><span class='n'>result</span><span class='p'>))</span>
+    <span class='p'>.</span><span class='n'>then</span><span class='p'>((</span><span class='n'>result</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;result: </span><span class='si'>$</span><span class='n'>result</span><span class='s1'>&#39;</span><span class='p'>));</span>    
+<span class='p'>}</span>
+
+<span class='n'>Future</span> <span class='n'>incrementAsync</span><span class='p'>(</span><span class='kt'>int</span> <span class='n'>value</span><span class='p'>)</span> <span class='p'>{</span>
+  <span class='kd'>final</span> <span class='n'>completer</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Completer</span><span class='p'>();</span>
+  <span class='kt'>int</span> <span class='n'>result</span> <span class='o'>=</span> <span class='n'>value</span> <span class='o'>+</span> <span class='m'>1</span><span class='p'>;</span>
+  <span class='n'>runAsync</span><span class='p'>(()</span> <span class='p'>{</span>        
+    <span class='n'>completer</span><span class='p'>.</span><span class='n'>complete</span><span class='p'>(</span><span class='n'>result</span><span class='p'>);</span>
+    <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>$</span><span class='n'>result</span><span class='s1'>&#39;</span><span class='p'>);</span>
+  <span class='p'>});</span>
+  <span class='k'>return</span> <span class='n'>completer</span><span class='p'>.</span><span class='n'>future</span><span class='p'>;</span>
+<span class='p'>}</span>
+
+<span class='n'>Future</span> <span class='n'>squareAsync</span><span class='p'>(</span><span class='kt'>int</span> <span class='n'>value</span><span class='p'>)</span> <span class='p'>{</span>
+  <span class='kd'>final</span> <span class='n'>completer</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Completer</span><span class='p'>();</span>
+  <span class='kt'>int</span> <span class='n'>result</span> <span class='o'>=</span> <span class='n'>value</span> <span class='o'>*</span> <span class='n'>value</span><span class='p'>;</span>
+  <span class='n'>runAsync</span><span class='p'>(()</span> <span class='p'>{</span>
+    <span class='n'>completer</span><span class='p'>.</span><span class='n'>complete</span><span class='p'>(</span><span class='n'>result</span><span class='p'>);</span>
+    <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>$</span><span class='n'>result</span><span class='s1'>&#39;</span><span class='p'>);</span>
+  <span class='p'>});</span>
+  <span class='k'>return</span> <span class='n'>completer</span><span class='p'>.</span><span class='n'>future</span><span class='p'>;</span>
+<span class='p'>}</span>
+</code></pre>
+</div>
+<p>The above program has two async functions, <code>incrementAsync</code> and <code>squareAsync</code>, which both perform some async work (using the <code>runAsync</code> utility) on an integer value and complete the future result using a completer. In the <code>main</code> function, we start with the value <code>42</code> and we chain a computation interlaced with <code>print</code> calls to log the intermediate values. It is in the ordering of the <code>print</code> output where we can observe the recent change in completer behavior.</p>
+
+<p>First, consider the output of this program using the Dart SDK 0.5.5_r22416:</p>
+
+<pre><code>43
+result: 1849
+1849</code></pre>
+
+<p>In order to understand the order of operations, we break down the computation into 3 <em>microtasks</em>, where (1) and (2) correspond to the anonymous closures that we pass to the <code>runAsync</code> function. We can then visualize better the sequence of events that leads to the printed output:</p>
+
+<pre><code>main            |   (1)             |   (2)       
+incrementAsync  |   complete [43]   |   complete [1849]
+runAsync(1)     |   then            |   then
+                |   squareAsync     |   print [result: 1849]
+                |   runAsync(2)     |   print [1849]
+                |   print [43]      |</code></pre>
+
+<p>As we see in the microtask (1) above, there are three function calls that come between the call to <code>completer.complete(result)</code> with the value <code>43</code> from inside the scope of <code>incrementAsync</code> and the call to <code>print('$result')</code> with the value <code>43</code> from the next line of code in that same function. The reason for this is that the call to <code>completer.complete(result)</code> was synchronous in that version (and all prior versions) of the Dart SDK.</p>
+
+<p>Next, consider the output of this program as of the Dart SDK 0.5.7_r22611:</p>
+
+<pre><code>43
+1849
+result: 1849</code></pre>
+
+<p>Whoa! Let’s break this into microtasks again before anyone panics:</p>
+
+<pre><code>main                |   (1)               |   (2)         
+incrementAsync      |   complete [43](2)  |   then        
+runAsync(1)         |   print [43]        |   squareAsync
+                    |                     |   runAsync(3)</code></pre>
+<hr />
+<pre><code>(3)                 |   (4)
+complete [1849](4)  |   then
+print [1849]        |   print [result: 1849]</code></pre>
+
+<p>As we can see above, we have two more microtasks than before. This is because each call to <code>completer.complete(result)</code> is now internally using <code>runAsync</code> to do its work. The result is that now our calls to <code>print('$result')</code> are called <em>before</em> the completer’s complete, and the output of our program has changed.</p>
+
+<p>I think that this change is the right thing to do. Before, I was being lazy in some ways by relying on the synchronous behavior of the completer. Worse than that, however, is that my library was not robust because of it. I was assuming that when I completed the future to the caller of my API, that they would do all of their work synchronously. If the user had chained any futures with more async work onto the completer’s future, my old code would have blown up because I was assuming that everything was said and done when the call to <code>completer.complete(value)</code> returned. So I am very happy this change was made because it prompted me to dig in further and to perform this analysis.</p>
+
+<p>Okay, so I hope that it is clear what behavior has changed. But, in <code>undone</code> I really <em>need</em> to do some cleanup work at a point in time where I know that the completer has completed. This includes the work of any other futures that the user might have chained onto my completer’s future. How can we know for certain that the sequence of async computations initiated by completing the completer has completed?!</p>
+
+<p>The answer is by careful use of the <code>whenComplete</code> method on the completer’s future. Let’s hook this into our async example functions as follows:</p>
+<div class='highlight'><pre><code class='dart'><span class='p'>...</span>
+<span class='n'>Future</span> <span class='n'>incrementAsync</span><span class='p'>(</span><span class='kt'>int</span> <span class='n'>value</span><span class='p'>)</span> <span class='p'>{</span>
+  <span class='kd'>final</span> <span class='n'>completer</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Completer</span><span class='p'>();</span>
+  <span class='kt'>int</span> <span class='n'>result</span> <span class='o'>=</span> <span class='n'>value</span> <span class='o'>+</span> <span class='m'>1</span><span class='p'>;</span>
+  <span class='n'>runAsync</span><span class='p'>(()</span> <span class='p'>{</span>  
+    <span class='n'>completer</span><span class='p'>.</span><span class='n'>future</span><span class='p'>.</span><span class='n'>whenComplete</span><span class='p'>(()</span> <span class='o'>=&gt;</span> <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>$</span><span class='n'>result</span><span class='s1'>&#39;</span><span class='p'>));</span>
+    <span class='n'>completer</span><span class='p'>.</span><span class='n'>complete</span><span class='p'>(</span><span class='n'>result</span><span class='p'>);</span>
+  <span class='p'>});</span>
+  <span class='k'>return</span> <span class='n'>completer</span><span class='p'>.</span><span class='n'>future</span><span class='p'>;</span>
+<span class='p'>}</span>
+<span class='p'>...</span>
+</code></pre>
+</div>
+<p>By changing <code>incrementAsync</code> and <code>squareAsync</code> as shown above, the output of our program returns to what we had originally:</p>
+
+<pre><code>43
+result: 1849
+1849</code></pre>
+
+<p>One subtle point regarding <code>whenComplete</code> is <em>when</em> we call it. Remember, our function returns the <code>completer.future</code> to the caller, who is free to chain other async computations onto that future. If we call <code>whenComplete</code> <em>before</em> we return to the caller, we will be at the <em>front</em> of the future chain. This might be desired in some situations, but for <code>undone</code> I want to be at the <em>end</em> of the future chain in order to cleanup internally. By calling <code>whenComplete</code> right before we call <code>completer.complete(result)</code> we can ensure that no other code can chain on after us.</p>
+
+<p>That is my story of when the completer’s complete. The <code>dart:async</code> library is very powerful, but working with it requires a fair amount of patience. Hang in there, as I’m hopeful that the debugging story will improve and maybe we’ll even get some language support for this in future versions of Dart. Please do leave me comments or feedback, and don’t be overly harsh on my microtask charts; I know that they are far from scientific :)</p>
+

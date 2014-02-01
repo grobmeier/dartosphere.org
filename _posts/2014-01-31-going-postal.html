@@ -1,0 +1,185 @@
+---
+title: 'Going POSTal'
+layout: post
+tags:
+    - Dart
+    - HttpRequest
+    - POST
+category: null
+published: '2014-01-31T21:25:33+00:00'
+
+---
+
+<p><img src="http://blog.butlermatt.me/wp-content/uploads/2014/01/Postal.png" alt="Going postal!" width="532" height="471" class="size-full wp-image-118" /></p>
+<p>So it seems, that people like their client-side applications to be able to talk to their servers. Strange what people like to do these days.</p>
+<p>As it so happens, there are a few ways to accomplish this in Dart. Each has some pros and cons associated with it, and which one you want to use will really depend on how you&#8217;re displaying and collecting information. </p>
+<p><span id="more-109"></span></p>
+<h2>HttpRequest.request()</h2>
+<p>To start off with, we&#8217;ll look at a use-case where your app is primarily based off of the dart:html libraries. In cases like this, where we do not have any data-binding to each of fields in the Form, it&#8217;s sometimes easier to just send the entire Form itself. First here&#8217;s a quick look at the code for our extremely simple form:</p>
+<pre class="prettyprint linenums"><code class="language-html">&lt;!DOCTYPE html&gt;
+
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    
+    &lt;link rel="stylesheet" href="postal.css"&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Postal&lt;/h1&gt;
+    
+    &lt;form id="myForm" action="send/"&gt;
+      &lt;label&gt;First Name:&lt;input type="text" value="" name="firstName" id="firstName"&gt;&lt;/label&gt;&lt;br /&gt;
+      &lt;label&gt;Last Name:&lt;input type="text" value="" name="lastName" id="lastName"&gt;&lt;/label&gt;&lt;br /&gt;
+      &lt;label&gt;Email: &lt;input type="email" value="" name="email" id="email"&gt;&lt;/label&gt;&lt;br /&gt;
+      &lt;input type="Submit" value="Submit"&gt;
+    &lt;/form&gt;
+
+    &lt;script type="application/dart" src="postal.dart"&gt;&lt;/script&gt;
+    &lt;script src="packages/browser/dart.js"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>The easiest way send all of that information is to bundle it into a <code><a href="https://api.dartlang.org/dart_html/FormData.html">FormData</a></code> class. This will automatically associate the values with the <code>name</code> attribute in the <code><a href="https://api.dartlang.org/dart_html/FormElement.html">FormElement</a></code> and pass that mapping to the server in our request.</p>
+<p>Lets take a look at what our Dart code looks like and see what exactly is going on here:</p>
+<pre class="prettyprint linenums"><code class="language-dart">import 'dart:html';
+
+void main() {
+  var myForm = querySelector('form#myForm') as FormElement;
+  myForm.onSubmit.listen((e) {
+    e.preventDefault(); // Don't change page when the form is submitted.
+    
+    var data = new FormData(myForm);
+    HttpRequest.request(myForm.action, method: 'POST', sendData: data)
+      .then((resp) {
+        // Do something with the response from the server.
+      });
+  });
+}
+</code></pre>
+<p>First we need to get our <code><a href="https://api.dartlang.org/dart_html/FormElement.html">FormElement</a></code> and assign it to a varable, <code>myForm</code>. Next we need to listen for an <code>on-submit</code> event from the form. When that event occurs the first thing we want to do is prevent the default action, which is to redirect to whatever page is in the <code>action</code> attribute of the form (or reload the current page). This is a Single Page Application though! We don&#8217;t need no stinkin&#8217; redirects!</p>
+<p>Now we need to get our data that we want to send with our request. As previously mentioned, since we want to send the entire form and don&#8217;t want to have to query each and every input field it contains, it&#8217;s just so much easier to send the entire form. Thus we use the <code><a href="https://api.dartlang.org/dart_html/FormData.html">FormData</a></code> constructor, passing our <code>FormElement</code>, <code>myForm</code> as the constructor (due to Dart&#8217;s awesome scoping rules, we can use our variable name inside a closure on the variable itself!)</p>
+<p>Now that we have the data, we just need to send it. There is a static method on the <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html">HttpRequest</a></code>, named <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#request">request</a></code>. This method will return a <code><a href="https://api.dartlang.org/dart_async/Future.html">Future</a></code> with an <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html">HttpRequest</a></code> which will represent our response from the server once the request has completed. You&#8217;ll note the above sample is for demonstration only and does not include any error checking or any of that good stuff we should have. To our <code>request</code> method we pass <code>myForm.action</code> as the URL of where the request should be sent to. I find it is often best to use the action attribute of the form to store the URL of the request as its often much easier to find that way should it need to be updated later. Additionally we pass the named parameter <code>method: 'POST'</code>. By default the <code>request</code> method will issue a <code>GET</code> method query. Since we&#8217;re trying to send data, not get data, we want to make sure we properly use <code>POST</code> (plus, if the request is a GET request, the next argument is ignored per HTTP/1.1 protocol.) Finally we use the parameter to send the data <code>sendData: data</code>.</p>
+<p>Using the asynchronous tools that Dart provides, we <code>then()</code> wait for the response to complete. Once we have that we can do whatever we need, be it verifying the data was submitted, error codes from the request, etc. As you notice this sample is pretty short and concise. However it does have its drawbacks. Depending on what you&#8217;re using for a backend server, it may not recognize the default content-type generated by the dart request. This means we may sometimes have to supply a different argument to specify the <code>requestHeaders</code>.</p>
+<p>But all-in-all the <code><a href="https://api.dartlang.org/dart_html/FormData.html">FormData</a></code> is a quick and easy way to send our form information to the sever. Of particular importance is to remember to apply the <code>name</code> attribute to your input elements or you may have difficulties accessing your data! <img src="http://blog.butlermatt.me/wp-includes/images/smilies/icon_wink.gif" alt=";-)" class="wp-smiley" /> </p>
+<h2>HttpRequest Instance</h2>
+<p>Since it&#8217;s along the same lines, we&#8217;ll next look at using a full instance of the <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html">HttpRequest</a></code>. In the background, <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#request">HttpRequest.request()</a></code> is actually just a static function which creates the full instance of <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html">HttpRequest</a></code> automagically for you and only passes back the response to you in a <code><a href="https://api.dartlang.org/dart_async/Future.html">Future</a></code>.</p>
+<p>The HTML source will stay the same as above. Find below the new dart source:</p>
+<pre class="prettyprint linenums"><code class="language-dart">import 'dart:html';
+
+void main() {
+  var myForm = querySelector('form#myForm') as FormElement;
+  myForm.onSubmit.listen((e) {
+    e.preventDefault(); // Don't change page when the form is submitted.
+    
+    var data = new FormData(myForm);
+    var req = new HttpRequest();
+    
+    req.open('POST', myForm.action);
+    req.onLoad.listen((event) {
+      var resp = event.target as HttpRequest;
+      // Do something with the response from the server.
+    });
+    req.send(data);
+  });
+}
+</code></pre>
+<p>You&#8217;ll notice that generally its pretty similar to using the static <code>request</code> method. First we attach a listener for the <code>on-submit</code> event for the form. In which we also prevent the default action. We also wrap our data in a <code><a href="https://api.dartlang.org/dart_html/FormData.html">FormData</a></code> instance as well. As opposed to sending each of our configuration values as parameters, we now need to apply them each individually to the request.</p>
+<p>Note that the majority of settings on an <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html">HttpRequest</a></code> instance need to be applied <em>after</em> we have called <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#open">open</a></code>, but <em>before</em> we call <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#send">send</a></code>. In the above example, we <code>open</code> our request passing the <code>method</code> (which is now a required positional argument and not optional named argument), and our URL. <code>open</code> Also accepts a few additional named parameters, one of interest is a boolean <code>async</code> which is <code>true</code> by default. If we pass <code>false</code> to this then the entire request will be completed synchronously and will block on the request. Please, please, please use this sparingly!</p>
+<p>Next we need to add a listener to our <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#onLoad">onLoad</a></code> property. Again we want to do this before we <code>send</code> the request to ensure that there&#8217;s no opportunity for the callback to be missed between the sending and the assignment of the listener. And finally we <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#send">send</a></code> our request including the attached data.</p>
+<p>Using an <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html">HttpRequest</a></code> instance is much more verbose way of creating a request however it is also much more powerful, allowing for more customization and control over your request.</p>
+<h2>HttpRequest.postFormData</h2>
+<p>Finally we reach my preference when it comes to sending data. The static method <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#postFormData">postFormData</a></code>. This method is particular useful when you&#8217;re using binding to automatically link your variables with the values in the input fields. Some great examples of this are with <a href="https://www.dartlang.org/polymer-dart/">Polymer</a> or <a href="https://pub.dartlang.org/packages/angular">Angular</a>.</p>
+<p>First lets look at the code. In this case I&#8217;m using the Polymer library to easily create my own custom element which contains its own form. I won&#8217;t get into too much detail about the Polymer stuff as that&#8217;s not the goal of this post:</p>
+<p>Main/index file:</p>
+<pre class="prettyprint linenums"><code class="language-html">&lt;!DOCTYPE html&gt;
+
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    
+    &lt;link rel="stylesheet" href="bindingpostal.css"&gt;
+    
+    &lt;!-- import the click-counter --&gt;
+    &lt;link rel="import" href="myform.html"&gt;
+    &lt;script type="application/dart"&gt;export 'package:polymer/init.dart';&lt;/script&gt;
+    &lt;script src="packages/browser/dart.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;BindingPostal&lt;/h1&gt;
+    
+    &lt;div id="sample_container_id"&gt;
+      &lt;my-form&gt;&lt;/my-form&gt;
+    &lt;/div&gt;
+
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>My Polymer element HTML file:</p>
+<pre class="prettyprint linenums"><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;polymer-element name="my-form" attributes="count"&gt;
+  &lt;template&gt;
+    &lt;style&gt;
+      div {
+        font-size: 24pt;
+        text-align: center;
+        margin-top: 140px;
+      }
+      button {
+        font-size: 24pt;
+        margin-bottom: 20px;
+      }
+    &lt;/style&gt;
+    &lt;form id="myForm" action="send/" on-submit="{{ save }}"&gt;
+      &lt;label&gt;First Name:&lt;input type="text" value="{{ firstName }}" id="firstName"&gt;&lt;/label&gt;&lt;br /&gt;
+      &lt;label&gt;Last Name:&lt;input type="text" value="{{ lastName }}" id="lastName"&gt;&lt;/label&gt;&lt;br /&gt;
+      &lt;label&gt;Email: &lt;input type="email" value="{{ email }}" id="email"&gt;&lt;/label&gt;&lt;br /&gt;
+      &lt;label&gt;Cool: &lt;input type="checkbox" checked="{{ isCool }}" id="email"&gt;&lt;/label&gt;&lt;br /&gt;
+      &lt;input type="Submit" value="Submit"&gt;
+    &lt;/form&gt;
+  &lt;/template&gt;
+  &lt;script type="application/dart" src="myform.dart"&gt;&lt;/script&gt;
+&lt;/polymer-element&gt;
+</code></pre>
+<p>And the Dart code for the Polymer element:</p>
+<pre class="prettyprint linenums"><code class="language-dart">import 'dart:html';
+import 'package:polymer/polymer.dart';
+
+@CustomTag('my-form')
+class ClickCounter extends PolymerElement {
+  @observable String firstName = '';
+  @observable String lastName = '';
+  @observable String email = '';
+  @observable bool isCool = false;
+
+  ClickCounter.created() : super.created() {
+  }
+
+  void save(Event e, var detail, Node node) {
+    e.preventDefault();
+    
+    var form = e.target as FormElement;
+    var data = this.toJson();
+    
+    HttpRequest.postFormData(form.action, data).then((resp) {
+      // do something with the response.
+    }); 
+  }
+  
+  Map&lt;String,String&gt; toJson() {
+    return {
+      'firstName' : firstName,
+      'lastName' : lastName,
+      'email' : email,
+      'isCool' : '$isCool',
+    };
+  }
+}
+</code></pre>
+<p>So a few things to note first regarding the class for my element. I added a method <code>toJson</code> which returns a Map of Strings and Strings. This is important as the <code>postFormData</code> method does not allow non-String values. As a demonstration I added a boolean to our form <code>isCool</code>. This value is String interpolated in the <code>toJson</code> method.</p>
+<p>Our <code>save</code> method is automatically bound to the <code>onSubmit</code> event on our Polymer Element so no worries about attaching listeners here! Since the binding is on the form itself, that will be the <code>target</code> of the <code>event</code> that is passed to the method. The other arguments we don&#8217;t really need in this case.</p>
+<p>As usual, we prevent default. We also get the <code><a href="https://api.dartlang.org/dart_html/FormElement.html">FormElement</a></code> so we can easily pass the <code>action</code> property to the <code>postFormData</code> static method. We also initialize <code>data</code> to be the Map of String which represent our form values. You&#8217;ll notice the HTML markup for the <code>input</code> elements do not require the <code>name</code> attribute.</p>
+<p>Similar to <code>HttpRequest.request</code> we pass our URL and our data. In this case we already know it&#8217;s a <code>POST</code> request so there&#8217;s no need to specify that. <code><a href="https://api.dartlang.org/dart_html/HttpRequest.html#postFormData">postFormData</a></code> also returns a Future as similar to <code>request</code> which provides an HttpRequest instance of the response from the server. </p>
+<p>Some additional nice features about this method is that it automatically applies the <code>Content-Type: application/x-www-form-urlencoded; charset=UTF-8</code> header, which helps servers on the backed to properly recognize the request and handle it (I&#8217;m looking at you PHP!).</p>
+<p>So as you can see there are a number of ways to send the data to the server using the <code>HTTP/1.1 POST</code> method. Which one you want will depend on your code-base and usage. When in doubt, post (haha get it?) questions to the Dart tag on <a href="http://stackoverflow.com/questions/tagged/dart">Stack Overflow</a>.</p>
+

@@ -1,0 +1,178 @@
+---
+title: 'builtool and libraries with cordova in dart on ios'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2012-12-29T21:36:00-08:00'
+
+---
+
+<p>Continuing on the chain of <a href="http://financeCoding.github.com/blog/categories/phonegap-from-scratch/">phonegap_from_scratch</a>, this post goes over <a href="https://github.com/dart-lang/buildtool">buildtool</a> and libraries.</p>
+
+<p>Took an afternoon to look into using <a href="https://github.com/dart-lang/buildtool">buildtool</a> for helping call dart2js on save within the DartEditor. Minor <a href="https://github.com/financeCoding/buildtool/commit/0692911befaa5705a2928ffaa532c295191d1155">modifications</a> was needed to redirect the generated javascript code to the cordova <code>www</code> directory in the project. This tool is still in the works and future versions will be more robust.</p>
+
+<p>The trend with dart currently is to use <code>pub</code> with github or to publish on <a href="http://pub.dartlang.org/">pub.dartlang.org</a>. A great feature with <code>pub</code> is if you want to make modifications to an existing project on github, <code>fork+branch</code> is an easy way to get hacking with modifications to an existing package. <code>buildtool</code>&#8217;s quick hack was added to the pubspec.yaml file as follows.</p>
+
+<figure class='code'><figcaption><span>pubspec.yaml</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span>  <span class="l-Scalar-Plain">dartdova</span>
+</span><span class='line'><span class="l-Scalar-Plain">description</span><span class="p-Indicator">:</span>  <span class="l-Scalar-Plain">A sample dart cordova integration</span>
+</span><span class='line'><span class="l-Scalar-Plain">dependencies</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">js</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">any</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">unittest</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.2.9+7</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">logging</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.2.9+7</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">buildtool</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">git</span><span class="p-Indicator">:</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">url</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">git://github.com/financeCoding/buildtool.git</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">ref</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">diroverride</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This pubspec.yaml pulls in the branch <code>diroverride</code> from a cloned version of <code>buildtool</code> from my github. Awesome solution for modifications that might not be upstreamed and needed quickly for testing.</p>
+
+<p>Moving along, the DartEditor will look for a <code>build.dart</code> file in the root directory of a projects folder. When that file is found it will execute on file changes within the project. <code>buildtool</code> currently provides a client/server architecture for building or transforming dart projects. The particular task I was interested in is <code>Dart2JSTask</code> which calls the dart2js compiler on modified dart files. With my modifications it now outputs the generated javascript code into the directory specified in the <code>Dart2JSTask.withOutDir</code> constructor.</p>
+
+<figure class='code'><figcaption><span>build.dart</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="cp">#!/usr/bin/env dart</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">import</span> <span class="s1">&#39;dart:io&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s1">&#39;package:buildtool/buildtool.dart&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s1">&#39;package:buildtool/dart2js_task.dart&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">config</span> <span class="o">=</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="n">dart2jstask</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Dart2JSTask</span><span class="p">.</span><span class="n">withOutDir</span><span class="p">(</span><span class="s2">&quot;dart2js&quot;</span><span class="p">,</span> <span class="k">new</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">addTask</span><span class="p">([</span><span class="s2">&quot;app.dart&quot;</span><span class="p">],</span> <span class="n">dart2jstask</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">configure</span><span class="p">(</span><span class="n">config</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The way that I&#8217;ve approached running the server side of the <code>buildtool</code> was to launch a <code>./build.dart --server</code> process before opening the project in the DartEditor.</p>
+
+<figure class='code'><figcaption><span>output</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>~/dart/phonegap_from_scratch/phonegap_from_scratch/www
+</span><span class='line'><span class="nv">$ </span>./build.dart --server
+</span><span class='line'>2012-12-29 23:06:49.732 INFO adding task Instance of <span class="s1">&#39;Dart2JSTask&#39;</span> <span class="k">for </span>files <span class="o">[</span>app.dart<span class="o">]</span>
+</span><span class='line'>2012-12-29 23:06:49.757 INFO startServer
+</span><span class='line'>2012-12-29 23:06:49.757 INFO listening on localhost:52746
+</span><span class='line'>buildtool server ready
+</span><span class='line'>port: 52746
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On each save in the project the server side will generate javascript code via <code>Dart2JSTask</code>.</p>
+
+<figure class='code'><figcaption><span>output</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>2012-12-29 23:07:51.897 INFO starting build
+</span><span class='line'>2012-12-29 23:07:51.903 INFO cwd: /Users/adam/dart/phonegap_from_scratch/phonegap_from_scratch/www build_out/out
+</span><span class='line'>2012-12-29 23:07:51.909 FINE _runTasks: <span class="o">[</span>_source:app.dart<span class="o">]</span>
+</span><span class='line'>2012-12-29 23:07:51.911 INFO cwd: /Users/adam/dart/phonegap_from_scratch/phonegap_from_scratch/www build_out/_dart2js
+</span><span class='line'>2012-12-29 23:07:51.915 INFO dart2js task starting. files: <span class="o">[</span>_source:app.dart<span class="o">]</span>
+</span><span class='line'>2012-12-29 23:07:51.918 FINE running dart2js args: <span class="o">[</span>--out<span class="o">=</span>./app.dart.js, --verbose, app.dart<span class="o">]</span>
+</span><span class='line'>2012-12-29 23:08:00.778 FINE dart2js exitCode: 0
+</span><span class='line'>2012-12-29 23:08:00.779 INFO dartjs tasks <span class="nb">complete</span>
+</span><span class='line'>2012-12-29 23:08:00.784 FINE tasks at depth 0 <span class="nb">complete</span>
+</span><span class='line'>2012-12-29 23:08:01.288 INFO starting build
+</span><span class='line'>2012-12-29 23:08:01.289 INFO cwd: /Users/adam/dart/phonegap_from_scratch/phonegap_from_scratch/www build_out/out
+</span><span class='line'>2012-12-29 23:08:01.291 FINE _runTasks: <span class="o">[</span>_source:app.dart.js, _source:app.dart.js.deps, _source:app.dart.js.map<span class="o">]</span>
+</span><span class='line'>2012-12-29 23:08:01.291 FINE tasks at depth 0 <span class="nb">complete</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This solution saves me having to run the <code>./build.sh</code> from command line and launching the iOS simulator on each launch.</p>
+
+<p>The other changes to this project was to refactor the single <code>app.dart</code> into a collection of dart library  files. Seems that each of the API categories have been implemented as singletons. At some point I may make this similar to <a href="https://github.com/rikulo/gap">gap</a> where each category of API is a singleton and instantiated at the top level of a dart library.</p>
+
+<figure class='code'><figcaption><span>output</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>~/dart/phonegap_from_scratch/phonegap_from_scratch/www
+</span><span class='line'><span class="nv">$ </span>tree
+</span><span class='line'>.
+</span><span class='line'>├── app.dart
+</span><span class='line'>├── app.dart.js
+</span><span class='line'>├── app.dart.js.deps
+</span><span class='line'>├── app.dart.js.map
+</span><span class='line'>├── build.dart
+</span><span class='line'>├── build.sh
+</span><span class='line'>├── cordova.js
+</span><span class='line'>├── dart.js
+</span><span class='line'>├── dart_interop.js
+</span><span class='line'>├── index.html
+</span><span class='line'>├── lib
+</span><span class='line'>│   └── src
+</span><span class='line'>│       ├── connection.dart
+</span><span class='line'>│       ├── cordova_events.dart
+</span><span class='line'>│       ├── device.dart
+</span><span class='line'>│       ├── globalization.dart
+</span><span class='line'>│       ├── notification.dart
+</span><span class='line'>│       └── splashscreen.dart
+</span><span class='line'>└── pubspec.yaml
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>New classes added <code>Connection</code>, <code>CordovaEvents</code>, <code>Notification</code>, <code>Splashscreen</code> and <code>Globalization</code>. <code>Globalization</code> is presenting a problem with knowing the proper ways to parse date strings within the javascript implementation dependent scenarios. For now I might just skip them, different javascript engines parse <code>Date</code> strings different ways and my goal was not to cover all of them. <code>app.dart</code> is now importing the libraries directly at some point a single <code>lib/cordova.dart</code> library should be provided.</p>
+
+<p>This is where my journey for tonight has ended, <code>Contacts</code> might be the next exciting class of API to cover.</p>
+
+<p>The code for <a href="http://financeCoding.github.com/blog/categories/phonegap-from-scratch/">phonegap_from_scratch</a> can be found on <a href="https://github.com/financeCoding/phonegap_from_scratch">github</a></p>
+

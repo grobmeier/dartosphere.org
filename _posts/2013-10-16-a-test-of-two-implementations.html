@@ -1,0 +1,153 @@
+---
+title: 'A Test of Two Implementations'
+layout: post
+tags: {  }
+category: futureperfect.info
+published: '2013-10-16T00:00:00+00:00'
+
+---
+
+
+<p>I write many tests for my code, and I think that most software engineers will agree about the positive value of having good tests. Tests help me find problems with my design and they give me assurance that a particular library or service continues to function as intended over time. This post is a bit of a potpourri of testing in Dart and how I’ve approached the problem of testing multiple implementations of an interface.</p>
+
+<h2 id="batteries_included">Batteries Included</h2>
+
+<p>One of the really nice things about Dart is that it comes out of the box with a solid <a href="http://pub.dartlang.org/packages/unittest">unit testing framework</a>. The framework is not perfect, but the mere fact that it exists and is widely used is of large benefit. I’ve been using it for a while now in my projects, and over time my own library has evolved to <em>augment</em> the standard library for my practical needs.</p>
+
+<h2 id="bench_reloaded">Bench Reloaded</h2>
+
+<p>I wrote a <a href="2012/11/29/bench.html">post</a> almost a year ago about my first attempt at publishing a Dart package for micro-benchmarks, <code>Bench</code>. It was a fun exercise for me, but after a while it became apparent that there was not much interest in it and an official benchmarking package was later released by the Dart team. So I decided to repurpose this package a couple of months ago as a <em>test bench</em>. The new goal of <code>Bench</code> is to reduce the complexity of declaring test functions and wiring them together to be run.</p>
+
+<h2 id="reflection_at_work">Reflection at Work</h2>
+
+<p>Automation of unit tests is a classic application of reflection. Normally, unit tests are not deployed so there is not concern regarding the overhead of code size or execution speed that reflection may introduce. Rather, the focus is on developer productivity and tooling.</p>
+
+<p>Many popular unit testing frameworks such as <code>junit</code> (Java) and <code>nunit</code> (C#) use reflection, so this approach has been validated many times before. However, Dart is unique and I have tried hard to apply lessons learned from those other tools in a way that suits Dart. In particular, I have found that libraries (as opposed to classes) work well as the unit of encapsulation for a group or suite of test functions, thanks to Dart’s support for first-class functions.</p>
+
+<p>Let’s take a look at a simple example of using <code>Bench</code>:</p>
+<pre><code>@TestGroup(description: 'Exhibit A')
+library example;
+
+import 'package:bench/bench.dart';
+import 'package:unittest/unittest.dart';
+ 
+void main() => reflectTests();
+
+@Setup
+setup() => print('Invoked one time before each test.');
+
+@Teardown
+teardown() => print('Invoked one time after each test');
+
+@Test('An example test case that passes.')
+void testPass() {
+  expect(true, isTrue);
+}
+</code></pre>
+<p>Some notes on the above example:</p>
+
+<ul>
+<li>
+<p>The <code>@TestGroup</code> annotation is optional, and allows us to give a custom name to our test group. If we don’t apply a <code>@TestGroup</code> annotation <code>Bench</code> will still run our tests, using the library’s name by default.</p>
+</li>
+
+<li>
+<p>We’ve included a <code>main</code> function in our library for brevity, as you’ll need at least one in your test project to serve as the entry point and to call <code>reflectTests()</code>. It is useful to include one in each test group library, so that it can be run individually, but this is not required. Instead you could structure your test application to have a single entry-point which imports all of your test group libraries. As you work and add new <code>@Test</code> functions to the different libraries in your test application, no additional wiring is needed.</p>
+</li>
+
+<li>
+<p>Each top-level function annotated with <code>@Test</code> declares a test function, with an optional description. If no description is given, the name of the function will be used. To add a new test function to the test group, you simply start writing a new top-level function with this annotation applied and the next time you run the program it will be called.</p>
+</li>
+
+<li>
+<p>The top-level functions annotated with <code>@Setup</code> and <code>@Teardown</code> are optional, and if you do include them in the library they are each called 1 time per test function. This is just syntactic sugar for the <code>setup</code> and <code>teardown</code> methods in the <code>unittest</code> library.</p>
+</li>
+</ul>
+
+<p>This simple example covers the basic functionality exposed in <code>Bench</code>; there is more there for you to explore, and it continues to evolve with the needs of real-world projects that are using it. One such evolution is the main subject of this post.</p>
+
+<h2 id="testing_multiple_implementations">Testing Multiple Implementations</h2>
+
+<p>This recently added feature goes above and beyond syntactic sugar for the <code>unittest</code> library.</p>
+
+<p>Let’s consider an example with an abstract <code>Connection</code> class:</p>
+<div class='highlight'><pre><code class='dart'><span class='kd'>abstract</span> <span class='kd'>class</span> <span class='nc'>Connection</span> <span class='p'>{</span>
+  <span class='kt'>bool</span> <span class='kd'>get</span> <span class='n'>isConnected</span><span class='p'>;</span>
+  <span class='n'>Future</span> <span class='n'>connect</span><span class='p'>();</span>
+  <span class='n'>Future</span> <span class='n'>disconnect</span><span class='p'>();</span>
+<span class='p'>}</span>
+</code></pre>
+</div>
+<p>Our <code>Connection</code> class represents a very basic interface for a persistent connection. We may have multiple concrete implementations of this class, such as a <code>TcpConnection</code> and an <code>HttpConnection</code>. We would like to write a group of tests for <em>all</em> types of <code>Connection</code>, and then run that test group against each of our implementations.</p>
+
+<p>Let’s start to write a test group for a <code>Connection</code> using what we’ve learned so far:</p>
+<pre><code>@TestGroup(description: 'Connection')
+library connection.test;
+
+import 'package:bench/bench.dart';
+import 'package:unittest/unittest.dart';
+import 'connection.dart';
+import 'tcp_connection.dart';
+
+void main() => reflectTests();
+
+Connection connection;
+
+@Setup
+void setup() {
+  connection = new TcpConnection();
+}
+
+@Test('Test that the connection isConnected')
+void testIsConnected() {
+  connection.connect().then(expectAsync1((_) {
+    expect(connection.isConnected, isTrue);
+  }));  
+}
+</code></pre>
+<p>Our test function above tests the state of the <code>connection</code> variable, which is declared as a <code>Connection</code>. In our <code>setup</code> function we assign an instance of <code>TcpConnection</code> to this variable; notice how that is the only reference to <code>TcpConnection</code> in the entire test library. By decoupling our test function <code>testIsConnected</code> from the actual implementation we are paving the way to reuse this test library for other types of connections.</p>
+
+<h3 id="declare_multiple_test_runs">Declare Multiple Test Runs</h3>
+
+<p>Now that we have a basic test library for <code>Connection</code> we’d like to extend our test coverage to include an <code>HttpConnection</code> implementation.</p>
+
+<p>The <code>TestGroup</code> annotation accepts an optional parameter named <code>runs</code>, which is a list of string identifiers. The first change we will make to our test library is to declare two runs of the test group:</p>
+<pre><code>@TestGroup(description: 'Connection', 
+           runs: const ['tcp', 'http'])
+library connection.test;
+</code></pre>
+<p>As we see above, we’ve chosen the identifiers <code>tcp</code> and <code>http</code> to declare our two runs. Running our test library now will execute our test function twice:</p>
+<pre><code>unittest-suite-wait-for-done
+PASS: Connection[tcp] Test that the connection isConnected
+PASS: Connection[http] Test that the connection isConnected
+
+All 2 tests passed.
+unittest-suite-success
+</code></pre>
+<p>Both test runs are identical at this point, but we can see that the identifiers we chose have been included in the output for each test to provide quick feedback.</p>
+
+<p>Our next step will be to actually <em>use</em> the <code>HttpConnection</code> for the <code>http</code> test run.</p>
+
+<h3 id="setup_test_runs">Setup Test Runs</h3>
+
+<p>In order to configure the different runs of our test library, we need to modify its <code>@Setup</code> function as follows:</p>
+<div class='highlight'><pre><code class='dart'><span class='err'>@</span><span class='n'>Setup</span>
+<span class='kt'>void</span> <span class='n'>setup</span><span class='p'>(</span><span class='n'>TestRun</span> <span class='n'>run</span><span class='p'>)</span> <span class='p'>{</span>
+  <span class='k'>if</span> <span class='p'>(</span><span class='n'>run</span><span class='p'>.</span><span class='n'>id</span> <span class='o'>==</span> <span class='s1'>&#39;tcp&#39;</span><span class='p'>)</span> <span class='p'>{</span>
+    <span class='n'>connection</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>TcpConnection</span><span class='p'>();</span>
+  <span class='p'>}</span> <span class='k'>else</span> <span class='p'>{</span>
+    <span class='n'>connection</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>HttpConnection</span><span class='p'>();</span>
+  <span class='p'>}</span>
+<span class='p'>}</span>
+</code></pre>
+</div>
+<p>Notice how we have added a parameter of type <code>TestRun</code> to the declaration of our <code>setup</code> function. This tells <code>Bench</code> that we would like to receive the context of each test run. The <code>TestRun</code> object that we receive contains a field <code>id</code> where we can inspect one of our chosen identifiers. We use this information to create an instance of either <code>TcpConnection</code> or <code>HttpConnection</code>, as appropriate.</p>
+
+<p>That is all that is required in order to run all of our test functions against both of our <code>Connection</code> implementations. We can iterate on our test library, adding new tests for the <code>connection</code> variable, and know that we are testing both of our implementations. If we write a new type of <code>Connection</code>, we can add it to the <code>runs</code> list and get instant coverage.</p>
+
+<h2 id="test_it">Test it!</h2>
+
+<p>You can find the example code from this article in this <a href="https://gist.github.com/rmsmith/7011427">gist</a>.</p>
+
+<p>Please give <a href="http://pub.dartlang.org/packages/bench">bench</a> a try and open <a href="https://github.com/rmsmith/bench/issues">issues</a> to request features or report bugs. I use this library in <em>all</em> of my Dart projects, so rest assured that it is supported. The more people who use it and provide feedback, the better it will be.</p>
+

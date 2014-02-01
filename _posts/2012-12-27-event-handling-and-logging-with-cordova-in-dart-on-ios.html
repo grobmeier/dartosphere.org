@@ -1,0 +1,239 @@
+---
+title: 'event handling and logging with cordova in dart on iOS'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2012-12-27T00:22:00-08:00'
+
+---
+
+<p>Continuing on the chain of <a href="http://financeCoding.github.com/blog/categories/phonegap-from-scratch/">phonegap_from_scratch</a> this post goes over event handlers and logging.</p>
+
+<p>Adding logging was trivial with the <a href="http://pub.dartlang.org/packages/logging"><code>logger</code></a> library on pub. Adding the following dependencies and setup configuration code was just enough to help with logging tests and code.</p>
+
+<figure class='code'><figcaption><span>pubspec.yaml</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span>  <span class="l-Scalar-Plain">dartdova</span>
+</span><span class='line'><span class="l-Scalar-Plain">description</span><span class="p-Indicator">:</span>  <span class="l-Scalar-Plain">A sample dart cordova integration</span>
+</span><span class='line'><span class="l-Scalar-Plain">dependencies</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">js</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">any</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">unittest</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.2.9+7</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">logging</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.2.9+7</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>configureLogging</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">configureLogging</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Logger</span><span class="p">.</span><span class="n">root</span><span class="p">.</span><span class="n">level</span> <span class="o">=</span> <span class="n">Level</span><span class="p">.</span><span class="n">ALL</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">Logger</span><span class="p">.</span><span class="n">root</span><span class="p">.</span><span class="n">on</span><span class="p">.</span><span class="n">record</span><span class="p">.</span><span class="n">add</span><span class="p">((</span><span class="n">LogRecord</span> <span class="n">r</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Print to console.log when compiled to javascript.</span>
+</span><span class='line'>    <span class="n">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">${</span><span class="n">r</span><span class="p">.</span><span class="n">loggerName</span><span class="si">}</span><span class="s2">:</span><span class="si">${</span><span class="n">r</span><span class="p">.</span><span class="n">level</span><span class="p">.</span><span class="n">name</span><span class="si">}</span><span class="s2">:</span><span class="si">${</span><span class="n">r</span><span class="p">.</span><span class="n">sequenceNumber</span><span class="si">}</span><span class="s2">:\n</span><span class="si">${</span><span class="n">r</span><span class="p">.</span><span class="n">message</span><span class="p">.</span><span class="n">toString</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>Cordova ships with a list of custom <a href="http://docs.phonegap.com/en/2.2.0/cordova_events_events.md.html#Events">events</a> that can be fired off to the dom. The common pattern is to add event handlers to these events. Luckily we can receive the events without having to register handles with js-interop.</p>
+
+<pre><code>deviceready
+pause
+resume
+online
+offline
+backbutton
+batterycritical
+batterylow
+batterystatus
+menubutton
+searchbutton
+startcallbutton
+endcallbutton
+volumedownbutton
+volumeupbutton
+</code></pre>
+
+<p>I&#8217;ve noticed a few of them need to be hooked really early in the loading of a dart application. One <code>deviceready</code> being critical for knowing when the device is ready. If they are not hooked early in the application you could miss the event. At least I&#8217;ve noticed that with the iOS simulator.</p>
+
+<figure class='code'><figcaption><span>main</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Cordova.js will fire off &#39;deviceready&#39; event once fully loaded.</span>
+</span><span class='line'><span class="cm">   * listen for the event on js.context.document.</span>
+</span><span class='line'><span class="cm">   *</span>
+</span><span class='line'><span class="cm">   * This must be the first event wired up before creating Device.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">document</span><span class="p">.</span><span class="n">on</span><span class="p">[</span><span class="s1">&#39;deviceready&#39;</span><span class="p">].</span><span class="n">add</span><span class="p">(</span><span class="n">deviceReady</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>online</code>, <code>offline</code>, <code>battery*</code> are also events that one might want to catch early in <code>main()</code>. Later in the application after <code>deviceready</code> has been fired off you can remove the old handlers and add new ones that relate to the context created.</p>
+
+<p>The design pattern for <code>Device</code> is a singleton which left me with having event handlers registered whenever any newed references go out of scope. This works for now, another approach for event handling could of been to use <a href="https://github.com/prujohn/Reactive-Dart">Reactive-Dart</a> <code>Observable</code> object.</p>
+
+<figure class='code'><figcaption><span>Device</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="cm">/** The device: Singleton */</span>
+</span><span class='line'><span class="kd">class</span> <span class="nc">Device</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">static</span> <span class="kd">final</span> <span class="n">Device</span> <span class="n">_singleton</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Device</span><span class="p">.</span><span class="n">_internal</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">Logger</span> <span class="n">_logger</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">_device</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">factory</span> <span class="n">Device</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">_singleton</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">Device</span><span class="p">.</span><span class="n">_internal</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">_logger</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Logger</span><span class="p">(</span><span class="s2">&quot;Device&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">_registerHandlers</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">_device</span> <span class="o">=</span> <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">device</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">js</span><span class="p">.</span><span class="n">retain</span><span class="p">(</span><span class="n">_device</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">_registerHandlers</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">_onOnlineHandlers</span> <span class="o">=</span> <span class="k">new</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Function</span><span class="o">&gt;</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">document</span><span class="p">.</span><span class="n">on</span><span class="p">[</span><span class="s1">&#39;online&#39;</span><span class="p">].</span><span class="n">add</span><span class="p">(</span><span class="n">_onOnline</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">_onOfflineHandlers</span> <span class="o">=</span> <span class="k">new</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Function</span><span class="o">&gt;</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">document</span><span class="p">.</span><span class="n">on</span><span class="p">[</span><span class="s1">&#39;offline&#39;</span><span class="p">].</span><span class="n">add</span><span class="p">(</span><span class="n">_onOffline</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">String</span> <span class="kd">get</span> <span class="n">name</span> <span class="o">=&gt;</span> <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="n">_device</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="kd">get</span> <span class="n">cordova</span> <span class="o">=&gt;</span> <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="n">_device</span><span class="p">.</span><span class="n">cordova</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="kd">get</span> <span class="n">platform</span> <span class="o">=&gt;</span> <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="n">_device</span><span class="p">.</span><span class="n">platform</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="kd">get</span> <span class="n">uuid</span> <span class="o">=&gt;</span> <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="n">_device</span><span class="p">.</span><span class="n">uuid</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="kd">get</span> <span class="n">version</span> <span class="o">=&gt;</span> <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="n">_device</span><span class="p">.</span><span class="n">version</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">List</span><span class="o">&lt;</span><span class="n">Function</span><span class="o">&gt;</span> <span class="n">_onOnlineHandlers</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">List</span><span class="o">&lt;</span><span class="n">Function</span><span class="o">&gt;</span> <span class="kd">get</span> <span class="n">onOnline</span> <span class="o">=&gt;</span> <span class="n">_onOnlineHandlers</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">_onOnline</span><span class="p">(</span><span class="n">Event</span> <span class="n">event</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">_onOnlineHandlers</span><span class="p">.</span><span class="n">forEach</span><span class="p">((</span><span class="n">handler</span><span class="p">)</span><span class="o">=&gt;</span><span class="n">handler</span><span class="p">(</span><span class="n">event</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">List</span><span class="o">&lt;</span><span class="n">Function</span><span class="o">&gt;</span> <span class="n">_onOfflineHandlers</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">List</span><span class="o">&lt;</span><span class="n">Function</span><span class="o">&gt;</span> <span class="kd">get</span> <span class="n">onOffline</span> <span class="o">=&gt;</span> <span class="n">_onOfflineHandlers</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">_onOffline</span><span class="p">(</span><span class="n">Event</span> <span class="n">event</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">_onOfflineHandlers</span><span class="p">.</span><span class="n">forEach</span><span class="p">((</span><span class="n">handler</span><span class="p">)</span><span class="o">=&gt;</span><span class="n">handler</span><span class="p">(</span><span class="n">event</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>Creating tests for this type of pluming was not too difficult using <a href="http://api.dartlang.org/docs/bleeding_edge/unittest.html#expectAsync1"><code>expectAsync1</code></a>. The most of time spent on figuring this out was creating <a href="http://api.dartlang.org/docs/bleeding_edge/dart_html/CustomEvent.html"><code>CustomEvent</code></a> and calling <a href="http://api.dartlang.org/docs/bleeding_edge/dart_html/EventListenerList.html#dispatch"><code>dispatch</code></a>. This is enough functionality to see that device was properly wired up with handlers. I found it important to cover lots of tests when working with Cordova, error handling and reporting is very minimal. At times something would stop working with no console output. So I move forward with code and test in tandem.</p>
+
+<figure class='code'><figcaption><span>runTests</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="n">test</span><span class="p">(</span><span class="s1">&#39;Device Event online&#39;</span><span class="p">,</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">eventName</span> <span class="o">=</span> <span class="s1">&#39;online&#39;</span><span class="p">;</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">asyncMethod</span> <span class="o">=</span> <span class="n">expectAsync1</span><span class="p">((</span><span class="n">Event</span> <span class="n">event</span><span class="p">)</span><span class="o">=&gt;</span><span class="n">expect</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="n">type</span><span class="p">,</span> <span class="n">equals</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">$</span><span class="n">eventName</span><span class="s1">&#39;</span><span class="p">)));</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">customEvent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CustomEvent</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">$</span><span class="n">eventName</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="s2">&quot;custom event&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">device</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Device</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">device</span><span class="p">.</span><span class="n">onOnline</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">asyncMethod</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">document</span><span class="p">.</span><span class="n">on</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">$</span><span class="n">eventName</span><span class="s1">&#39;</span><span class="p">].</span><span class="n">dispatch</span><span class="p">(</span><span class="n">customEvent</span><span class="p">);</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">test</span><span class="p">(</span><span class="s1">&#39;Device Event offline&#39;</span><span class="p">,</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">eventName</span> <span class="o">=</span> <span class="s1">&#39;offline&#39;</span><span class="p">;</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">asyncMethod</span> <span class="o">=</span> <span class="n">expectAsync1</span><span class="p">((</span><span class="n">Event</span> <span class="n">event</span><span class="p">)</span><span class="o">=&gt;</span><span class="n">expect</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="n">type</span><span class="p">,</span> <span class="n">equals</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">$</span><span class="n">eventName</span><span class="s1">&#39;</span><span class="p">)));</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">customEvent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CustomEvent</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">$</span><span class="n">eventName</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="s2">&quot;custom event&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">device</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Device</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">device</span><span class="p">.</span><span class="n">onOffline</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">asyncMethod</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">document</span><span class="p">.</span><span class="n">on</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">$</span><span class="n">eventName</span><span class="s1">&#39;</span><span class="p">].</span><span class="n">dispatch</span><span class="p">(</span><span class="n">customEvent</span><span class="p">);</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p><a href="http://financeCoding.github.com/images/2012-12-27-event-handling-and-logging-with-cordova-in-dart-on-ios/unittests_passing.png"><img src="http://financeCoding.github.com/images/2012-12-27-event-handling-and-logging-with-cordova-in-dart-on-ios/unittests_passing.png" alt="unittest_pass" /></a></p>
+
+<p>So far this is a good enough to have a device class and event handlers for custom events. The single <a href="https://github.com/financeCoding/phonegap_from_scratch"><code>app.dart</code></a> is starting to get large, next it should be broken out. I integrated the event handling directly in the <code>Device</code> class, but the Cordova <a href="http://docs.phonegap.com/en/2.2.0/index.html">API Reference</a> keeps them at the top level of the application. So a singleton <code>Events</code> or <code>CordovaEvents</code> class might be useful to separate the implementation out.</p>
+
+<p>A project that is just starting to hit the <a href="https://github.com/dart-lang/">dart-lang</a> github repository is <a href="https://github.com/dart-lang/buildtool">buildtool</a>. <code>buildtool</code> might provide a better solution then having a custom build script that needs to be called before each launch of the simulator.</p>
+
+<p>The code for <a href="http://financeCoding.github.com/blog/categories/phonegap-from-scratch/">phonegap_from_scratch</a> can be found on <a href="https://github.com/financeCoding/phonegap_from_scratch">github</a></p>
+

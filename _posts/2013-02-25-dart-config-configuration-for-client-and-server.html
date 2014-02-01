@@ -1,0 +1,190 @@
+---
+title: 'dart_config - configuration for client and server'
+layout: post
+tags:
+    - samples
+    - article
+category: dartwatch
+published: '2013-02-25T09:10:00+00:00'
+
+---
+
+I was reading HN the other day, and <a href="http://news.ycombinator.com/item?id=5272634">was amused by TOML</a>, an "ini" type config file format. &nbsp;This spurred me on to create a new library that I've been toying with for a couple of months: dart_config.<br />
+<div>
+<br /></div>
+<div>
+I find that I have a load of Dart apps that have code that looks similar to:</div>
+<div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> myServerUrl = <span style="color: blue;">"http://localhost/foo"</span>; <span style="color: #008800; font-style: italic;">// local server</span>
+<span style="color: #008800; font-style: italic;">//var myServerUrl = "http://awesomeapp.com/foo"; // real server</span>
+</pre>
+</div>
+<br />
+And before I deploy, I switch from one to another. But what I really want is to have multiple config files, one on the local machine, and one on the server (like wot I do wit java...[sic]). &nbsp;Here is an example config file in YAML format.<br />
+<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;"># local server config.yaml</span>
+myServerUrl: http://localhost/foo
+</pre>
+</div>
+<br />
+or <br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;">
+</span></pre>
+<pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;"># real server config.yaml</span>
+myServerUrl: http://awesomeapp.com/foo
+</pre>
+</div>
+<br />
+<a href="http://blogoscoped.com/archive/2005-08-24-n14.html">I'm also lazy</a>, and don't want to have to write the same boilerplate every time to pick up a file and parse it. &nbsp;I don't even want to care (much) about whether the current app is a client-side app or a server-side app.<br />
+<br />
+<a href="http://pub.dartlang.org/packages/dart_config">And so, dart_config is born - available on pub.</a><br />
+<br />
+Now I can write code that looks like this: reading config.yaml and using the "myServerUrl" key<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">  loadConfig().then(
+    (Map config) {
+     print(config[<span style="color: blue;">"myServerUrl"</span>]);
+     <span style="color: #008800; font-style: italic;">// continue with your app here!</span>
+    }, 
+    onError: (error) =&gt; print(error));
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+That code works on both the client and the server: just import <span style="font-family: Courier New, Courier, monospace; font-size: x-small;">package:dart_config/default_server.dart</span> or <span style="font-family: Courier New, Courier, monospace; font-size: x-small;">package:dart_config/default_browser.dart</span> as appropriate.<br />
+<br />
+<h3>
+What just happened?</h3>
+Because most of the time I don't even want to think about "what should I call my config file," both the client and server code looks for a file called 
+<code>config.yaml</code>, loads it from the current folder (or current 
+browser path), parses it, and returns it to your app as a map of key/value 
+pairs (the values may also be maps themselves).<br />
+<br />
+Take a look at <code><a href="https://github.com/chrisbu/dart_config/blob/master/test/test_default_browser.dart">test/test_default_browser.dart</a></code> and&nbsp;<code><a href="https://github.com/chrisbu/dart_config/blob/master/test/test_default_server.dart">test/test_default_server.dart</a></code>, and the associated 
+<code>config.yaml</code> files to get the idea.<br />
+<br />
+<h3>
+Want more control?</h3>
+Of course you want more control! The <code>loadConfig()</code> function 
+actually takes an optional <code>filename</code> parameter, which defaults to 
+<code>config.yaml</code> - but you can provide a different filename / path if 
+you want.<br />
+<br />
+<h3>
+Want even more control? Don't like yaml?</h3>
+No problem. The <code>default_browser</code> and 
+<code>default_server</code> libraries are just opinionated implementations. 
+Behind the scenes, they are calling code that looks similar to this:<br />
+<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> config = <span style="color: navy; font-weight: bold;">new</span> Config(filename,
+  <span style="color: navy; font-weight: bold;">new</span> ConfigFilesystemLoader(),
+  <span style="color: navy; font-weight: bold;">new</span> YamlConfigParser());
+
+<span style="color: navy; font-weight: bold;">return</span> config.readConfig(); <span style="color: #008800; font-style: italic;">// returns a Future&lt;Map&gt;</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+The <code>Config</code> class has a single constructor, which takes three 
+parameters. The first parameter is the location of the config file. The 
+second is an implementation of <code>ConfigLoader</code>, and the third is an 
+implementation of<br />
+<code>ConfigParser</code> (this is a typical dependency 
+injection pattern)<br />
+<br />
+The <code>dart_config</code> library comes (at the moment) with two 
+ConfigLoader implementations and two ConfigParser implementations:<br />
+<a href="https://github.com/chrisbu/dart_config/tree/master/lib/loaders"><code>ConfigLoaders</code></a>:<br />
+<ul>
+<li><code>ConfigFilesystemLoader</code> 
+</li>
+<li><code>ConfigHttpRequestLoader</code> </li>
+</ul>
+<a href="https://github.com/chrisbu/dart_config/tree/master/lib/parsers"><code>ConfigParsers</code></a>:<br />
+<ul>
+<li><code>YamlConfigParser</code> 
+</li>
+<li><code>JsonConfigParser</code> </li>
+</ul>
+(The YAML and JSON parsers use the Dart's existing YAML and JSON libraries).<br />
+<br />
+You can use any combination of loader and parser. At its core, the config system needs to know <strong>how to load a config file</strong> and 
+<strong>how to parse a config&nbsp;</strong><strong>file</strong>. It really is no more complex 
+than that.<br />
+<br />
+Take a look at the three files: <code>tests.dart</code> (a VM independant 
+suite of tests), and the <code>test_browser.dart</code> and 
+<code>test_server.dart</code>, which run the same set of tests found in 
+<code>tests.dart</code> both in the browser and on the server. The 
+only differences are <code>ConfigLoader</code> implementation, and the path 
+to the config files.<br />
+<br />
+<h3>
+Want to load a config file from system "x"?</h3>
+No problem - simply implement your own version of <code>ConfigLoader</code> - 
+there's only one method: <code>Future&lt;String&gt; 
+loadConfig(pathOrUrl)</code> - just return the contents of the config file in 
+the Future<string>, and it will get passed into whatever&nbsp;</string>parser you 
+specify.<br />
+<br />
+<h3>
+Want to parse a config file of type "y"?</h3>
+No problem again - simply implement your own version of 
+<code>ConfogParser</code> - there's only one method: 
+<code>Future&lt;Map&lt;String,Object&gt;&gt; parse(String configText)</code> - 
+just parse the String contents that the ConfigLoader has loaded into a Map, 
+and return it in a Future.<br />
+<br />
+<h3>
+Written your own config loader / parser?</h3>
+Great! - Please share :) - create your own pub packaged containing loaders 
+and/ or parsers, or clone this library and issue pull requests.<br />
+<br />
+Some ideas (that I might work on if someone else doesn't get there 
+first):<br />
+<ul>
+<li><a href="https://github.com/mojombo/toml">TOML</a> parser 
+</li>
+<li>Key=value pair parser (almost the same as toml, above)</li>
+<li>Server-side HttpClient configLoader - load config files from a remote url.</li>
+</ul>
+<div>
+<br /></div>
+<h3>
+Found a bug?</h3>
+Raise an <a href="https://github.com/chrisbu/dart_config/issues">issue on 
+github</a>&nbsp;and I'll take a look, or even better, create a <a href="https://github.com/chrisbu/dart_config/pulls">pull request</a> with a 
+failing unit test or even a fix?<br />
+<br />
+<h3>
+Got a question?</h3>
+StackOverflow is a great place for that. Make sure you use the&nbsp;<a href="http://stackoverflow.com/questions/tagged/dart">dart</a> tag, and it will 
+find its way to me, or others that are very knowledgeable.<br />
+<!-- This document was created with MarkdownPad, the Markdown editor for Windows (http://markdownpad.com) --></div>
+<div class="feedflare">
+<a href="http://feeds.feedburner.com/~ff/Dartwatch?a=CPl7y22jB8o:7dC6Hby5CFQ:yIl2AUoC8zA"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=yIl2AUoC8zA" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=CPl7y22jB8o:7dC6Hby5CFQ:V_sGLiPBpWU"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=CPl7y22jB8o:7dC6Hby5CFQ:V_sGLiPBpWU" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=CPl7y22jB8o:7dC6Hby5CFQ:qj6IDK7rITs"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=qj6IDK7rITs" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=CPl7y22jB8o:7dC6Hby5CFQ:63t7Ie-LG7Y"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=63t7Ie-LG7Y" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=CPl7y22jB8o:7dC6Hby5CFQ:F7zBnMyn0Lo"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=CPl7y22jB8o:7dC6Hby5CFQ:F7zBnMyn0Lo" border="0"></img></a>
+</div><img src="http://feeds.feedburner.com/~r/Dartwatch/~4/CPl7y22jB8o" height="1" width="1"/>

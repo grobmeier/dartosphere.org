@@ -1,0 +1,17 @@
+---
+title: 'MSBuild and Custom Targets: Almost too much fun'
+layout: post
+tags:
+    - .NET
+    - 'Bag of Tricks'
+    - 'C#'
+    - msbuild
+    - thinkpixellab
+    - 'visual studio'
+    - vs2010
+category: kevinwork
+published: '2010-10-15T09:47:00-07:00'
+
+---
+
+<script src="http://gist.github.com/628499.js?file=gistfile1.xml"></script> <p>I’m a big believer in DRY – <a href="http://en.wikipedia.org/wiki/Don't_repeat_yourself">Don’t Repeat Yourself</a> – in software.</p> <p>While I try hard to practice this in the code for the <a href="http://github.com/thinkpixellab/bot">Bag of Tricks</a> (BOT), until recently I’ve ignored my project files.</p> <p>VS handles that, right?</p> <p>Well, kind.</p> <p>It turns out there is a lot of duplication in proj files. Every one defines constants and output paths. If you’re using Code Contracts, you get a bunch of contract properties all over – sometimes differing in inexplicable ways between debug and release.</p> <p>I got sick of it. I cleaned it up.</p> <ul> <li><strong>BuildShared.targets</strong> – Shared state across every project. Warning levels, shared build constants, even output path.  <ul> <li>This is great. If I want to change the location of obj and bin, I just change one file now. Super nice.</li></ul> <li><strong>Contracts.targets</strong> – This defines all of the Code Contracts build parameters.  <li><strong>WPF4, SL4, WP7.targets</strong> – Common code for a given platform. Things like target framework, framework profile, etc. (WPF and SL include Contracts, Phone dosen’t.)  <li>Now each proj file includes the associated platform proj file and just sets project-specific properties.  <ul> <li>Guids, OutputType (library or exe), root namespace, assembly name, etc.</li></ul></li></ul> <p>The downside: if you go hack specific properties via VS, you’ll add a bunch of one-off changes to individual proj files.</p> <p>…but this is why we use source control, right? I can look at the diffs and ask: are these changes I want to share across projects or things I can just throw-away?</p> <p>And having all of the shared noise in another place makes parsing the proj file a lot faster.</p> <p>Take a look at the code. All of the targets are in <strong>PixelLab.Common\_targets</strong>. (Yeah, a weird place. I’ll explain later.)</p> <p>Happy hacking.</p>  

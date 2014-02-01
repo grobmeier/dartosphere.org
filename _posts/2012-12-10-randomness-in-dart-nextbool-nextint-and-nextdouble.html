@@ -1,0 +1,91 @@
+---
+title: 'Randomness in Dart: nextBool(), nextInt(), and nextDouble()'
+layout: post
+tags: {  }
+category: shailen-tulis-blog-dart
+published: '2012-12-10T14:36:00-08:00'
+
+---
+
+<p>The <code>Random</code> class in <code>dart:math</code> contains 3 methods, <code>nextBool()</code>, <code>nextInt()</code>
+and <code>nextDouble()</code>. To use <code>Random</code>, you will need a <code>import 'dart:math</code> in your
+code.</p>
+
+<h2>nextBool()</h2>
+
+<p>simply returns <code>true</code> or <code>false</code> at random. Here is a little
+function, <code>randUpcase()</code> that demonstrates <code>randBool()</code> use. <code>randUpcase()</code>
+takes a string as an argument, and converts each character in the string to
+uppercase if random.nextBool() is <code>true</code> and leaves it untouched if it is
+<code>false</code>.</p>
+
+<pre><code>String randUpcase(String s) {
+  Random random = new Random();
+  List&lt;String&gt; chars = s.split('');
+  return Strings.join(chars.map(
+    (char) =&gt; random.nextBool() ? char.toUpperCase() : char), '');
+}
+</code></pre>
+
+<p>And here is some sample usage:</p>
+
+<pre><code>var herbs = ["parsley", "sage", "rosemary", "thyme"];
+print(herbs.map((herb) =&gt; randUpcase(herb))); // [pARslEY, SaGE, roSEMaRY, tHYME]
+</code></pre>
+
+<h2>nextInt()</h2>
+
+<p>takes a <code>max</code> int argument and generates a positive int between 0 (inclusive) and <code>max</code>, exclusive.</p>
+
+<p>To generate a random int within a range, you can do something like this:</p>
+
+<pre><code>int randRange(int min, int max) {
+  var random = new Random();
+  return min + random.nextInt(max - min);
+}
+</code></pre>
+
+<p>You can also use <code>nextInt()</code> to randomly shuffle a list (using the familiar
+Fisher-Yates-Knuth algorithm):</p>
+
+<pre><code>List shuffle(List items) {
+  var random = new Random();
+  for (var i = items.length - 1; i &gt; 0; i--) {
+    var j = random.nextInt(i);
+    var temp = items[i];
+    items[i] = items[j];
+    items[j] = temp;
+  }
+  return items;
+}
+</code></pre>
+
+<p>You can use it like this:</p>
+
+<pre><code>var items = ["fee", "fi", "fo", "fum", "smell", "Englishman"];
+print(shuffle(items)); // [fo, smell, fum, Englishman, fee, fi]
+</code></pre>
+
+<h2>nextDouble()</h2>
+
+<p>generates a random floating point value distributed between 0.0
+and 1.0. Here is a little function to simulate a biased coin toss; the <code>percent</code>
+argument alters the percent a coin will return heads (&#8216;H&#8217;). This is pretty much cribbed from
+<a href="http://stackoverflow.com/questions/477237/how-do-i-simulate-flip-of-biased-coin-in-python">this discussion on Stack Overflow</a>:</p>
+
+<pre><code>String flip(num percent) {
+  Random random = new Random();
+  return random.nextDouble() &lt; percent ? 'H' : 'T';
+}
+</code></pre>
+
+<p>And here is some code to test that it works:</p>
+
+<pre><code>int n = 1000;
+int heads = 0;
+for (var i = 0; i &lt; 1000; i++) {
+  if(flip(.20) == "H") heads++;
+}
+print(heads/n); // 0.209, 0.196, etc.
+</code></pre>
+

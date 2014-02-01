@@ -1,0 +1,14 @@
+---
+title: 'Dart on a Chromebook: Success!'
+layout: post
+tags:
+    - chromeos
+    - crouton
+    - dartlang
+    - google
+category: jjinuxland
+published: '2013-02-27T22:57:00-08:00'
+
+---
+
+<div dir="ltr" style="text-align: left;" trbidi="on"><a href="http://1.bp.blogspot.com/-zo0Nhn4Tj28/US7EjS8Y2FI/AAAAAAAAKtM/1lgHE7G7sek/s1600/Screenshot+-+022713+-+18:32:16.png" imageanchor="1" style="clear: right; float: right; margin-bottom: 1em; margin-left: 1em;"><img border="0" src="http://1.bp.blogspot.com/-zo0Nhn4Tj28/US7EjS8Y2FI/AAAAAAAAKtM/1lgHE7G7sek/s320/Screenshot+-+022713+-+18:32:16.png" /></a>I finally have a viable approach to editing Dart directly on a Chromebook running ChromeOS! The usual approach to developing Dart code on a Chromebook is to use Chrome Remote Desktop to connect to another development machine. However, I wanted an approach that would let me develop in Dart while offline, for instance if I'm giving a talk on Dart and my internet connection goes down.<br /><br /><a href="https://github.com/dnschneid/crouton">Crouton</a> is a set of scripts based around debootstrap that bundle up into an easy-to-use, Chromium OS-centric Ubuntu chroot generator. Using Crouton, I was able to create a chroot running a basic Ubuntu setup. Within the chroot, I was able to install a JDK and then Dart Editor. Everything works, as you can see in the picture. I can switch back and forth between XFCE and ChromeOS's desktop using a key combination, and everything still runs at native speed since it's just a simple chroot.<br /><br />I got everything working on my wife's <a href="http://www.samsung.com/us/computer/chrome-os-devices/XE500C21-A01US">Samsung Series 5 Chromebook</a>&nbsp;running an Intel Atom processor. I have a newer ARM-based Chromebook, but there is currently no ARM port of the Dart VM. I used the 32-bit version of the JDK and the 32-bit version of Dart Editor.<br /><br />I'm pretty excited that this works because this is one of the few things that was preventing me from fully switching to a Chromebook :) Now, all I need to do is get my hands on a <a href="http://www.google.com/intl/en/chrome/devices/chromebook-pixel/#utm_campaign=en&amp;utm_source=en-ha-na-us-bkws&amp;utm_medium=ha">Chromebook Pixel</a>!<br /><br /></div>

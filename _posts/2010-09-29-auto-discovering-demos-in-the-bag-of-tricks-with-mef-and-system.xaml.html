@@ -1,0 +1,17 @@
+---
+title: 'Auto-discovering demos in the Bag of Tricks with MEF and System.Xaml'
+layout: post
+tags:
+    - .NET
+    - 'Bag of Tricks'
+    - 'C#'
+    - Programming
+    - Silverlight
+    - thinkpixellab
+    - xaml
+category: kevinwork
+published: '2010-09-29T11:22:00-07:00'
+
+---
+
+<p></p> <p><a href="http://bot.codeplex.com" target="_blank"><img style="display: block; float: none; margin-left: auto; margin-right: auto" src="http://download.codeplex.com/Project/Download/FileDownload.aspx?ProjectName=bot&amp;DownloadId=114209&amp;Build=17184"></a></p> <p>Back in the old days (sometime in 2005) I built out the Bag of Tricks. At the time, the index of the samples was stored in an XML file. I then used data binding to to connect to the XML, show the items and the descriptions, navigate to the page URLs.</p> <p>It was very cool…kinda…</p> <p><img style="border-right-width: 0px; display: block; float: none; border-top-width: 0px; border-bottom-width: 0px; margin-left: auto; border-left-width: 0px; margin-right: auto" title="image" border="0" alt="image" src="http://lh5.ggpht.com/_3BkQqJvzLFM/TKOD75fyK4I/AAAAAAAAKy0/1cIZPHnHhdA/image%5B32%5D.png?imgmax=800" width="512" height="183"> Then <a href="http://msdn.microsoft.com/en-us/library/dd460648.aspx" target="_blank">MEF</a> came along and I realized that having a secondary list of each demo was a bit broken. Each demo should describe itself, right? So I MEF-ized all of the demos that had custom classes by annotating the classes with custom metadata.</p> <p>It was very cool…but…</p> <p>I had a bunch of demos that were Xaml-only. Just pages of Xaml that did their thing.</p> <p><img style="border-right-width: 0px; display: block; float: none; border-top-width: 0px; border-bottom-width: 0px; margin-left: auto; border-left-width: 0px; margin-right: auto" title="image" border="0" alt="image" src="http://lh3.ggpht.com/_3BkQqJvzLFM/TKOD8UW2_aI/AAAAAAAAKy4/wlJs5DzbhuQ/image%5B33%5D.png?imgmax=800" width="567" height="174"> I started the process of creating classes for a bunch of them, but that felt broken. Pages are just xaml. I should be able to use attached properties on each page to specify demo metadata.</p> <p>Thanks to the work of the Xaml team at MS, we got it done. (Thanks for the email support, <a href="http://blogs.windowsclient.net/rob_relyea/" target="_blank">Rob</a>.)</p> <p>Now BOT samples for both Silverlight and WPF use the same mechanism to load samples—although the WPF version gets special support for Xaml-only pages.</p> <p>Download the <a href="http://bot.codeplex.com/SourceControl/list/changesets" target="_blank">latest code on the Source Code page</a> on BOT’s home on Codeplex.</p>  

@@ -1,0 +1,73 @@
+---
+title: 'Dart String Interpolation'
+layout: post
+tags: {  }
+category: shailen-tulis-blog-dart
+published: '2012-11-14T11:23:00-08:00'
+
+---
+
+<p>You can access the value of an expression inside a string by using <code>${expression}</code>.</p>
+
+<pre><code>var greeting = "Hello";
+var person = "Rohan";
+
+print("${greeting}, ${person}!"); // prints "Hello, Rohan!"
+</code></pre>
+
+<p>If the expression is an identifier, the <code>{}</code> can be skipped.</p>
+
+<pre><code>print("$greeting, $person");
+</code></pre>
+
+<p>If the variable inside the <code>{}</code> isn&#8217;t a string, the variable&#8217;s <code>toString()</code> method is called:</p>
+
+<pre><code>int x = 5;
+print("There are ${x.toString()} people in this room");
+</code></pre>
+
+<p>The call to <code>toString()</code> is unnecessary (although harmless) in this case: <code>toString()</code> is already defined
+for ints and Dart automatically calls <code>toString()</code>. What this does mean, though, is that it is the user&#8217;s
+responsibility to define a <code>toString()</code> method when interpolating user-defined objects.</p>
+
+<p>You can interpolate expressions of arbitrary complexity by placing them inside <code>${}</code>:</p>
+
+<p>A ternary <code>if..else</code>:</p>
+
+<pre><code>int x = 5;
+print("There are ${x &lt; 10 ? "a few" : "many"} people in this room");
+</code></pre>
+
+<p>List and Map operations:</p>
+
+<pre><code>List list = [1, 2, 3, 4, 5];
+print("The list is $list, and when squared it is ${list.map((i) {return i * i;})}");
+// The list is [1, 2, 3, 4, 5], and when squared it is [1, 4, 9, 16, 25]
+
+Map map = {"ca": "California", "pa": "Pennsylvania"};
+print("I live in sunny ${map['ca']}");
+// I live in sunny California
+</code></pre>
+
+<p>Notice above that you can access <code>$list</code>(an identifier) without using <code>{}</code>, but the call to <code>list.map</code>(an expression)
+needs to be inside <code>{}</code>. Similarly, in the example below, <code>$x</code> works, but <code>{}</code> are required for <code>-x</code>:</p>
+
+<pre><code>print("x = $x and -x = ${-x}");
+// x = 5 and -x = -5
+</code></pre>
+
+<p>Expressions inside <code>${}</code> can be arbitrarily complex:</p>
+
+<pre><code>List names = ['John', 'Sophena', 'Henrietta'];
+print("${
+  ((names) {
+      return names[(new math.Random()).nextInt(names.length)];
+  })(names)} is the most valueable member of our team");
+</code></pre>
+
+<p>The code above defines an anonymous function to pick a random name from a list and then calls that function with
+<code>names</code> as an argument. All of this is done as part of string interpolation.</p>
+
+<p>Creating a function and immediately calling it is useful in a lot of situations (it is a common practice in Javascript); but, watch out:
+doing this sort of thing can lead to hard to maintain code. An abudance of caution is advised ;)</p>
+

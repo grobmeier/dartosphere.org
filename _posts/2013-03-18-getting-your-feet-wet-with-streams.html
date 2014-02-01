@@ -1,0 +1,625 @@
+---
+title: 'Getting your feet wet with Streams'
+layout: post
+tags:
+    - article
+category: dartwatch
+published: '2013-03-18T19:35:00+00:00'
+
+---
+
+<blockquote class="tldr-embed-widget" data-align="center">
+<a class="link-to-tldr-page" href="http://tldr.io/tldrs/514818632df238f01a0003d0/dartwatch-getting-your-feet-wet-with-streams" target="_blank">Summary of "Dartwatch: Getting your feet wet with Streams"</a> (via <a href="http://tldr.io/" target="_blank">tldr.io</a>)      <br />
+<ul>
+<li style="line-height: 130%; margin-bottom: 10px;">Streams are the new, unified way to interact with async APIs in Dart.</li>
+<li style="line-height: 130%; margin-bottom: 10px;">They emit a repeating series of events (such as messages, file data, user clicks)</li>
+<li style="line-height: 130%; margin-bottom: 10px;">A stream is either single-subscriber or multi-subscriber</li>
+<li style="line-height: 130%; margin-bottom: 10px;">Example stream usage is button.onClick.listen((e) =&gt; print("button clicked"); or reading a file from the file system</li>
+<li style="line-height: 130%; margin-bottom: 10px;">Streams have a number of methods to take partial data (first, take...), check where data matches (contains, any, every), and transform (List<int> to String).</int></li>
+</ul>
+</blockquote>
+<script async="" charset="utf-8" src="//tldr.io/embed/widget-embed.js"></script><br />
+<br />
+Over the last few months you can't help but notice that Streams have appeared in Dart in a big way.<br />
+Whether running in the browser as part of the various html events, such as <span style="font-family: Courier New, Courier, monospace;">button.onClick</span>, or on the server as part of the <span style="font-family: Courier New, Courier, monospace;">dart:io</span> changes, Streams form a unified interface to anything that might send out a repeating series of data.<br />
+<br />
+In this, (the first of two blog posts), you will learn about:<br />
+<ul>
+<li>how to consume streams (this post)</li>
+<li>how to use the Stream classes to send your own data (coming soon)</li>
+</ul>
+<div>
+Before we get started, though, it is important to note that Streams are part of the <span style="font-family: Courier New, Courier, monospace;">dart:async</span> library, and share a close relationship with Dart's async staple: <span style="font-family: Courier New, Courier, monospace;">Future</span><span style="font-family: inherit;"> due to their asynchronous nature (you can't block code until a user clicks a button!)</span></div>
+<div>
+<span style="font-family: Courier New, Courier, monospace;"><br /></span></div>
+<div class="divContainerMain">
+<h3>
+<span style="font-family: inherit;">Background reading: Futures</span></h3>
+<div class="calloutUp">
+<div class="calloutUp2">
+</div>
+</div>
+<div class="divContainerUp">
+The <span style="font-family: Courier New, Courier, monospace;">Future</span> class is used for async communication within various Dart.  A common example is a browser HttpRequest (or AJAX request). &nbsp;You have some code running in the browser that wants to get a value from the server, let's say, the current number of logged on users. &nbsp;If your client-side code called the server and then waited (blocking) for the server to respond, the UI would freeze up until the server responded (due to code execution being halted). <br />
+Fortunately (and provided by the A in AJAX), this call to the server is asynchronous, and modelled by Dart's Future API, which returns a future value wrapped up in a callback exposed by the <span style="font-family: Courier New, Courier, monospace;">then()</span> function.<br />
+<br />
+The following snippet shows how this might work, with the callback function in <b><i>bold italics:</i></b><br />
+<br />
+<span style="font-family: Courier New, Courier, monospace;">var url = "http://example.com/userCount";</span><br />
+<span style="font-family: Courier New, Courier, monospace;">HttpRequest.getString(url).then( <b><i>(String result) {<br />&nbsp;print("User count: $result");</i></b></span><br />
+<span style="font-family: Courier New, Courier, monospace;"><b><i>}</i></b>);</span><br />
+<span style="font-family: Courier New, Courier, monospace;"><br /></span>
+<span style="font-family: inherit;">This pattern is used by streams to retrieve or manipulate data that the stream is sending out to its consumers.</span><br />
+<span style="font-family: Courier New, Courier, monospace;"><br /></span></div>
+</div>
+<div>
+<h3>
+<span style="font-family: inherit;">What are streams for?</span></h3>
+</div>
+<div>
+Imagine you are writing a chat application. &nbsp;On a single client, you will be receiving messages and displaying them to the user. &nbsp;You can't simply write a while loop, because that will block execution, so you need to use async callbacks. &nbsp;This is an ideal use case for streams - you have one part of your code pushing data into the stream, and another part of your code listening to the stream. &nbsp;</div>
+<div>
+<br /></div>
+<h4>
+Key concepts:</h4>
+<div>
+<div>
+<b>Populating a stream</b>: Data gets into a stream from a <span style="font-family: Courier New, Courier, monospace;">StreamController</span></div>
+<div>
+<b>Consuming a stream</b>: Data is sent out of a stream to a <span style="font-family: Courier New, Courier, monospace;">StreamSubscriber</span> (or possibly multiple subscribers).</div>
+</div>
+<div>
+<br /></div>
+<div>
+We'll look at the <b>consuming</b> a stream first as you're more likely to come across streams as a consumer from existing APIs within Dart.</div>
+<h2>
+Consuming a stream</h2>
+<div>
+Lets take a look at some simple stream code. &nbsp;For simplicity we're going to create a stream from a fixed, literal list at the moment by using the stream's <span style="font-family: Courier New, Courier, monospace;">fromIterable()</span> constructor, rather than by dynamically populating it with a <span style="font-family: Courier New, Courier, monospace;">StreamController</span>. &nbsp;</div>
+<div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> data = [<span style="color: blue;">1</span>,<span style="color: blue;">2</span>,<span style="color: blue;">3</span>,<span style="color: blue;">4</span>,<span style="color: blue;">5</span>]; <span style="color: #008800; font-style: italic;">// some sample data</span>
+<span style="color: navy; font-weight: bold;">var</span> stream = <span style="color: navy; font-weight: bold;">new</span> Stream.fromIterable(data);  <span style="color: #008800; font-style: italic;">// create the stream</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+</div>
+<div>
+<br />
+Now that we have a stream that is ready to send out some data, we can use that stream to listen to some data.<br />
+<br />
+The typical way is to use the stream's <span style="font-family: Courier New, Courier, monospace;">listen()</span> method to subscribe to the stream. &nbsp;This has a number of optional parameters, and one mandatory parameter, which is the onData handler callback function:</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:async'</span>;
+
+main() {
+  <span style="color: navy; font-weight: bold;">var</span> data = [<span style="color: blue;">1</span>,<span style="color: blue;">2</span>,<span style="color: blue;">3</span>,<span style="color: blue;">4</span>,<span style="color: blue;">5</span>]; <span style="color: #008800; font-style: italic;">// some sample data</span>
+  <span style="color: navy; font-weight: bold;">var</span> stream = <span style="color: navy; font-weight: bold;">new</span> Stream.fromIterable(data);  <span style="color: #008800; font-style: italic;">// create the stream</span>
+
+  <span style="color: #008800; font-style: italic;">// subscribe to the streams events</span>
+  stream.listen( (value) {     <span style="color: #008800; font-style: italic;">// </span>
+    print(<span style="color: blue;">"Received: $</span>value<span style="color: blue;">"</span>); <span style="color: #008800; font-style: italic;">// onData handler</span>
+  });                          <span style="color: #008800; font-style: italic;">// </span>
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<div>
+<br />
+The <span style="font-family: Courier New, Courier, monospace;">listen()</span> method is fired every time some data is received. In in our stream, the <span style="font-family: Courier New, Courier, monospace;">listen()</span> callback is called for each of the data elements, so the output of running this code is as expected:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;">Received: 1
+Received: 2
+Received: 3
+Received: 4
+Received: 5
+</pre>
+</div>
+<!-- end -->
+
+<br />
+There are other ways to consume data from the stream, using properties such as <span style="font-family: Courier New, Courier, monospace;">first</span>, <span style="font-family: Courier New, Courier, monospace;">last</span>, <span style="font-family: Courier New, Courier, monospace;">length</span>, <span style="font-family: Courier New, Courier, monospace;">isEmpty</span><span style="font-family: inherit;">. &nbsp;Each of these properties return a future: for example:</span><br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">stream.first.then((value) =&gt; print(<span style="color: blue;">"stream.first: $</span>value<span style="color: blue;">"</span>));  // 1
+<span style="color: #008800; font-style: italic;">// stream.last.then((value) =&gt; print("stream.last: $value")); // 5</span>
+<span style="color: #008800; font-style: italic;">// stream.isEmpty.then((value) =&gt; print("stream.isEmpty: $value")); // false</span>
+<span style="color: #008800; font-style: italic;">// stream.length.then((value) =&gt; print("stream.length: $value")); // 5</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+<span style="font-family: inherit;">You'll notice that some of the lines are commented out. &nbsp;This is for an important reason. &nbsp;</span>Streams comes in two flavours: <b>single</b> or <b>multiple</b> subscriber. &nbsp; By default, our <b>stream</b> is a single subscriber. &nbsp;This means that if you try to listen to the stream more than once, you will get an exception, and using any of the callback functions or future properties counts as listening.<br />
+<br />
+You can convert the single subscriber stream into a multi subscriber, or broadcast stream by using the <span style="font-family: Courier New, Courier, monospace;">asBroadcastStream()</span> method, as shown below:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:async'</span>;
+
+<span style="color: navy; font-weight: bold;">void</span> main() {
+  <span style="color: navy; font-weight: bold;">var</span> data = [<span style="color: blue;">1</span>,<span style="color: blue;">2</span>,<span style="color: blue;">3</span>,<span style="color: blue;">4</span>,<span style="color: blue;">5</span>];
+  <span style="color: navy; font-weight: bold;">var</span> stream = <span style="color: navy; font-weight: bold;">new</span> Stream.fromIterable(data);
+  <span style="color: navy; font-weight: bold;">var</span> broadcastStream = stream.asBroadcastStream();
+  
+  broadcastStream.listen((value) =&gt; print(<span style="color: blue;">"stream.listen: $</span>value<span style="color: blue;">"</span>));
+  broadcastStream.first.then((value) =&gt; print(<span style="color: blue;">"stream.first: $</span>value<span style="color: blue;">"</span>));
+  broadcastStream.last.then((value) =&gt; print(<span style="color: blue;">"stream.last: $</span>value<span style="color: blue;">"</span>));
+  broadcastStream.isEmpty.then((value) =&gt; print(<span style="color: blue;">"stream.isEmpty: $</span>value<span style="color: blue;">"</span>));
+  broadcastStream.length.then((value) =&gt; print(<span style="color: blue;">"stream.length: $</span>value<span style="color: blue;">"</span>));
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+</div>
+<div>
+Now that the stream allows multiple subscribers, you can add multiple listeners. You can check whether a stream is a broadcast stream by checking the <span style="font-family: Courier New, Courier, monospace;">stream.isBroadcast</span> property.<br />
+<br />
+<h3>
+Common Stream methods</h3>
+There are lots of methods available on the stream class, be sure to <a href="http://api.dartlang.org/docs/releases/latest/dart_async/Stream.html" target="_blank">check out the API docs</a> for the complete list. &nbsp;In the following section, I'll describe some of the more common methods.<br />
+<h4>
+Subsets of streaming data</h4>
+Streams also have some useful methods for extracting parts of the data being sent out from the stream. &nbsp;The <span style="font-family: Courier New, Courier, monospace;">take()</span>, <span style="font-family: Courier New, Courier, monospace;">skip()</span>, <span style="font-family: Courier New, Courier, monospace;">takeWhile()</span> and <span style="font-family: Courier New, Courier, monospace;">skipWhile()</span> and <span style="font-family: Courier New, Courier, monospace;">where()</span> allow you to take a subset of data, as shown by the following example. &nbsp;Each outputs its own stream that you can listen to.<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">  broadcastStream
+      .where((value) =&gt; value % <span style="color: blue;">2</span> == <span style="color: blue;">0</span>) <span style="color: #008800; font-style: italic;">// divisble by 2</span>
+      .listen((value) =&gt; print(<span style="color: blue;">"where: $</span>value<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// where: 2</span>
+                                                  <span style="color: #008800; font-style: italic;">// where: 4</span>
+  
+  broadcastStream
+      .take(<span style="color: blue;">3</span>) <span style="color: #008800; font-style: italic;">// takes only the first three elements</span>
+      .listen((value) =&gt; print(<span style="color: blue;">"take: $</span>value<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// take: 1</span>
+                                                 <span style="color: #008800; font-style: italic;">// take: 2</span>
+                                                 <span style="color: #008800; font-style: italic;">// take: 3</span>
+  
+  broadcastStream
+      .skip(<span style="color: blue;">3</span>)  <span style="color: #008800; font-style: italic;">// skips the first three elements</span>
+      .listen((value) =&gt; print(<span style="color: blue;">"skip: $</span>value<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// skip: 4</span>
+                                                 <span style="color: #008800; font-style: italic;">// skip: 5</span>
+  
+  broadcastStream
+      .takeWhile((value) =&gt; value &lt; <span style="color: blue;">3</span>) <span style="color: #008800; font-style: italic;">// take while true</span>
+      .listen((value) =&gt; print(<span style="color: blue;">"takeWhile: $</span>value<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// takeWhile: 1</span>
+                                                      <span style="color: #008800; font-style: italic;">// takeWhile: 2</span>
+
+  broadcastStream
+      .skipWhile((value) =&gt; value &lt; <span style="color: blue;">3</span>) <span style="color: #008800; font-style: italic;">// skip while true</span>
+      .listen((value) =&gt; print(<span style="color: blue;">"skipWhile: $</span>value<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// skipWhile: 4</span>
+                                                      <span style="color: #008800; font-style: italic;">// skipWhile: 5</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+<h4>
+Transforming</h4>
+Another useful method is the <span style="font-family: Courier New, Courier, monospace;">transform()</span> method, which takes a <span style="font-family: Courier New, Courier, monospace;">StreamTransformer</span> instance. &nbsp;This allows you to modify the contents of the stream. &nbsp;the <span style="font-family: Courier New, Courier, monospace;">StreamTransformer</span> constructor takes a <span style="font-family: Courier New, Courier, monospace;">handleData</span> function, that is called for each value passed &nbsp;from the stream. &nbsp;You can modify the value as you wish, and add it back to the <span style="font-family: Courier New, Courier, monospace;">StreamSink</span> (more on that later), which results in the modified values being output on the transform() method's stream. &nbsp;The example below takes our data <span style="font-family: Courier New, Courier, monospace;">[1,2,3,4,5]</span> and converts each item into two new String values "<span style="font-family: Courier New, Courier, monospace;">Message n</span><span style="font-family: inherit;">"&nbsp;</span>and "<span style="font-family: Courier New, Courier, monospace;">Body n</span>" values. &nbsp;Each of these are placed onto the new stream.<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6
+7
+8
+9</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;">// define a stream transformer</span>
+<span style="color: navy; font-weight: bold;">var</span> transformer = <span style="color: navy; font-weight: bold;">new</span> StreamTransformer(handleData: (value, sink) {
+  <span style="color: #008800; font-style: italic;">// create two new values from the original value</span>
+  sink.add(<span style="color: blue;">"Message: $</span>value<span style="color: blue;">"</span>);
+  sink.add(<span style="color: blue;">"Body: $</span>value<span style="color: blue;">"</span>);
+});
+  
+<span style="color: #008800; font-style: italic;">// transform the stream and listen to its output</span>
+stream.transform(transformer).listen((value) =&gt; print(<span style="color: blue;">"listen: $</span>value<span style="color: blue;">"</span>));
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+Running this produces the following output:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;">listen: Message: 1
+listen: Body: 1
+listen: Message: 2
+listen: Body: 2
+listen: Message: 3
+listen: Body: 3
+listen: Message: 4
+listen: Body: 4
+listen: Message: 5
+listen: Body: 5
+</pre>
+</div>
+<br />
+<h4>
+Validating</h4>
+Sometimes, you want to validate that the data returned from a stream meets certain conditions. &nbsp;A number of functions are provided which return <span style="font-family: Courier New, Courier, monospace;">Future&lt;bool&gt;</span> values: <span style="font-family: Courier New, Courier, monospace;">any()</span>, <span style="font-family: Courier New, Courier, monospace;">every()</span>, <span style="font-family: Courier New, Courier, monospace;">contains()</span>:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">broadcastStream
+    .any((value) =&gt; value &lt; <span style="color: blue;">5</span>)
+    .then((result) =&gt; print(<span style="color: blue;">"Any less than 5?: $</span>result<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// true</span>
+  
+broadcastStream
+    .every((value) =&gt; value &lt; <span style="color: blue;">5</span>)
+    .then((result) =&gt; print(<span style="color: blue;">"All less than 5?: $</span>result<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// false</span>
+  
+broadcastStream
+    .contains(<span style="color: blue;">4</span>)
+    .then((result) =&gt; print(<span style="color: blue;">"Contains 4?: $</span>result<span style="color: blue;">"</span>)); <span style="color: #008800; font-style: italic;">// true</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+<h4>
+Single value streams</h4>
+</div>
+<div>
+Some streams are designed to return only a single value, and you want to ensure that you only retrieve a &nbsp;single value from them. &nbsp;The &nbsp;<span style="font-family: Courier New, Courier, monospace;">single</span>&nbsp;getter and <span style="font-family: Courier New, Courier, monospace;">singleMatching()</span>&nbsp;method both return a future containing the single value, or raise an error if they don't. &nbsp;For example, with our data set containing 5 values, the following will return the value 1:</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">broadcastStream
+    .singleMatching((value) =&gt; value &lt; <span style="color: blue;">2</span>) 
+    .then((value) =&gt; print(<span style="color: blue;">"single value: $</span>value<span style="color: blue;">"</span>));
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end-->
+whereas, the following will raise an error and halt the application (because the error is unhandled):
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">broadcastStream
+    .single
+    .then((value) =&gt; print(<span style="color: blue;">"single value: $</span>value<span style="color: blue;">"</span>));
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+<blockquote class="tr_bq">
+<b>Note</b>: Thanks to Florian who's just pointed out that the <span style="font-family: Courier New, Courier, monospace;"><b>x</b>Matching</span> (such as <span style="font-family: Courier New, Courier, monospace;"><b>single</b>Matching</span>) has been renamed <span style="font-family: Courier New, Courier, monospace;"><b>x</b>Where</span> (such as <span style="font-family: Courier New, Courier, monospace;"><b>single</b>Where</span>) in the current bleeding edge build. &nbsp;This blog was written with r19425, so likely you'll be using the <span style="font-family: Courier New, Courier, monospace;">Where</span> version rather than the <span style="font-family: Courier New, Courier, monospace;">Matching</span> version.</blockquote>
+<br />
+This brings us neatly on to...<br />
+<br />
+<h3>
+Error handling in streams and futures</h3>
+<div>
+There is already an <a href="http://www.dartlang.org/articles/futures-and-error-handling/" target="_blank">excellent article about handling errors with future based APIs</a> on the dartlang website, so I'll not repeat that here. &nbsp;It's useful to note, though, that we could rewrite our previous snippet to include some error handling so that we can detect that the single() call has failed. &nbsp;A Future's <span style="font-family: Courier New, Courier, monospace;">then()</span> function returns a future, and you can use its&nbsp;<span style="font-family: Courier New, Courier, monospace;">catchError</span> handler. &nbsp;This <span style="font-family: Courier New, Courier, monospace;">catchError</span> handler will catch any errors thrown within the <span style="font-family: Courier New, Courier, monospace;">.then()</span> callback:<br />
+<br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">broadcastStream
+    .single
+    .then((value) =&gt; print(<span style="color: blue;">"single value: $</span>value<span style="color: blue;">"</span>)) 
+    <span style="line-height: 125%;">.</span><b style="line-height: 125%;">catchError</b><span style="line-height: 125%;">((err) =&gt; print(err));</span>
+<span style="color: #008800; font-style: italic;">// output: Bad State: More than one element</span>
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+<h4>
+Error handling with a stream subscription</h4>
+<!-- end -->
+When you use the <span style="font-family: Courier New, Courier, monospace;">listen()</span> function to listen to values coming from a stream, you have the option of adding error handling. &nbsp;The <span style="font-family: Courier New, Courier, monospace;">listen</span> function creates a <span style="font-family: Courier New, Courier, monospace;">StreamSubscription</span>&nbsp;instance, which is the return value of the <span style="font-family: Courier New, Courier, monospace;">listen()</span> function. <br />
+A <span style="font-family: Courier New, Courier, monospace;">StreamSubscription</span> has a number of handlers, namely: <span style="font-family: Courier New, Courier, monospace;">onData</span>, <span style="font-family: Courier New, Courier, monospace;">onError</span> and <span style="font-family: Courier New, Courier, monospace;">onDone</span>. &nbsp;Each of these can be assigned via the <span style="font-family: Courier New, Courier, monospace;">listen()</span> function, or later, via the returned <span style="font-family: Courier New, Courier, monospace;">StreamSubscription</span> object. &nbsp;As far as I can tell, the following two are equivalent. &nbsp;Note the <span style="font-family: Courier New, Courier, monospace;">onError</span> handler, which you can use to catch errors output from the stream.<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;">// setup the handlers through the subscription's handler methods</span>
+<span style="color: navy; font-weight: bold;">var</span> subscription = stream.listen(<span style="color: navy; font-weight: bold;">null</span>);
+subscription.onData((value) =&gt; print(<span style="color: blue;">"listen: $</span>value<span style="color: blue;">"</span>));
+subscription.onError((err) =&gt; print(<span style="color: blue;">"error: $</span>err<span style="color: blue;">"</span>));
+subscription.onDone(() =&gt; print(<span style="color: blue;">"done"</span>));
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+and
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: #008800; font-style: italic;">// setup the handlers as arguments to the listen() function</span>
+<span style="color: navy; font-weight: bold;">var</span> subscription = stream.listen(
+    (value) =&gt; print(<span style="color: blue;">"listen: $</span>value<span style="color: blue;">"</span>),
+    onError: (err) =&gt; print(<span style="color: blue;">"error: $</span>err<span style="color: blue;">"</span>),
+    onDone: () =&gt; print(<span style="color: blue;">"done"</span>));
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+These two both print the same output:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;">listen: 1
+listen: 2
+listen: 3
+listen: 4
+listen: 5
+done
+</pre>
+</div>
+<br />
+<br />
+One of &nbsp;the benefits of using the form <span style="font-family: Courier New, Courier, monospace;">var subscription = stream.listen(null)</span><span style="font-family: inherit;">&nbsp;and then setting up the </span><span style="font-family: Courier New, Courier, monospace;">onData</span><span style="font-family: inherit;"> handler&nbsp;</span>separately means that you can use the <span style="font-family: Courier New, Courier, monospace;">subscription</span> object in the data handler itself.<br />
+The&nbsp;<span style="font-family: Courier New, Courier, monospace;">onDone</span>&nbsp;handler is called when there is no more data, and the underlying stream is closed.<br />
+<br />
+<h3>
+Unsubscribing from the stream</h3>
+</div>
+<div>
+You can also use the <span style="font-family: Courier New, Courier, monospace;">StreamSubscription</span> object to unsubscribe from the stream, by using its <span style="font-family: Courier New, Courier, monospace;">cancel()</span> method. &nbsp;For example, this unsubscribes from the stream after the value 2 is received, so never gets receives the onDone message.</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6
+7</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> subscription = stream.listen(<span style="color: navy; font-weight: bold;">null</span>);
+subscription.onData((value) {
+  print(<span style="color: blue;">"listen: $</span>value<span style="color: blue;">"</span>);
+  <span style="color: navy; font-weight: bold;">if</span> (value == <span style="color: blue;">2</span>) subscription.cancel(); <span style="color: #008800; font-style: italic;">// cancel the subscription</span>
+});
+subscription.onError((err) =&gt; print(<span style="color: blue;">"error: $</span>err<span style="color: blue;">"</span>));
+subscription.onDone(() =&gt; print(<span style="color: blue;">"done"</span>));
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+<h3>
+Streams are generic</h3>
+<div>
+All the stream classes are also generic, which means that you get strongly typed data in the handlers. &nbsp;For example, if you create a Stream&lt;String&gt;, then all the handler functions will also be expecting a string, as shown by the following code:</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">var</span> data = [<span style="color: blue;">1</span>,<span style="color: blue;">2</span>,<span style="color: blue;">3</span>,<span style="color: blue;">4</span>,<span style="color: blue;">5</span>]; <span style="color: #008800; font-style: italic;">// int's, valid</span>
+<span style="color: #008800; font-style: italic;">// var data = ["1","2","3","4","5"]; // strings, not valid</span>
+<span style="color: navy; font-weight: bold;">var</span> stream = <span style="color: navy; font-weight: bold;">new</span> Stream&lt;<span style="color: navy; font-weight: bold;">int</span>&gt;.fromIterable(data); <span style="color: #008800; font-style: italic;">// Stream&lt;int&gt;</span>
+stream.listen((value) { <span style="color: #008800; font-style: italic;">// value must be an int</span>
+  print(<span style="color: blue;">"listen: $</span>value<span style="color: blue;">"</span>);
+});
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<div>
+<br />
+<h3>
+Some real world examples of consuming a stream</h3>
+</div>
+<div>
+Now that you've seen how to consume data in a stream, let's take a look at a couple of real-world examples: handling button clicks, and reading data from a file.</div>
+<h4>
+Button clicks - dart:html</h4>
+<div>
+Buttons have a number of <span style="font-family: Courier New, Courier, monospace;">onXYZ</span> streams defined, and the <span style="font-family: Courier New, Courier, monospace;">onClick</span> stream is defined as <span style="font-family: Courier New, Courier, monospace;">Stream&lt;MouseEvent&gt;</span> - this means that the data that you receive when you listen to the <span style="font-family: Courier New, Courier, monospace;">onClick</span> stream is all going to be a <span style="font-family: Courier New, Courier, monospace;">MouseEvent</span> datatype.</div>
+<div>
+<br /></div>
+<div>
+We'll set up a button, and a couple of event handlers. &nbsp;One that will remain registered, and one that will unregister itself after the third button click.</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre>
+<pre style="line-height: 125%; margin: 0;">19</pre>
+<pre style="line-height: 125%; margin: 0;">20</pre>
+<pre style="line-height: 125%; margin: 0;">21</pre>
+<pre style="line-height: 125%; margin: 0;">22</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:html'</span>;
+
+<span style="color: navy; font-weight: bold;">void</span> main() {
+  <span style="color: navy; font-weight: bold;">var</span> button = <span style="color: navy; font-weight: bold;">new</span> ButtonElement();
+  document.body.children.add(button);
+  
+  button.text = <span style="color: blue;">"Foo"</span>; </pre>
+<pre style="line-height: 125%; margin: 0;">  var clickCount = 0;</pre>
+<pre style="line-height: 125%; margin: 0;">  button.onClick.listen((mouseEvent) {
+    print(<span style="color: blue;">"clicked"</span>); <span style="color: #008800; font-style: italic;">// remain subscribed for all clicks</span>
+  });
+  
+  <span style="color: navy; font-weight: bold;">var</span> subscription = button.onClick.listen(<span style="color: navy; font-weight: bold;">null</span>);
+  subscription.onData((mouseEvent) {
+    print(<span style="color: blue;">"copy that"</span>);</pre>
+<pre style="line-height: 125%; margin: 0;">    clickCount++;
+    window.alert(<span style="color: blue;">"Clicked"</span>);</pre>
+<pre style="line-height: 125%; margin: 0;">    if (clickCount == 3) {
+      subscription.cancel(); <span style="color: #008800; font-style: italic;">// unsubscribe after the third click</span></pre>
+<pre style="line-height: 125%; margin: 0;">    }
+  });  
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<div>
+When the button is clicked, the click counter is incremented, and on the third click, the second subscription is unsubscribed.<br />
+<h4>
+Reading a file - dart:io</h4>
+<div>
+The second real-world example shows how to read some data from a file on the filesystem. &nbsp;The <span style="font-family: Courier New, Courier, monospace;">file.openRead()</span> returns a stream containing the file's contents. &nbsp;The stream (which contains a <span style="font-family: Courier New, Courier, monospace;">List&lt;int&gt;</span>) is decoded using a <span style="font-family: Courier New, Courier, monospace;">StringDecoder</span> class to allow for UTF-8 conversion.</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:io'</span>;
+
+<span style="color: navy; font-weight: bold;">void</span> main() {
+  File file = <span style="color: navy; font-weight: bold;">new</span> File(r<span style="color: blue;">"c:\work\test.txt"</span>);
+  file.openRead().transform(new StringDecoder()).listen(
+      (String data) {
+        print(data); <span style="color: #008800; font-style: italic;">// output the data</span>
+      }, 
+      onError: (error) =&gt; print(<span style="color: blue;">"Error, could not open file"</span>),
+      onDone: () =&gt; print(<span style="color: blue;">"Finished reading data"</span>));
+} 
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+</div>
+<h4>
+</h4>
+<h4>
+Next time: populating your own streams</h4>
+<div>
+Feel free to leave comments, or contact me via my <a href="https://plus.google.com/117571249567635877826/about" target="_blank">G+ profile</a> (especially if you spot any inaccuracies. &nbsp;The snippets were all tested with r19425).<br />
+<br />
+<b>Note</b>: This blog post is now syndicated&nbsp;<a href="http://www.dartlang.org/articles/feet-wet-streams/" target="_blank">as an article on dartlang.org</a>. &nbsp;That version is more likely to stay correct (with respect to any breaking API changes).</div>
+<div class="feedflare">
+<a href="http://feeds.feedburner.com/~ff/Dartwatch?a=EYdoFL_tURE:-WgVyujqqOc:yIl2AUoC8zA"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=yIl2AUoC8zA" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=EYdoFL_tURE:-WgVyujqqOc:V_sGLiPBpWU"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=EYdoFL_tURE:-WgVyujqqOc:V_sGLiPBpWU" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=EYdoFL_tURE:-WgVyujqqOc:qj6IDK7rITs"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=qj6IDK7rITs" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=EYdoFL_tURE:-WgVyujqqOc:63t7Ie-LG7Y"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=63t7Ie-LG7Y" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=EYdoFL_tURE:-WgVyujqqOc:F7zBnMyn0Lo"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=EYdoFL_tURE:-WgVyujqqOc:F7zBnMyn0Lo" border="0"></img></a>
+</div><img src="http://feeds.feedburner.com/~r/Dartwatch/~4/EYdoFL_tURE" height="1" width="1"/>

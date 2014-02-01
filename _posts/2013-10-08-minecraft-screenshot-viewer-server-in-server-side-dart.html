@@ -1,0 +1,20 @@
+---
+title: 'Minecraft Screenshot Viewer Server in Server Side Dart'
+layout: post
+tags:
+    - Dart
+    - Game
+    - GitHub
+    - Graphics
+    - HTTPServer
+    - Minecraft
+    - Screenshot
+    - Server
+    - Viewer
+    - Web
+category: diving-into-dart
+published: '2013-10-08T12:55:00-07:00'
+
+---
+
+<p>Dart and Minecraft are my favourite two time sinks right now so when I had and ideas to combine the two I just had to try it out! Previously I had written a wxPython screenshot viewer and it was a fun project that proved popular on my old Python blog. For non-players of the game, pressing F2 takes an instant screenshot (and saves it into your .minecraft) folder but there is no built in way to view them. This results, for me anyway, in a lot of great screenshots I never look at!</p> <div class="separator" style="clear: both; text-align: center;"><a href="http://2.bp.blogspot.com/-nXZmhBWYkEM/UlRiSG0ARbI/AAAAAAAAtl4/j8UAiyGlXmc/s1600/mcviewerweb.png" imageanchor="1" style="clear: left; float: left; margin-bottom: 1em; margin-right: 1em;"><img border="0" src="http://2.bp.blogspot.com/-nXZmhBWYkEM/UlRiSG0ARbI/AAAAAAAAtl4/j8UAiyGlXmc/s320/mcviewerweb.png" /></a></div> <p>Currently I don't know of any desktop GUI library for Dart so it has to be a web app. On the plus side this means displaying png graphics files is going to be very easy.</p> <p>Dart makes it very easy to build a HTTP server. As we are working Server side we can use dart:io which also includes file access. HTTPServer is the key class and we are provided with a HttpRequest object which gives the URL (e.g. http://divingintodart.blogspot.co.uk ) that the web browser requests a resource with. For the full code see <a href="https://github.com/daftspaniel/dart-minecraftscreenshotviewer/blob/master/mcscreenshotserver.dart">GitHub</a>.</p> <p>If you don't have the game and want to try out this code, just change the path to point at any folder containing png files (no sub-folders are read). </p> <p>I have quite a few ideas to extend this - leave a comment if you have a suggestion! <br/><b>TODO</b><li>Caching files in memory instead of reading from the disk every time. <li>Recording some statistics for access. <li>Refresh images shown without restarting the server. <li>Showing the files date. <li>Test on Windows.  </p>

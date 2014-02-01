@@ -1,0 +1,12 @@
+---
+title: 'You complete me, unless you already have a Dart future'
+layout: post
+tags:
+    - dart
+    - dartlang
+category: seth-ladds-blog
+published: '2013-09-05T18:04:00-07:00'
+
+---
+
+Dart Protip: if you already have an instance of Future, you probably don't need a Completer. Simply return the last Future.<br /><br /><div class="separator" style="clear: both; text-align: center;"><img border="0" src="http://4.bp.blogspot.com/-96p-Dv4Mtpw/UikrkngSzeI/AAAAAAAAbR8/Qwbn1AhxLBg/s1600/jerry_maguire.png" /></div><br /><br />If you find yourself using Completers inside of Futures, like this:<br /><br /><pre class="prettyprint"><code><br />  // NOT recommended.<br /><br />  Future doStuff() {<br />    Future future = someAsyncProcess();<br />    Completer<bool> completer = new Completer();<br /><br />    future.then((msg) {<br />      bool result = msg.result as bool;<br /><br />      completer.complete(result);<br />    });<br /><br />    return completer.future;<br />  }<br /></bool></code></pre><br /><br />then I'm happy to report there's a better way. Dart's Futures chain, so you can do this instead:<br /><br /><pre class="prettyprint"><code><br />  // Recommend.<br />  Future doStuff() {<br />    return someAsyncProcess().then((msg) =&gt; msg.result);<br />  }<br /></code></pre><br /><br />The last Future in a chain can return another Future, or simply a value. It's always a good idea to return a Future from a function that uses a Future. This way, the caller knows when the method finished its async work, and can properly handle potential errors.<br /><br />Completers are great for bridging a callback-based API with a Future-based API. For example, suppose your database driver doesn't use Futures, but you need to return a Future. Try this code:  <br /><pre class="prettyprint"><code><br />  // A good use of a Completer.<br /><br />  Future doStuff() {<br />    Completer completer = new Completer();<br />    runDatabaseQuery(sql, (results) {<br />      completer.complete(results);<br />    });<br />    return completer.future;<br />  }<br /></code></pre><br />To learn more about Futures, read <a href="https://www.dartlang.org/articles/using-future-based-apis/">Using Future Based APIs</a>. To step up your game, read <a href="https://www.dartlang.org/articles/futures-and-error-handling/">Futures and Error Handling</a>.<br /><br />Enjoy!<img src="http://feeds.feedburner.com/~r/SethLaddsBlog/~4/tH5zOzYMW2s" height="1" width="1"/>

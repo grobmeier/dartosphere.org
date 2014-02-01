@@ -1,0 +1,43 @@
+---
+title: 'New Dart (and Polymer) Update (0.8.5.1_r28990)'
+layout: post
+tags:
+    - Dart
+    - Polymer
+    - route
+category: null
+published: '2013-10-23T16:32:46+00:00'
+
+---
+
+<p><img src="http://blog.butlermatt.me/wp-content/uploads/2013/10/editor-update.png" alt="editor update notification" width="504" height="564" class="aligncenter size-full wp-image-72" /><br />
+Woo Hoo! A new update for the integrated build! I&#8217;ve been waiting for this one to land (normally they occur weekly but this was about 2 weeks after the last one). I won&#8217;t detail all the changes in this update, that is done much better in the official <a href="https://groups.google.com/a/dartlang.org/d/topic/announce/Pqjlff_HJAw/discussion" title="Dart Announcements - New Dart build 0.8.5.1_r28990" target="_blank">announcement</a>. But I will mention that this change does require some updates to sources I&#8217;ve released.<br />
+<span id="more-71"></span><br />
+First I will mention the updates required for Polymer since I it seems to be a general theme for many of my posts. One of the important things to now note is that Polymer Elements are now legitimate HTML elements. As such one update that is required is to change your constructors for your elements. All custom elements require the created() constructor. See the <a href="https://groups.google.com/a/dartlang.org/d/topic/web-ui/OYUjGbeP1QA/discussion" title="Dart WebUI - Breaking Change: PolymerElement" target="_blank">breaking change announcement</a>. So to start with, just PolymerElements will look like this:</p>
+<pre class="prettyprint linenums"><code class="language-dart">@CustomTag('my-element')
+class MyElement extends PolymerElement {
+  MyElement.created() : super.created();
+}</code></pre>
+<p>If you are extending an element in your markup, for instance: <code>&lt;polymer-element name="my-element" extends="div"&gt;</code> Then your Dart class must match, and must include a call to <code>polymerCreated()</code> in the created constructor:</p>
+<pre class="prettyprint linenums"><code class="language-dart">@CustomTag('my-element')
+class MyElement extends DivElement with Polymer, Observable {
+  MyElement.created() : super.created() {
+    polymerCreated();
+  }
+}</code></pre>
+<p>This change also means we no longer need to use the <code>xtag</code> property to access the model of our elements. Now we can simply assign directly to the value we receive from <code>query()</code> or <code>querySelector()</code>. As well, the createElement() function no longer exists, and we now create our element the same way we would with a standard HTML element: <code class="language-dart prettyprint">var myElement = new Element.tag('my-element');</code></p>
+<p>Another important change is that we no longer use Polymer boot.js, and are back to using browser/dart.js and (temporarily) polymer/init.dart. See the <a href="https://groups.google.com/a/dartlang.org/d/topic/web-ui/_9c1Hw5L1xc/discussion" title="Dart WebUI - Breaking change: bye bye boot.js..." target="_blank">breaking change announcement</a> for some fine details.</p>
+<p>This change was a little confusing, because you don&#8217;t remove the <code>main()</code> method in all situations, only with Polymer Element imports, as near as I can tell. Some confusion may be related to the up-coming breaking change involving only one Dart script per document. That change will take place for Polymer >=0.8.6, and not the current 0.8.5 so I&#8217;ll delve into that more in-depth later.</p>
+<p>The above changes also mean I had to make some updates to my <a href="http://blog.butlermatt.me/?p=45" title="Polymer and Route">Polymer with Route</a> sample. Most notably are the changes to the Polymer Elements which were required. Additionally however, the latest build was also causing some issues with Route crashing when the browser was launched because there were no routes matching without a hash sign.</p>
+<p>The simple solution to resolve this, was to add a static route for the &#8216;home&#8217; Url which has an empty event handler:</p>
+<pre class="prettyprint linenums"><code class="language-dart">final HomeUrl = 
+    new UrlPattern(r'/routes_example/web/routes_example.html');
+// ... 
+// And in my router initialization
+var router = new Router()..addHandler(MyUrl, route_handler)
+    ..addHandler(HomeUrl, (_) { })
+    ..listen();
+</code></pre>
+<p>I&#8217;m not sure why this didn&#8217;t generate an error in the previous version, but this should help to prevent future issues with the missing hash route. It would have also been possible to modify our regular expression to conditionally look for the hash sign and additional characters but ultimately I didn&#8217;t think it would have been that beneficial for this small sample.</p>
+<p>See the full changes made to the <a href="https://github.com/butlermatt/routes_example" title="GitHub: Routes Example" target="_blank">Routes Example</a> with <a href="https://github.com/butlermatt/routes_example/commit/fe89f0197e2d7fcf4de3cc32c38c4fe66f738573" title="GitHub - Commit: Updates to Polymer 0.8.5" target="_blank">this commit</a>.</p>
+

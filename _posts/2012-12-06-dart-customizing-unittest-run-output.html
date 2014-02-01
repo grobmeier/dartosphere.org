@@ -1,0 +1,270 @@
+---
+title: 'Dart: Customizing Unittest Run Output'
+layout: post
+tags: {  }
+category: shailen-tulis-blog-dart
+published: '2012-12-06T14:57:00-08:00'
+
+---
+
+<p><code>unittest</code> provides a default configuration that determines the
+content and appearance of the output from running your tests. In addition, the
+package provides fancier configurations for running tests in the browser, or on
+the VM.</p>
+
+<p>But suppose you want to customize the test run output? Maybe you are an ardent
+Test Driven Development (TDD) hacker, and want to have your test output be
+in sync with TDD Red-Green-Refactor workflow (passing tests in green, failing
+tests in red); maybe you want a green &#8220;.&#8221; printed to the command line for every
+passing test (you don&#8217;t care for all the &#8220;PASS: &#8230;&#8221; messages that the default
+configuration gives you), and a red &#8216;F&#8217; printed for every failing test, with
+more details about the failures in the summary. You also want the ouput to
+list the file where the tests being run are located and you want to know how
+long it takes to run all your tests.</p>
+
+<p>To do all this, you need to extend the default <code>Configuration</code> class (see
+<code>unittest/src/config.dart</code>) and customize your environment by passing an
+instance of that class to <code>configure()</code> as an argument.
+A <code>Configuration</code> has several functions that get called at different stages of
+the testing process:</p>
+
+<pre><code>onInit(), when the test framework is initialized
+onStart(), before the first test is run
+onTestStart(), when a test starts running
+onTestResult(), upon the completion of each test
+onDone(), when all tests are done
+</code></pre>
+
+<p>and you can override all of these.</p>
+
+<p>Let&#8217;s extend <code>Configuration</code> and begin by adding a few constants to help with the
+presentation:</p>
+
+<pre><code>class ColorTestRunner extends Configuration {
+  const String NEUTRAL_COLOR = "\u001b[33;34m"; // blue
+  const String PASS_COLOR = "\u001b[33;32m";    // green
+  const String FAIL_COLOR = "\u001b[33;31m";    // red
+  const String RESET_COLOR = "\u001b[33;0m";
+
+  ...
+}
+</code></pre>
+
+<p>We will prefix our failing output with <code>FAIL_COLOR</code>, passing output
+with <code>PASS_COLOR</code> and use <code>RESET_COLOR</code> to revert back to the user&#8217;s settings.
+We will use <code>NEUTRAL_COLOR</code> to print a small introduction and the summary.</p>
+
+<p>We are now ready to start filling out our <code>ColorTestRunner</code> class. The
+<code>onInit()</code> of <code>Configuration</code> is empty; let&#8217;s add a little introduction that
+prints the name of the file containing the tests:</p>
+
+<pre><code>void onInit() { 
+  print(NEUTRAL_COLOR);
+  Options options = new Options();  
+  print("Running tests for ${options.script}");
+  print(RESET_COLOR);
+}
+</code></pre>
+
+<p>Now let&#8217;s move on to <code>onStart()</code>. This is called after <code>onInit()</code> but before
+the first test is run. In the default <code>Configuration</code>, this prints the
+<code>unittest-suite-wait-for-done</code> message. We pushed our custom message in
+the <code>onInit()</code>, so we don&#8217;t need another message here. But this would be a
+good place to start running the stopwatch for timing our tests:</p>
+
+<pre><code>Stopwatch stopwatch = new Stopwatch();
+void onStart() =&gt; stopwatch.start();
+</code></pre>
+
+<p><code>Configuration</code> defines the twin <code>onTestStart()</code> and <code>onTestResult()</code> functions
+that basically define which test is currently being run:</p>
+
+<pre><code>void onTestStart(TestCase testCase) {
+  currentTestCase = testCase;
+}
+
+void onTestResult(TestCase testCase) {
+  currentTestCase = null;
+}
+</code></pre>
+
+<p>We don&#8217;t need to tinker with <code>onTestRun()</code>, but we&#8217;ll override <code>onTestResult()</code> to
+output the green <code>.</code> or red <code>F</code> for passing and failing tests, respectively:</p>
+
+<pre><code>void onTestResult(TestCase testCase) {
+  var color = testCase.result == PASS ? PASS_COLOR : FAIL_COLOR;
+  stdout.writeString("${color}${testCase.result == PASS ? '.' : 'F'}$RESET_COLOR");
+  currentTestCase = null;
+}
+</code></pre>
+
+<p>The <code>onDone()</code> function is where <code>Configuration</code> does the heavy lifting: it
+outputs the status and description of each test as well as the error messages
+and stack traces for failing tests. Then, it provides summary informtion for
+the test run. We&#8217;ll just skip over the passing tests and color-code our
+summary (it will be red if even a single test fails). Then, we will output
+the total time taken for the tests to run (remember the stopwatch we started in
+<code>onStart()</code>?.</p>
+
+<p>With a little bit of refactoring, and some additional formatting added to the
+output, here is what the script looks like:</p>
+
+<pre><code>library colorTestRunner;
+
+import 'package:unittest/unittest.dart';
+import 'dart:io';
+
+/// Overrides default Configuration to provide colorful command line
+/// output when tests are run. Loosely based on RSpec (https://www.relishapp.com/rspec).
+/// Outputs green (passing) "." and red (failing) "F" characters as tests are running. 
+/// If there are failing tests, provides detailed error report in red.
+/// Provides a short summary.
+class ColorTestRunner extends Configuration {
+  const String NEUTRAL_COLOR = "\u001b[33;34m"; // blue
+  const String PASS_COLOR = "\u001b[33;32m";    // green
+  const String FAIL_COLOR = "\u001b[33;31m";    // red
+  const String RESET_COLOR = "\u001b[33;0m";
+  const int BORDER_LENGTH = 80;
+
+  Stopwatch stopwatch = new Stopwatch();
+
+  void onInit() =&gt; _printResultHeader();
+  void onStart() =&gt; stopwatch.start();
+
+  void onTestResult(TestCase testCase) {
+    var color = testCase.result == PASS ? PASS_COLOR : FAIL_COLOR;
+    _colorPrint(color, testCase);
+    currentTestCase = null;
+  }
+
+  void onDone(int passed, int failed, int errors, List&lt;TestCase&gt; testCases,
+              String uncaughtError) {
+    stopwatch.stop();
+
+    _printFailingTestInfo(testCases);
+    _printSummary(passed, failed, errors, uncaughtError);
+    print("${NEUTRAL_COLOR}Total time = ${stopwatch.elapsedMilliseconds / 1000} seconds.$RESET_COLOR");
+  }
+
+  void _printFailingTestInfo(List&lt;TestCase&gt; testCases) {
+    print(FAIL_COLOR);
+    for (var testCase in testCases) {
+      if (testCase.result != PASS) {
+        print("${testCase.result.toUpperCase()}: ${testCase.description}");
+
+        if (testCase.message != '') {
+          print(testCase.message);
+        }
+
+        if (testCase.stackTrace != null &amp;&amp; testCase.stackTrace != '') {
+          print(testCase.stackTrace);
+        }
+
+        print(_repeatString(".", BORDER_LENGTH));
+      }
+    }
+    print(RESET_COLOR);
+  }
+
+  void _printSummary(int passed, int failed, int errors, String uncaughtError) {
+    if (_passed(failed, errors, uncaughtError)) {
+      print(PASS_COLOR); 
+      print("All $passed tests passed.");
+    } else {
+      print(FAIL_COLOR); 
+      if (_noTestsFound(passed, failed, errors)) {
+        print('No tests found.');
+      } else if (uncaughtError != null) {
+        print("Top-level uncaught error: $uncaughtError");
+      } else {
+        print("$passed PASSED, $failed FAILED, $errors ERRORS.");
+      }
+    }
+  }
+
+  bool _noTestsFound(int passed, int failed, int errors) {
+    return passed == 0 &amp;&amp; failed == 0 &amp;&amp; errors == 0;
+  }
+
+  bool _passed(int failed, int errors, String uncaughtError) {
+    return failed == 0 &amp;&amp; errors == 0 &amp;&amp; uncaughtError == null;
+  }
+
+  void _printResultHeader() {
+    print(NEUTRAL_COLOR);
+    Options options = new Options();  
+    String description = "Running tests for ${options.script}";
+    String frame = _repeatString("=", description.length);
+    print(frame);
+    print(description);
+    print(frame);
+    print(RESET_COLOR);
+  }
+
+  String _repeatString(String str, int times) {
+    StringBuffer sb = new StringBuffer();
+    for (var i = 0; i &lt; times; i++) {
+      sb.add(str);  
+    }
+    return sb.toString();
+  }
+
+  void _colorPrint(String color, TestCase testCase) {
+    stdout.writeString("${color}${testCase.result == PASS ? '.' : 'F'}$RESET_COLOR");
+  }
+}
+
+/// The function that should be called right before the tests.
+void useColorTestRunner() {
+  configure(new ColorTestRunner());
+}
+</code></pre>
+
+<p>To use this script, call the <code>useColorTestRunner()</code> just before where you have
+defined your tests. Here is a simple use case:</p>
+
+<pre><code>import 'package:unittest/unittest.dart';
+import '&lt;path to&gt;/color_test_runner.dart';
+
+num factorial(num n) {
+  if (n &lt; 2) {
+    return 1;
+  } else {
+    return n * factorial(n - 1);
+  }
+}
+
+void main() {
+  useColorTestRunner(); // we're using our own configuration
+
+  test("when n is 0", () {   
+    expect(factorial(0), equals(1));
+  });
+
+  test("when n is 1", () {
+    expect(factorial(1), equals(1));
+  });
+
+  test("when n is &gt; 1", () {
+    expect(factorial(5), equals(120));
+  });
+}
+</code></pre>
+
+<p>Call this from the command line: <code>dart &lt;test file&gt;.dart</code> and your output should
+look like this:</p>
+
+<p><img src="http://shailen.github.com/images/passing_tests.png"></p>
+
+<p>Everything is green. Great! But perhaps you were in a hurry and got your <code>0</code> and
+<code>1</code> mixed up in the first test:</p>
+
+<pre><code>test("when n is 0", () {   
+  expect(factorial(1), equals(0)); // oops....!
+});
+</code></pre>
+
+<p>If you run the tests now, you&#8217;ll see:</p>
+
+<p><img src="images/failing_tests.png"></p>
+

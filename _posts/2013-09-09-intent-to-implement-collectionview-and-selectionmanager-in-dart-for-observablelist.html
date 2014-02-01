@@ -1,0 +1,12 @@
+---
+title: 'Intent to Implement: CollectionView and SelectionManager in Dart for ObservableList'
+layout: post
+tags:
+    - dart
+    - dartlang
+category: kevinwork
+published: '2013-09-09T13:27:00-07:00'
+
+---
+
+<div class="separator" style="clear: both; text-align: center;"><a href="https://www.dartlang.org/polymer-dart/" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="330" src="http://1.bp.blogspot.com/-b-G4LDluczo/Ui4yiV4X_MI/AAAAAAAAJGM/pVTXW-QnY60/s400/polymer.png" width="400" /></a></div><br />I'm getting into some non-trivial infrastructure and I wanted to put the word out.<br /><br />The story:<br /><ol><li>The <a href="http://pub.dartlang.org/packages/observe">Observe package</a> exposes <code>ObservableList&lt;E&gt;</code>, which works with <a href="http://pub.dartlang.org/packages/mdv">Model Driven Views (mdv)</a> to enable dynamic lists in your UI. This is all wrapped up with Polymer.</li><li>I'd be nice to have a generic way to sort and filter an input list. <code>CollectionView&lt;E&gt;</code> wraps an <code>ObservableList&lt;E&gt;</code> with filter and sort properties. Changes to the source list or the properties cause the <code>CollectionView</code>, which is a readonly implementation of <code>ObservableList</code> to update accordingly.</li><li><code>SelectionManager&lt;E&gt;</code> also wraps an <code>ObservableList&lt;E&gt;</code>. It appears as <code>ObservableList&lt;Selectable&lt;E&gt;&gt;</code>. <code>Selectable</code> has two properties: <code>E get value</code> and <code>bool get isSelected</code>. It handles the semi-gnarly process of managing selection (single-selection to start with, then multi-selection at some point--hopefully).</li></ol><div>These are core infrastructure pieces that, frankly, I miss from .NET/WPF.</div><div><br /></div><div>I'm not ready to share code yet, but I wanted to give folks a heads-up.</div><div><br /></div><div>Ideally, these types of concepts would be once (or rarely), tested like crazy, and used everywhere.</div><div><br /></div><div>I may try to get them into the <a href="http://pub.dartlang.org/packages/observe">Observe</a> package at some point, once they are baked.</div><div><br /></div><div>If anyone has suggestions, feedback, other implementations, or interest, please let me know.</div>

@@ -1,0 +1,99 @@
+---
+title: 'Getting started with Dart and Cordova from scratch on iOS'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2012-12-23T00:00:00-08:00'
+
+---
+
+<p>Looking for some fun this weekend I decided to investigate the current status of using dart and cordova together.</p>
+
+<p>Breif history of Dart and Cordova comes down to two projects, <a href="https://github.com/Solvr/dart-gap">solvr/dart-gap</a> and <a href="https://github.com/rikulo/gap">rikulo/gap</a> have ventured into creating a frameworks for dart and cordova interop. <a href="http://rikulo.org/">rikulo</a> has latest release, decided to give it a spin. After some tinkering I had no luck with rikulo&#8217;s gap.</p>
+
+<p>I decided to go down the route of finding the most minimal amount of dart code needed for loading cordova apps. A major step forward for working with cordova was the introduction of <a href="https://github.com/dart-lang/js-interop">js-interop</a>. js-interop will provide the communications needed between cordova.js context and the dart application. This example just gets the <code>'deviceready'</code> event fired off from <code>cordova.js</code>.</p>
+
+<p>Download the phonegap <a href="http://phonegap.com/download">build</a> and unpack into a folder.</p>
+
+<div>
+  <pre><code class='bash'>$ mkdir ~/dart/phonegap_from_scratch/
+$ cd ~/dart/phonegap_from_scratch/
+$ unzip ~/Downloads/phonegap-phonegap-2.2.0-0-g8a3aa47.zip
+$ mv phonegap-phonegap-8a3aa47 phonegap</code></pre>
+</div>
+
+
+<p>This is mostly done on <a href="http://docs.phonegap.com/en/2.2.0/guide_getting-started_ios_index.md.html#Getting%20Started%20with%20iOS">MacOSX</a></p>
+
+<p>Setup and create a phonegap project</p>
+
+<div>
+  <pre><code class='bash'>$ ./create ~/dart/phonegap_from_scratch/phonegap_from_scratch com.phonegap.from.scratch phonegap_from_scratch</code></pre>
+</div>
+
+
+<p>Open up <code>Xcode</code> and do a sanity check with the default generated project from the <code>create</code> script.</p>
+
+<div>
+  <pre><code class='bash'>$ open /Applications/Xcode.app</code></pre>
+</div>
+
+
+<p><a href="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/open_project_dialog.png"><img src="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/open_project_dialog.png" alt="open_project_dialog" /></a></p>
+
+<p><a href="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/sanity_check.png"><img src="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/sanity_check.png" alt="sanity_check" /></a></p>
+
+<p>Remove all the files in <code>www</code>, rename <code>cordova-2.2.0.js</code>.</p>
+
+<div>
+  <pre><code class='bash'>$ cd ~/dart/phonegap_from_scratch/phonegap_from_scratch/www/
+$ rm -rf css img index.html js spec res spec.html
+$ mv cordova-2.2.0.js cordova.js</code></pre>
+</div>
+
+
+<p>Create a dart project in the <code>www</code> directory. This is not a typical dart package layout but works well for building and debugging. A real project might need some type of build scripts that call <code>dart2js</code> and copy files over to the <code>www</code> directory in the cordova generated project.</p>
+
+<script src="https://gist.github.com/4366847.js"><!-- gist --></script>
+
+
+
+
+<script src="https://gist.github.com/4366855.js"><!-- gist --></script>
+
+
+
+
+<script src="https://gist.github.com/4366906.js"><!-- gist --></script>
+
+
+
+
+<script src="https://gist.github.com/4367140.js"><!-- gist --></script>
+
+
+<p>Install the <code>pub</code> dependencies. The <code>dart.js</code> and <code>dart_interop.js</code> need to be stored locally within the cordova project.</p>
+
+<div>
+  <pre><code class='bash'>~/dart/phonegap_from_scratch/phonegap_from_scratch/www
+$ pub install
+Resolving dependencies...
+Dependencies installed!
+
+$ cp packages/js/dart_interop.js .
+$ wget https://dart.googlecode.com/svn/branches/bleeding_edge/dart/client/dart.js</code></pre>
+</div>
+
+
+<p><a href="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/opening_dart_editor.png"><img src="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/opening_dart_editor.png" alt="opening_dart_editor" /></a></p>
+
+<p><a href="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/dart_project_layout.png"><img src="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/dart_project_layout.png" alt="dart_project_layout" /></a></p>
+
+<p>Having little success with the other projects it took some time to figure out a proper way to load all the js files. Some combinations would not yield the <code>‘deviceready’</code> event expected from cordova. The loading order that worked best for me was <code>cordova.js</code>, <code>dart.js</code>, <code>dart_interop.js</code> and then the actual application <code>app.dart.js</code>. Running the build script and loading up the simulator should yeild some output on the console.</p>
+
+<p>This is just the start of exploring integrations between dart and cordova. At least until the existing projects have an easier solution to bootstraping with their frameworks.</p>
+
+<p><a href="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/most_minimal_event_deviceready.png"><img src="http://financeCoding.github.com/images/2012-12-23-phonegap-from-scratch-images/most_minimal_event_deviceready.png" alt="most_minimal_event_deviceready" /></a></p>
+
+<p>Full example can be found on github <a href="http://financeCoding.github.com/blog/categories/phonegap-from-scratch/">phonegap_from_scratch</a>.</p>
+

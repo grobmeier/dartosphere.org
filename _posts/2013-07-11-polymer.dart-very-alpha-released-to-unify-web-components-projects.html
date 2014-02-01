@@ -1,0 +1,141 @@
+---
+title: 'Polymer.dart (very alpha) released to unify web components projects'
+layout: post
+tags:
+    - news
+category: dartwatch
+published: '2013-07-11T11:00:00+01:00'
+
+---
+
+<span style="font-size: x-small;">TLDR: <a href="https://groups.google.com/a/dartlang.org/d/msg/web-ui/6laXXxRtA7k/Ms0q3EIMt9MJ">Polymer.dart released</a>.</span><br />
+<br />
+Web Components and Model Driven Views are a <a href="https://dvcs.w3.org/hg/webcomponents/raw-file/tip/explainer/index.html" target="_blank">set of specifications</a> that are being developed at the W3C. &nbsp;Google's Dart team have been busy building their implementation of web components and model driven views under the Web UI name, and have built a nice framework for creating web applications.<br />
+<br />
+<h2>
+Dart's Web UI</h2>
+Using Web UI, you can define custom elements, like the Dart Editor's sample "Click Counter"<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; border-width: .1em .1em .1em .8em; border: solid gray; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;">    &lt;element name=<span style="color: #a31515;">"click-counter"</span>&nbsp;</pre>
+<pre style="line-height: 125%; margin: 0;">                constructor=<span style="color: #a31515;">"CounterComponent"</span> extends=<span style="color: #a31515;">"div"</span>&gt;
+      &lt;template&gt;
+        &lt;div&gt;
+          &lt;button on-click=<span style="color: #a31515;">"increment()"</span>&gt;Click me&lt;/button&gt;&lt;br /&gt;
+          &lt;span&gt;(click count: {{count}})&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/template&gt;
+      &lt;script type=<span style="color: #a31515;">"application/dart"</span>&gt;
+        <span style="color: blue;">import</span> <span style="color: #a31515;">'package:web_ui/web_ui.dart'</span>;
+
+        <span style="color: blue;">class</span> CounterComponent <span style="color: blue;">extends</span> WebComponent {
+          @observable
+          <span style="color: blue;">int</span> count = 0;
+        
+          <span style="color: blue;">void</span> increment() {
+            count++;
+          }
+        }  
+      &lt;/script&gt;
+    &lt;/element&gt;
+</pre>
+</div>
+<!-- end -->
+
+<br />
+<br />
+And then import them into your application like any other HTML tag:
+<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; border-width: .1em .1em .1em .8em; border: solid gray; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;"><span style="color: red;">&lt;click-counter</span> <span style="color: red;">count=</span><span style="color: blue;">"5"</span>&gt;<span style="line-height: 125%;">&lt;/click-counter&gt;</span></pre>
+</div>
+<!-- end -->
+
+<br />
+<br />
+Dart's Web UI tool takes this and runs it through a compiler that inserts the required code to make this work cross-browser, even where web component spec's haven't been implemented. &nbsp;You can read much more about Web UI on the <a href="http://www.dartlang.org/articles/web-ui/" target="_blank">Dart website</a>.<br />
+<br />
+<h2>
+Polymer Project</h2>
+<div>
+Separately, a group of bright Googlers have been working on the polymer project, announced at Google I/O this year. &nbsp;The polymer project provides the underlying platform.js, which provides polyfills to fill in the gaps where native browser implementations of the various web components spec's don't yet exist. &nbsp;This also lets you use web component technology across multiple browsers.</div>
+<div>
+<br /></div>
+<div>
+On top of the platform.js lives the Polymer libraries. &nbsp;Polymer provides syntactic sugar to the underlying web components frameworks, in the same way that jQuery or dart:html provides syntactic sugar to the DOM. &nbsp;It's also worth a note that last month Mozilla's <a href="http://www.x-tags.org/blog" target="_blank">also decided to use the Platform.js polyfills</a>&nbsp;for their X-Tag project (which has similar goals to Polymer).</div>
+<div>
+<br /></div>
+<div>
+A Polymer web component looks like this:</div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; border-width: .1em .1em .1em .8em; border: solid gray; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">&lt;element</span> <span style="color: red;">name=</span><span style="color: blue;">"click-counter"</span> <span style="color: red;">attributes=</span><span style="color: blue;">"count"</span><span style="color: navy; font-weight: bold;">&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;template&gt;</span>
+        <span style="color: navy; font-weight: bold;">&lt;button</span> <span style="color: red;">on-click=</span><span style="color: blue;">"increment"</span><span style="color: navy; font-weight: bold;">&gt;</span>Click Me<span style="color: navy; font-weight: bold;">&lt;/button&gt;&lt;br</span> <span style="color: navy; font-weight: bold;">/&gt;</span>
+        <span style="color: navy; font-weight: bold;">&lt;span&gt;</span>click count: {{ count }}<span style="color: navy; font-weight: bold;">&lt;/span&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;/template&gt;</span>
+    <span style="color: navy; font-weight: bold;">&lt;script&gt;</span>
+        Polymer.register(<span style="color: navy; font-weight: bold;">this</span>,{
+          count: <span style="color: blue;">0</span>,
+          increment : <span style="color: navy; font-weight: bold;">function</span>(e) {
+            <span style="color: navy; font-weight: bold;">this</span>.count++;
+          }
+        });
+    <span style="color: navy; font-weight: bold;">&lt;/script&gt;</span>
+<span style="color: navy; font-weight: bold;">&lt;/element&gt;</span>
+</pre>
+</div>
+<br />
+<!-- end -->
+
+And is imported into your HTML in the same way:<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; border-width: .1em .1em .1em .8em; border: solid gray; overflow: auto; padding: .2em .6em; width: auto;">
+<pre style="line-height: 125%; margin: 0;"><span style="color: red;">&lt;click-counter</span> <span style="color: red;">count=</span><span style="color: blue;">"5"</span>&gt;&lt;/click-counter&gt;
+</pre>
+</div>
+<!-- end -->
+
+<br />
+The difference with this is that it doesn't need the underlying compile step that you get with Dart's Web UI tool (because the polyfills are applied at runtime rather than build time.<br />
+<h2>
+How does this affect Dart?</h2>
+<div>
+In an announcement this morning on the Dart <a href="https://groups.google.com/a/dartlang.org/d/msg/web-ui/6laXXxRtA7k/Ms0q3EIMt9MJ" target="_blank">Web UI mailing list</a>, John Messerly announced the publishing of <a href="https://pub.dartlang.org/packages/polymer">polymer.dart</a> to pub, along with a number of the polyfill packages, such as <a href="https://pub.dartlang.org/packages/observe">observe</a>, <a href="https://pub.dartlang.org/packages/mdv">mdv</a>, and <a href="https://pub.dartlang.org/packages/shadow_dom">shadow_dom</a>. John notes:</div>
+<blockquote class="tr_bq">
+"T<span style="border: 0px; font-family: Arial; font-size: 15px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">oday we continue our mission by publishing the beginnings of </span><span style="border: 0px; font-family: Arial; font-size: 15px; font-style: italic; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">polymer.dart</span><span style="border: 0px; font-family: Arial; font-size: 15px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">, our port of the Polymer stack. ...</span><span style="border: 0px; font-family: Arial; font-size: 15px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">&nbsp;The Dart team is collaborating with the Polymer team to ensure that polymer.dart elements and polyfills are fully compatible with Polymer."</span></blockquote>
+The compatible with polymer is great - hopefully this means you'll be able to take your Web Components &nbsp;from Polymer and use it with Dart, and vice-versa. &nbsp;At the very least, you'll be able to use your knowledge in both places.<br />
+<br />
+Polymer.dart is at a very early stage (as indeed are the web components spec's themselves). John says:<br />
+<blockquote class="tr_bq">
+<div dir="ltr" style="background-color: white; border: 0px; color: #222222; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.15; margin-bottom: 0pt; margin-top: 0pt; padding: 0px; vertical-align: baseline;">
+<span style="background-color: transparent; border: 0px; color: black; font-family: Arial; font-size: 15px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">"This is only the beginning. Polymer and web components are evolving, and we’re going to keep bringing that to you. Some of the things we’ll be working on are:</span></div>
+<ul style="background-color: white; color: #222222; font-family: Arial, Helvetica, sans-serif; font-size: 13px; margin-bottom: 0pt; margin-top: 0pt;">
+<li dir="ltr" style="background-color: transparent; color: black; font-family: Arial; font-size: 15px; line-height: 17px; list-style-type: disc; vertical-align: baseline;"><div dir="ltr" style="border: 0px; font-size: 13px; line-height: 1.15; margin-bottom: 0pt; margin-top: 0pt; padding: 0px; vertical-align: baseline;">
+<span style="background-color: transparent; border: 0px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">declarative &lt;polymer-element&gt; and custom elements.</span></div>
+</li>
+<li dir="ltr" style="background-color: transparent; color: black; font-family: Arial; font-size: 15px; line-height: 17px; list-style-type: disc; vertical-align: baseline;"><div dir="ltr" style="border: 0px; font-size: 13px; line-height: 1.15; margin-bottom: 0pt; margin-top: 0pt; padding: 0px; vertical-align: baseline;">
+<span style="background-color: transparent; border: 0px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">more new, up-to-date polyfill packages, like html_imports.</span></div>
+</li>
+<li dir="ltr" style="background-color: transparent; color: black; font-family: Arial; font-size: 15px; line-height: 17px; list-style-type: disc; vertical-align: baseline;"><div dir="ltr" style="border: 0px; font-size: 13px; line-height: 1.15; margin-bottom: 0pt; margin-top: 0pt; padding: 0px; vertical-align: baseline;">
+<span style="background-color: transparent; border: 0px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">removing the mandatory compiler step for polymer.dart. Just edit, save &amp; refresh!</span></div>
+</li>
+<li dir="ltr" style="background-color: transparent; color: black; font-family: Arial; font-size: 15px; line-height: 17px; list-style-type: disc; vertical-align: baseline;"><div dir="ltr" style="border: 0px; font-size: 13px; line-height: 1.15; margin-bottom: 0pt; margin-top: 0pt; padding: 0px; vertical-align: baseline;">
+<span style="background-color: transparent; border: 0px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">bring the Polymer UI elements to Dart.</span></div>
+</li>
+<li dir="ltr" style="background-color: transparent; color: black; font-family: Arial; font-size: 15px; line-height: 17px; list-style-type: disc; vertical-align: baseline;"><div dir="ltr" style="border: 0px; font-size: 13px; line-height: 1.15; margin-bottom: 0pt; margin-top: 0pt; padding: 0px; vertical-align: baseline;">
+<span style="background-color: transparent; border: 0px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;">up to date documentation for all of this shiny new stuff."</span></div>
+<div>
+<span style="background-color: transparent; border: 0px; margin: 0px; padding: 0px; vertical-align: baseline; white-space: pre-wrap;"><br /></span></div>
+</li>
+</ul>
+</blockquote>
+The removal of the compiler step is a going to be a great leap forward - it seems (to me at least) that's where a number of people have problems, both when developing and deploying.<br />
+<br />
+John also says that:<br />
+<blockquote class="tr_bq">
+<span style="background-color: white; font-family: Arial; font-size: 15px; line-height: 17px; white-space: pre-wrap;">It's still very early for polymer.dart, but we welcome you to try out the new packages. We’ll be maintaining the web_ui package for a considerable time, but will eventually be sunsetting it in favor of Polymer.</span></blockquote>
+You can check out the source code in the&nbsp;<a href="https://github.com/dart-lang/web-ui/tree/polymer">polymer branch of Web UI</a>, and take a look at some of the examples in the&nbsp;<a href="https://github.com/dart-lang/web-ui/tree/polymer/example">example subfolder</a>. &nbsp;You'll see that not much has changed at the moment, but watch this space!<div class="feedflare">
+<a href="http://feeds.feedburner.com/~ff/Dartwatch?a=M3WCde6E5S4:NkyGFlMmwKU:yIl2AUoC8zA"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=yIl2AUoC8zA" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=M3WCde6E5S4:NkyGFlMmwKU:V_sGLiPBpWU"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=M3WCde6E5S4:NkyGFlMmwKU:V_sGLiPBpWU" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=M3WCde6E5S4:NkyGFlMmwKU:qj6IDK7rITs"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=qj6IDK7rITs" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=M3WCde6E5S4:NkyGFlMmwKU:63t7Ie-LG7Y"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=63t7Ie-LG7Y" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=M3WCde6E5S4:NkyGFlMmwKU:F7zBnMyn0Lo"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=M3WCde6E5S4:NkyGFlMmwKU:F7zBnMyn0Lo" border="0"></img></a>
+</div><img src="http://feeds.feedburner.com/~r/Dartwatch/~4/M3WCde6E5S4" height="1" width="1"/>

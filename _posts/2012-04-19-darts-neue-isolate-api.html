@@ -1,0 +1,54 @@
+---
+title: 'Darts neue Isolate API'
+layout: post
+tags:
+    - Beispiele
+    - Neues
+    - Isolates
+    - Server
+category: null
+published: '2012-04-19T05:52:40+00:00'
+
+---
+
+<p>Eines meiner Lieblingsfeatures in Google Dart sind die Isolates (eine Art Multithreading Feature für Dart, falls Sie es noch nicht kennen. <a href="http://dartvader.grobmeier.de/dart-isolates-08112011.html" title="Dart Isolates">Jedoch war die erste Version der API noch sehr komplex</a>. Sie erinnerte sehr stark an das Java Threading und war generell sehr schwer zu erlernen. Die Dart-Entwickler haben jedoch recht bald angekündigt, eine Überarbeitung vorzunehmen, was mittlerweile getan ist.</p>
+<p>Mit der alten API musste man noch die Isolate-Klasser erweitern, um ein Isolate zu erstellen. Dabei wurde zwischen &#8220;Heavy&#8221; und &#8220;Light&#8221; Isolates unterschieden. Das ist alles Vergangenheit. Die Dart VM entscheidet mittlerweile für den Entwickler, welche Art von Isolate angemessen ist. Außerdem muss nicht mehr von Isolate abgeleitet werden, jetzt arbeitet man mit Funktionen. Das Ergebnis führt zu sehr viel besser lesbaren Code. Ein Beispiel.</p>
+<p>Zunächst muss das Isolate-Packet importiert werden. Auch das ist neu, denn vorher haben sich die Isolate Klassen im Core befunden.</p>
+<pre class="brush: jscript; title: ; notranslate">
+#import('dart:isolate');
+</pre>
+<p>Dann kann der Spaß beginnen!</p>
+<p>Zunächst definiere ich eine Funktion, die als neues Isolate agieren soll.</p>
+<pre class="brush: jscript; title: ; notranslate">
+process() {
+  port.receive((var message, SendPort replyTo) {
+      print (&quot;Got message: ${message}&quot;);
+      replyTo.send(&quot;close&quot;);
+      port.close();  
+  });
+}
+</pre>
+<p>Es muss sich hierbei um eine Top-Level Funktion handeln und darf keinen Rückgabewert haben. &#8220;Void&#8221; würde daher nicht funktionieren. In Zeile 2 sieht man, dass ich auf den &#8220;port&#8221; zugreife. Es handelt sich hier um eine get-Methode, die den Port dieser Funktion zurückliefert. Über Ports kann man mit anderen Isolates kommunizieren.</p>
+<p>Dieser Port kann eien Funktion ausführen, wenn eine Nachricht erhalten wurde. Dessen Argumente sind dann die eigentliche Nachricht. Eine Nachricht kann aus null, num, bool, double oder String bestehen. Auch Listen und Maps, die diese Typen beinhalten, sind erlaubt. Sogar Objekte sind möglich, wenn die Isolates im selben Prozess laufen (vorher auch als &#8220;light&#8221; Isolate) bekannt. Die Dokumentation sagt dazu, diese ist der Fall wenn das Isolate mit &#8220;spawnFunction&#8221; erzeugt wurde.</p>
+<p>Zusätzlich zur Nachricht erhalten wir auch noch einen SendPort, was eine Art Rückkanal zum sendenden Isolate darstellt.</p>
+<p>In meiner Funktion drucke ich eine Nachricht, sende einen &#8220;close&#8221;-String zurück und schließe im Nachhinein den Port. Das Isolate ist dann bereit in den Müll zu wandern und die VM sollte dies auch erledigen. Es ist wichtig, die Ports zu schließen, da sonst der Code für immer läuft und den Speicher unnötig belastet.</p>
+<p>Soweit zur Isolate-Funktion. Sehen wir uns an, wie wir die Funktion dann eigentlich erzeugen (spawn).</p>
+<pre class="brush: jscript; title: ; notranslate">
+main() {
+   port.receive((var message, SendPort replyTo) {
+     print(&quot;Got message: ${message}&quot;);
+     port.close();  
+   });
+
+   SendPort sender = spawnFunction(process);
+   sender.send(&quot;start&quot;, port.toSendPort());
+}
+</pre>
+<p>Dieser Code läuft in der Main-Methode. Die Main-Methode ist auch nur ein Isolate, deswegen habe ich hier auf einen Port zugriff. Ich lege wieder eine Funktion als Empfänger fest, die abermals eine Nachricht druckt und den Port im Anschluß schließt. Sobald der Main-Port schließt, ist die Anwendung beendet.</p>
+<p>Dann rufe ich die &#8220;spawnFunction()&#8221; Methode auf die die bereits beschriebene Top-Level-Funktion als Argument erhält. Ich verwende keine Klammern. Der Grund ist, dass ich eine Referenz zur Funktion übergeben möchte, und nicht dessen Ergebnis. Die eigentliche Durchführung soll ja im eigenen Isolate erfolgen, und zwar durch die spawnFunction-Methode.</p>
+<p>Die spawnFunction-Methode liefert einen SendPort, den ich in der letzten Zeile benutze, um meine erste Nachricht zu senden. Mein zweites Argument ist der Rückkanal für das zweite Isolate. Jetzt kann ich also Antworten meiner &#8220;process&#8221;-Funktion erhalten.</p>
+<p>Das war&#8217;s!</p>
+<p>Ich habe festgestellt, das die Funktion nicht gespawned wird, when die port.receive() Methode keinen Handler erhält. Zusätzlich darf man nicht vergessen, dass die Funktion die gespawned werden soll, kein &#8220;void&#8221; als Rückgabewert erhält. Zu guter Letzt habe ich festgestellt, dass der SendPort &#8211; obwohl er in der API als optional markiert war &#8211; immer vorhanden oder null sein muss.</p>
+<p>Fall Sie gerne mit Futures arbeiten möchten: auch dafür gibt es Unterstützung im SendPort. Es ist außerdem möglich einen Isolate von einer URI zu spawnen. <a href="http://api.dartlang.org/dart_isolate.html" target="_blank">Mehr dazu bieten die Docs</a>.</p>
+<p>Die API ist meiner Meinung nach ein Schritt in die richtige Richtung. Alles ist einfacher und benötigt weniger Code. Mal sehen, wie das in ein paar Monaten so aussieht. Es soll wohl auch bald Isolates geben, die auf dem gleichen DOM Stück operieren können, was die Geschwindigkeit von Webapps ziemlich steigern dürfte. </p>
+

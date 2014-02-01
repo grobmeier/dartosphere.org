@@ -1,0 +1,480 @@
+---
+title: 'Using Dart for Website Publishing on Google Drive'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2013-01-27T00:38:00-08:00'
+
+---
+
+<p>After watching a <a href="http://www.youtube.com/watch?v=T56eZ1lg2oE">Generating a Google Drive Hosted Website with tools you have lying around in your kitchen</a> by <a href="https://plus.google.com/118327176775959145936">Ali Afshar</a> I got interested in doing the same thing with dart.</p>
+
+<p>Had to ask my self a few questions first?</p>
+
+<ul>
+<li>Can the <a href="https://github.com/dart-gde/discovery_api_dart_client_generator">discovery_api_dart_client_generator</a> create drive_v2_api code that would allow us to access drive from the console?</li>
+<li>Can dart process markdown?</li>
+<li>Can we make the <a href="https://developers.google.com/drive/v2/reference/files">webViewLink</a> easier to read and share?</li>
+</ul>
+
+
+<p>At the time I started this investigation the <a href="https://github.com/dart-gde/discovery_api_dart_client_generator">discovery_api_dart_client_generator</a> did not have <a href="https://developers.google.com/accounts/docs/OAuth2#installed">OAuth2</a> support for installed applications. Knowing that <a href="http://pub.dartlang.org/">pub</a> does use OAuth2 in a similar fashion, I decided to peek inside of <a href="http://pub.dartlang.org/">pub</a> to see what it is doing.</p>
+
+<p>After reviewing the <a href="http://pub.dartlang.org/">pub</a> <a href="https://github.com/dart-lang/bleeding_edge/tree/master/dart/utils/pub">source code</a>, it&#8217;s interested to see how they handle getting tokens from the Google OAuth2 Authorization Server back to the client application. <a href="http://pub.dartlang.org/">pub</a> first checks if the client applications has a <code>~/.pub-cache/credentials.json</code> file stored, if the <code>credentials.json</code> is not found or invalid pub will generate an authorization url. The authorization url is copied and pasted by the user into a web browser and asks the user if they will allow access to some scopes. When the user accepts access the redirect url with token the Google OAuth2 Authorization Server redirects to a listening http server on localhost. This server was started by the <a href="http://pub.dartlang.org/">pub</a> application, now <a href="http://pub.dartlang.org/">pub</a> has the token and stores it for later use.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>12:22:46-adam@Adams-MacBook-Air:~/dart/stats.dart
+</span><span class='line'>$ pub publish
+</span><span class='line'>Publishing "stats" 0.0.4:
+</span><span class='line'>|-- .gitignore
+</span><span class='line'>|-- AUTHORS
+</span><span class='line'>|-- LICENSE
+</span><span class='line'>|-- README.md
+</span><span class='line'>|-- asset
+</span><span class='line'>|   |-- stats_dart_fps.png
+</span><span class='line'>|   '-- stats_dart_ms.png
+</span><span class='line'>|-- example
+</span><span class='line'>|   |-- basic
+</span><span class='line'>|   |   |-- statsdart.dart
+</span><span class='line'>|   |   '-- statsdart.html
+</span><span class='line'>|   '-- theming
+</span><span class='line'>|       |-- theming.dart
+</span><span class='line'>|       '-- theming.html
+</span><span class='line'>|-- lib
+</span><span class='line'>|   |-- src
+</span><span class='line'>|   |   '-- stats.dart
+</span><span class='line'>|   '-- stats.dart
+</span><span class='line'>|-- pubspec.yaml
+</span><span class='line'>'-- test
+</span><span class='line'>    |-- run.sh
+</span><span class='line'>    |-- tests_browser.dart
+</span><span class='line'>    '-- tests_browser.html
+</span><span class='line'>
+</span><span class='line'>Looks great! Are you ready to upload your package (y/n)? y
+</span><span class='line'>Pub needs your authorization to upload packages on your behalf.
+</span><span class='line'>In a web browser, go to https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force&response_type=code&client_id=818368855108-8grd2eg9tj9f38os6f1urbcvsq399u8n.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A62462&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email
+</span><span class='line'>Then click "Allow access".
+</span><span class='line'>
+</span><span class='line'>Waiting for your authorization...
+</span><span class='line'>Authorization received, processing...
+</span><span class='line'>Successfully authorized.
+</span><span class='line'>
+</span><span class='line'>Package "stats" already has version "0.0.4".</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/allow_access.png"><img src="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/allow_access.png" alt="allow_access" /></a></p>
+
+<p><a href="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/success.png"><img src="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/success.png" alt="success.png" /></a></p>
+
+<p>After some initial slicing and dicing I was able to take what was needed from <a href="http://pub.dartlang.org/">pub</a> and merge it into <a href="https://github.com/dart-gde/dart-google-oauth2-library">dart-google-oauth2-library</a> that <a href="https://github.com/dart-gde/discovery_api_dart_client_generator">discovery_api_dart_client_generator</a> depends on for OAuth2 support. <a href="http://pub.dartlang.org/">pub</a> was structured such that all files are dart libraries, so ripping out parts was easy, I found the most issues with <a href="http://pub.dartlang.org/packages/http">http</a> package. The client <a href="https://github.com/dart-lang/bleeding_edge/blob/master/dart/pkg/http/lib/src/request.dart#L119">requests</a> <code>ContentType</code> could only be set as <code>application/x-www-form-urlencoded</code> when making requests, this did not seem to play nicely with Google APIs. Took many hours of debugging to figure out why <code>POST</code> method would fail but <code>GET</code> method would not. Stumbled on some Google mailing lists that mentioned some services do work with <code>ContentType</code> <code>application/x-www-form-urlencoded</code> and some only with <code>application/json</code>. So I created a separate client that does the <code>POST</code>, <code>PATCH</code>, <code>PUT</code>, <code>DELETE</code> methods required for the Google Client APIs.</p>
+
+<p><strong>Big thanks</strong> to <a href="https://profiles.google.com/scarygami">Gerwin Sturm</a> for working on this merge with me, in a very short amount of time we&#8217;ve been able to push the <a href="https://github.com/dart-gde/dart-google-oauth2-library">dart-google-oauth2-library</a> and <a href="https://github.com/dart-gde/discovery_api_dart_client_generator">discovery_api_dart_client_generator</a> into almost complete solutions for dart and Google Client API services.</p>
+
+<p>The <a href="https://github.com/financeCoding/markdown.dart">markdown.dart</a> processor was for the most part a total freebie, <a href="https://plus.google.com/100798142896685420545">Bob Nystrom</a> had already created a <a href="https://github.com/dart-lang/bleeding_edge/tree/master/dart/samples/markdown">markdown</a> processor which eventually got rolled into <a href="https://github.com/dart-lang/bleeding_edge/tree/master/dart/sdk/lib/_internal/dartdoc">Dartdoc</a>. All that was needed here is picking out the code from the dart repo, updating libraries and import, minor code clean up and hosting it on github.</p>
+
+<p>One of my all time favorite Google APIs is the <a href="https://developers.google.com/url-shortener/">url-shortener</a> API. Even without OAuth2 you can use this service, now that we have patched up <a href="https://github.com/dart-gde/dart-google-oauth2-library">dart-google-oauth2-library</a> and <a href="https://github.com/dart-gde/discovery_api_dart_client_generator">discovery_api_dart_client_generator</a> shortening the long <a href="https://developers.google.com/drive/v2/reference/files">webViewLink</a> will be easy. A site note, <a href="http://goo.gl">goo.gl</a> links work great as for landing slides when giving a presentation, easy and short enough for audience to type into mobile phone, tablet or laptop to pull down your slides and follow along.</p>
+
+<p>Now we have all the parts needed to create a simple application that reads in some markdown, processes it to html, creates a website folder on drive, uploads the final html, then generates a shortened url.</p>
+
+<p><em>We are still working on the best way to publish the Dart Google Client APIs, so please don&#8217;t depend on the links below for too long, they will be out dated soon. This was just for testing.</em></p>
+
+<p>Starting off with our <code>pubspec.yaml</code> file we add the dependencies needed for the application.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span>  <span class="l-Scalar-Plain">drive_publish_markdown</span>
+</span><span class='line'><span class="l-Scalar-Plain">description</span><span class="p-Indicator">:</span>  <span class="l-Scalar-Plain">Publishing markdown content to a public drive site</span>
+</span><span class='line'><span class="l-Scalar-Plain">dependencies</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">urlshortener_v1_api</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">git</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">https://github.com/financeCoding/urlshortener_v1_api_client.git</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">drive_v2_api</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">git</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">https://github.com/financeCoding/drive_v2_api_client.git</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">markdown</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">git</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">https://github.com/financeCoding/markdown.dart.git</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Getting a <code>identifier</code> and <code>secret</code> is simple, just goto your <a href="https://code.google.com/apis/console">Google APIs Console</a> and pull out <code>Client ID</code> and <code>Client secret</code> for a <code>Client ID for installed applications</code> that was previously created. If you don&#8217;t have one already they are easy to create.</p>
+
+<ul>
+<li><p>Goto API access in a project.<br/>
+<a href="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/api_access.png"><img src="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/api_access.png" alt="api_access" /></a></p></li>
+<li><p>Click Create another client ID.
+<a href="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/create_another_client_id.png"><img src="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/create_another_client_id.png" alt="create_another_client_id" /></a></p></li>
+<li><p>Choose Installed application and Installed type Other. Your Done!
+<a href="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/create_client_id.png"><img src="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/create_client_id.png" alt="create_client_id" /></a></p></li>
+</ul>
+
+
+<p>Apply <code>identifier</code> and <code>secret</code> to your code.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="n">import</span> <span class="s2">&quot;dart:io&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s2">&quot;dart:async&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s1">&#39;dart:crypto&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s2">&quot;dart:json&quot;</span> <span class="n">as</span> <span class="n">JSON</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s2">&quot;package:google_oauth2_client/google_oauth2_console.dart&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s2">&quot;package:drive_v2_api/drive_v2_api_console.dart&quot;</span> <span class="n">as</span> <span class="n">drivelib</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s2">&quot;package:urlshortener_v1_api/urlshortener_v1_api_console.dart&quot;</span> <span class="n">as</span> <span class="n">urllib</span><span class="p">;</span>
+</span><span class='line'><span class="n">import</span> <span class="s2">&quot;package:markdown/lib.dart&quot;</span> <span class="n">as</span> <span class="n">markdown</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">String</span> <span class="n">identifier</span> <span class="o">=</span> <span class="s2">&quot;&lt;IDENTIFIER&gt;&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="kt">String</span> <span class="n">secret</span> <span class="o">=</span> <span class="s2">&quot;&lt;SECRET&gt;&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="n">List</span> <span class="n">scopes</span> <span class="o">=</span> <span class="p">[</span><span class="n">drivelib</span><span class="p">.</span><span class="n">Drive</span><span class="p">.</span><span class="n">DRIVE_FILE_SCOPE</span><span class="p">,</span> <span class="n">drivelib</span><span class="p">.</span><span class="n">Drive</span><span class="p">.</span><span class="n">DRIVE_SCOPE</span><span class="p">,</span> <span class="n">urllib</span><span class="p">.</span><span class="n">Urlshortener</span><span class="p">.</span><span class="n">URLSHORTENER_SCOPE</span><span class="p">];</span>
+</span><span class='line'><span class="n">drivelib</span><span class="p">.</span><span class="n">Drive</span> <span class="n">drive</span><span class="p">;</span>
+</span><span class='line'><span class="n">urllib</span><span class="p">.</span><span class="n">Urlshortener</span> <span class="n">urlshort</span><span class="p">;</span>
+</span><span class='line'><span class="n">OAuth2Console</span> <span class="n">auth</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now with <code>identifier</code> and <code>secret</code> the setup for a dart application to use <code>Drive</code> and <code>Urlshortener</code> is easy, create a new <code>OAuth2Console</code> and pass them along to the constructor of <code>Drive</code> and <code>Urlshortener</code>. Note that the flag <code>makeAuthRequests</code> has been set on both objects, that allows us to make authroized calls on behalf of the user. You could create the Google Client API objects without a OAuth2 token and leave the <code>makeAuthRequests</code> as false, the objects would then only be allowed to access non-authenticated resources on the Google servers.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create new or load existing oauth2 token.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">auth</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OAuth2Console</span><span class="p">(</span><span class="nl">identifier:</span> <span class="n">identifier</span><span class="p">,</span> <span class="nl">secret:</span> <span class="n">secret</span><span class="p">,</span> <span class="nl">scopes:</span> <span class="n">scopes</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create a new [drivelib.Drive] object with authenticated requests.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">drive</span> <span class="o">=</span> <span class="k">new</span> <span class="n">drivelib</span><span class="p">.</span><span class="n">Drive</span><span class="p">(</span><span class="n">auth</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">drive</span><span class="p">.</span><span class="n">makeAuthRequests</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create a new [urllib.Urlshortener] object with authenticated requests.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">urlshort</span> <span class="o">=</span> <span class="k">new</span> <span class="n">urllib</span><span class="p">.</span><span class="n">Urlshortener</span><span class="p">(</span><span class="n">auth</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">urlshort</span><span class="p">.</span><span class="n">makeAuthRequests</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create a new &#39;public_folder&#39; and insert markdown as html</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">createPublicFolder</span><span class="p">(</span><span class="s2">&quot;public_folder&quot;</span><span class="p">).</span><span class="n">then</span><span class="p">(</span><span class="n">processMarkdown</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I have to admit, updating permissions took me awhile to figure out. I first tried to update by calling <code>drive.files.update</code> with a modified <code>drivelib.File</code>. That was not the proper way to change permissions on <a href="https://developers.google.com/drive/">drive</a>. The correct way is to call the <code>drive.permissions.*</code> methods, lesson learned after some Googling and searching on <a href="http://stackoverflow.com/">stackoverflow</a> <a href="http://stackoverflow.com/questions/tagged/google-drive-sdk">drive-sdk</a>. Setting the <code>Permissions</code> and <code>mimeType</code> are the most important parts to note here, thats what change the folder into a public website hosted on drive viewable to anyone.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">insertPermissions</span><span class="p">(</span><span class="n">drivelib</span><span class="p">.</span><span class="n">File</span> <span class="n">file</span><span class="p">,</span> <span class="n">Completer</span> <span class="n">completer</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create new [drivelib.Permission] for insertion to the</span>
+</span><span class='line'><span class="cm">   * drive permissions list. This will mark the folder publicly</span>
+</span><span class='line'><span class="cm">   * readable by anyone.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">permissions</span> <span class="o">=</span> <span class="k">new</span> <span class="n">drivelib</span><span class="p">.</span><span class="n">Permission</span><span class="p">.</span><span class="n">fromJson</span><span class="p">({</span>
+</span><span class='line'>    <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span class='line'>    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;anyone&quot;</span><span class="p">,</span>
+</span><span class='line'>    <span class="s2">&quot;role&quot;</span><span class="o">:</span> <span class="s2">&quot;reader&quot;</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">drive</span><span class="p">.</span><span class="n">permissions</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">permissions</span><span class="p">,</span> <span class="n">file</span><span class="p">.</span><span class="n">id</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">drivelib</span><span class="p">.</span><span class="n">Permission</span> <span class="n">permission</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">completer</span><span class="p">.</span><span class="n">complete</span><span class="p">(</span><span class="n">file</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">Future</span><span class="o">&lt;</span><span class="n">drivelib</span><span class="p">.</span><span class="n">File</span><span class="o">&gt;</span> <span class="n">createPublicFolder</span><span class="p">(</span><span class="kt">String</span> <span class="n">folderName</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">completer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Completer</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create the [drivelib.File] with a web folder app mime type.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">drivelib</span><span class="p">.</span><span class="n">File</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="n">drivelib</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="n">fromJson</span><span class="p">({</span>
+</span><span class='line'>    <span class="s1">&#39;title&#39;</span><span class="o">:</span> <span class="n">folderName</span><span class="p">,</span>
+</span><span class='line'>    <span class="s1">&#39;mimeType&#39;</span><span class="o">:</span> <span class="s2">&quot;application/vnd.google-apps.folder&quot;</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Insert the [drivelib.File] to google drive.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">drive</span><span class="p">.</span><span class="n">files</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">file</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">drivelib</span><span class="p">.</span><span class="n">File</span> <span class="n">newfile</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">insertPermissions</span><span class="p">(</span><span class="n">newfile</span><span class="p">,</span> <span class="n">completer</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="n">completer</span><span class="p">.</span><span class="n">future</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we get to the meat and potatoes of our application. At this point we have a public web folder that can host our content. We do the follow steps</p>
+
+<ul>
+<li>Read in the markdown and html template file</li>
+<li>Replace a tag in the template with the markdown</li>
+<li>Insert the file into drive</li>
+<li>Add a parent reference to the file</li>
+<li>Get the url to the folder</li>
+<li>Shorten the url</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="n">processMarkdown</span><span class="p">(</span><span class="n">drivelib</span><span class="p">.</span><span class="n">File</span> <span class="n">folder</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Read in both markdown and html template</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">markdownFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s1">&#39;markdown.md&#39;</span><span class="p">);</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">templateFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s1">&#39;template.html&#39;</span><span class="p">);</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">markdownStr</span> <span class="o">=</span> <span class="n">markdownFile</span><span class="p">.</span><span class="n">readAsStringSync</span><span class="p">();</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">templateStr</span> <span class="o">=</span> <span class="n">templateFile</span><span class="p">.</span><span class="n">readAsStringSync</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Convert markdown to html.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">page</span> <span class="o">=</span> <span class="n">markdown</span><span class="p">.</span><span class="n">markdownToHtml</span><span class="p">(</span><span class="n">markdownStr</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Replace $page with converted markdown.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">templateStr</span> <span class="o">=</span> <span class="n">templateStr</span><span class="p">.</span><span class="n">replaceFirst</span><span class="p">(</span><span class="s1">&#39;\</span><span class="si">$</span><span class="n">page</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">page</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create a new [drivelib.File] to hold the html content.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">drivelib</span><span class="p">.</span><span class="n">File</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="n">drivelib</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="n">fromJson</span><span class="p">({</span>
+</span><span class='line'>    <span class="s1">&#39;title&#39;</span><span class="o">:</span> <span class="s1">&#39;index.html&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="s1">&#39;mimeType&#39;</span><span class="o">:</span> <span class="s2">&quot;text/html&quot;</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Create a new [drivelib.ParentReference] to link the html file to.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">drivelib</span><span class="p">.</span><span class="n">ParentReference</span> <span class="n">newParent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">drivelib</span><span class="p">.</span><span class="n">ParentReference</span><span class="p">.</span><span class="n">fromJson</span><span class="p">({</span><span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="n">folder</span><span class="p">.</span><span class="n">id</span><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Encode the content to Base64 for inserting into drive.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">content</span> <span class="o">=</span> <span class="n">CryptoUtils</span><span class="p">.</span><span class="n">bytesToBase64</span><span class="p">(</span><span class="n">templateStr</span><span class="p">.</span><span class="n">charCodes</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * 1) Insert the new file with title index.html and type text/html</span>
+</span><span class='line'><span class="cm">   * 2) Insert the new parent of the file (i.e. place the file in the folder)</span>
+</span><span class='line'><span class="cm">   * 3) Get the folders web view link</span>
+</span><span class='line'><span class="cm">   * 4) Shorten the web view link with UrlShortener</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">drive</span><span class="p">.</span><span class="n">files</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="nl">content:</span> <span class="n">content</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">drivelib</span><span class="p">.</span><span class="n">File</span> <span class="n">insertedFile</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">drive</span><span class="p">.</span><span class="n">parents</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">newParent</span><span class="p">,</span> <span class="n">insertedFile</span><span class="p">.</span><span class="n">id</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">drivelib</span><span class="p">.</span><span class="n">ParentReference</span> <span class="n">parentReference</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">drive</span><span class="p">.</span><span class="n">files</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="n">folder</span><span class="p">.</span><span class="n">id</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">folder</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">print</span><span class="p">(</span><span class="s2">&quot;Web View Link: </span><span class="si">${</span><span class="n">folder</span><span class="p">.</span><span class="n">webViewLink</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="n">url</span> <span class="o">=</span> <span class="k">new</span> <span class="n">urllib</span><span class="p">.</span><span class="n">Url</span><span class="p">.</span><span class="n">fromJson</span><span class="p">({</span><span class="s1">&#39;longUrl&#39;</span><span class="o">:</span> <span class="n">folder</span><span class="p">.</span><span class="n">webViewLink</span><span class="p">});</span>
+</span><span class='line'>        <span class="n">urlshort</span><span class="p">.</span><span class="n">url</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">url</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">url</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">print</span><span class="p">(</span><span class="s2">&quot;Short Url </span><span class="si">${</span><span class="n">url</span><span class="p">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">});</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The code for this sample can be found on <a href="http://github.com">github</a> <a href="https://github.com/financeCoding/drive_publish_markdown">drive_publish_markdown</a>. Executing the sample follows the flow explained above</p>
+
+<ul>
+<li>Ask user to generate token</li>
+<li>Get token from redirect</li>
+<li>Store token</li>
+<li>Make <a href="https://developers.google.com/drive/">drive</a> and <a href="https://developers.google.com/url-shortener/">url-shortener</a> requests.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="m">13</span><span class="o">:</span><span class="m">32</span><span class="o">:</span><span class="m">40</span><span class="o">-</span><span class="n">adam</span><span class="err">@</span><span class="n">Adams</span><span class="o">-</span><span class="n">MacBook</span><span class="o">-</span><span class="nl">Air:</span><span class="o">~/</span><span class="n">dart</span><span class="o">/</span><span class="n">drive_publish_markdown</span><span class="o">/</span><span class="n">bin</span>
+</span><span class='line'><span class="n">$</span> <span class="n">dart</span> <span class="n">drive_publish_markdown</span><span class="p">.</span><span class="n">dart</span>
+</span><span class='line'><span class="n">Client</span> <span class="n">needs</span> <span class="n">your</span> <span class="n">authorization</span> <span class="k">for</span> <span class="n">scopes</span> <span class="p">[</span><span class="nl">https:</span><span class="c1">//www.googleapis.com/auth/drive.file, https://www.googleapis.com/auth/drive, https://www.googleapis.com/auth/urlshortener]</span>
+</span><span class='line'><span class="n">In</span> <span class="n">a</span> <span class="n">web</span> <span class="n">browser</span><span class="p">,</span> <span class="n">go</span> <span class="n">to</span> <span class="nl">https:</span><span class="c1">//accounts.google.com/o/oauth2/auth?access_type=offline&amp;approval_prompt=force&amp;response_type=code&amp;client_id=299615367852-n0kfup30mfj5emlclfgud9g76itapvk9.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A62900&amp;scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.file+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Furlshortener</span>
+</span><span class='line'><span class="n">Then</span> <span class="n">click</span> <span class="s2">&quot;Allow access&quot;</span><span class="p">.</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">Waiting</span> <span class="k">for</span> <span class="n">your</span> <span class="n">authorization</span><span class="p">...</span>
+</span><span class='line'><span class="n">Authorization</span> <span class="n">received</span><span class="p">,</span> <span class="n">processing</span><span class="p">...</span>
+</span><span class='line'><span class="n">Calling</span> <span class="n">curl</span> <span class="n">with</span> <span class="o">--</span><span class="n">insecure</span><span class="p">,</span> <span class="n">ca</span><span class="o">-</span><span class="n">certificates</span><span class="p">.</span><span class="n">crt</span> <span class="n">not</span> <span class="n">found</span><span class="p">.</span>
+</span><span class='line'><span class="n">Successfully</span> <span class="n">authorized</span><span class="p">.</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">Calling</span> <span class="n">curl</span> <span class="n">with</span> <span class="o">--</span><span class="n">insecure</span><span class="p">,</span> <span class="n">ca</span><span class="o">-</span><span class="n">certificates</span><span class="p">.</span><span class="n">crt</span> <span class="n">not</span> <span class="n">found</span><span class="p">.</span>
+</span><span class='line'><span class="n">Web</span> <span class="n">View</span> <span class="nl">Link:</span> <span class="nl">https:</span><span class="c1">//www.googledrive.com/host/0B29MR2FlgtejWnh6SS03LWFnVE0/</span>
+</span><span class='line'><span class="n">Short</span> <span class="n">Url</span> <span class="nl">http:</span><span class="c1">//goo.gl/3fGi3</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/allow_access_drive_publish_markdown.png"><img src="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/allow_access_drive_publish_markdown.png" alt="allow_access_drive_publish_markdown" /></a></p>
+
+<p><a href="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/generated_markdown_published_on_drive.png"><img src="http://financeCoding.github.com/images/2013-01-27-using-dart-for-website-publishing-on-google-drive/generated_markdown_published_on_drive.png" alt="generated_markdown_published_on_drive" /></a></p>
+
+<p>Thats all, have fun with this really simple and easy to get started sample.</p>
+

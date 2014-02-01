@@ -1,0 +1,13 @@
+---
+title: 'Dart to Javascript output size: what a difference a year makes.'
+layout: post
+tags:
+    - dart
+    - dartlang
+    - Dartsweeper
+category: kevinwork
+published: '2013-10-31T16:44:00-07:00'
+
+---
+
+<div class="separator" style="clear: both; text-align: center;"><a href="http://1.bp.blogspot.com/-E7Jvd8c5PMA/UnLq4_Or7BI/AAAAAAAAJL0/7VXUA7fKzEI/s1600/dart-minify-blog.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" src="http://1.bp.blogspot.com/-E7Jvd8c5PMA/UnLq4_Or7BI/AAAAAAAAJL0/7VXUA7fKzEI/s1600/dart-minify-blog.png" /></a></div><br />About <a href="http://work.j832.com/2012/11/excited-to-see-dart2js-minified-output.html" target="_blank">a year ago I posted</a> on the improving output size of Dart to Javascript (dart2js) compiler.<br /><div><br /></div><div>For <a href="http://dart-lang.github.io/pop-pop-win/" target="_blank">Pop, Pop, Win!</a>, I was taking the ~441KB output from dart2js, pumping it through the <a href="https://developers.google.com/closure/compiler/" target="_blank">Google Closure Compiler</a> to get a Javascript file around 389K.</div><div><br /></div><div>With gzip over the wire, the download size was 90KB.</div><div><br /></div><div>My words at the time:</div><blockquote class="tr_bq">I certainly don't feel I need to justify the javascript output size for non-trivial apps anymore.</blockquote><div>That was with build 15005 of the Dart SDK.</div><div><br /></div><div>What a difference a year makes.</div><div><br /></div><div>Today, with the latest trunk release – v0.8.9, build 29656 – we are doing even better.<br /><br /><div class="separator" style="clear: both; text-align: center;"><a href="http://3.bp.blogspot.com/-OKIyZoySELo/UnLl2yy0RHI/AAAAAAAAJLk/M-1Jum0GaPY/s1600/Screen+Shot+2013-10-31+at+6.40.54+PM.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="76" src="http://3.bp.blogspot.com/-OKIyZoySELo/UnLl2yy0RHI/AAAAAAAAJLk/M-1Jum0GaPY/s640/Screen+Shot+2013-10-31+at+6.40.54+PM.png" width="640" /></a></div><br />The dart2js compiler, without the help of other tools, is generating an output file around 263KB. That's 40% smaller that a year ago.<br /><br />The gzip size – which is what really matters, since it's the cost-on-the-wire – is at 70.5KB. Over 20% smaller.<br /><br />This includes content like the&nbsp;<a href="https://github.com/dart-lang/pop-pop-win/blob/master/web/texture_data.dart" target="_blank">texture mapping data</a> which is 39KB on disk.<br /><br />For an app with high quality images, audio, and fonts the total cost of the compiled code come in right at 4% of the total download for the app.<br /><br />Impressive!</div>

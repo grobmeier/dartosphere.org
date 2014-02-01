@@ -1,0 +1,61 @@
+---
+title: 'Win-win for developers and users: Dart @ Google I/O 2013'
+layout: post
+tags:
+    - opinion
+category: dartwatch
+published: '2013-05-23T12:51:00+01:00'
+
+---
+
+<h1>
+Win-win for developers and users: Dart @ Google I/O 2013</h1>
+Google I/O 2013 is now over, and Dart had a pretty good showing, with three Dart talks and a codelab.  <br />
+Performance was a big theme throughout Google I/O, especially with Chrome and Mobile in mind.  Mobile apps running with a touch screen need to be more responsive than ever to create a good user experience (when you're physically touching a widget, you expect it to respond immediately to your touch), and there was lots of discussion about the target 60 fps refresh rate on mobile.<br />
+<br />
+<h2>
+Win 1: Great performance for users.</h2>
+<a href="https://developers.google.com/events/io/sessions/324431687">Lars Bak and Kasper Lund's talk on VM Performance</a> highlighted some of the problems that they face when designing a VM.  They've designed VMs in the past (including Hotspot VM and Chrome's V8), and although V8 made great leaps initially (an initial benchmark in Firefox ran at "100" when V8 was being invented.  Now, the same benchmark runs at around "~16,000"), the rate of improvement is slow.  In order to get the next "leap" in performance, they need to address some of the problems with the actual language (JavaScript).  An example given in their talk is that V8 optimizes based upon known executions of a block of code up to that point.  If, however, that code changes (such as inserting a new property into the prototype), the optimizer has to back-out the optimizations until it's ready to optimize again.  All this has an overhead.  <br />
+<br />
+By designing a language that is designed to make it easy to optimize a VM for, Dart's is already ahead of V8 in terms of performance (after only about 2 years of development, compared to 7 years of V8).<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><img alt="enter image description here" src="http://asset0.cbsistatic.com/cnwk.1d/i/tim2/2013/05/16/20130516_Dart_Google_IO_004_610x382.jpg" style="margin-left: auto; margin-right: auto;" title="" /></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Image courtesy&nbsp;<span style="background-color: white; color: #222222; font-family: arial, sans-serif; text-align: left; white-space: nowrap;"><a href="https://plus.google.com/+StephenShankland">Stephen Shankland</a> / <a href="https://www.google.co.uk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;ved=0CDAQFjAA&amp;url=http%3A%2F%2Fnews.cnet.com%2F8301-1023_3-57584979-93%2Fgoogle-dart-will-rescue-browsers-from-javascript%2F&amp;ei=HTqeUcjXDKLg7QbKuoDYAg&amp;usg=AFQjCNHQ9ojKAwV4VtEoPUx7b1lVsC3vvQ&amp;sig2=jPz9avSaBpQNmXUfiNUmYw&amp;bvm=bv.46865395,d.ZGU">cnet</a></span></td></tr>
+</tbody></table>
+There are (currently broken) <a href="https://code.google.com/p/dart/wiki/Android">instructions</a> on the Dart wiki about building a VM on ARM, and it has to be thought that a long-term goal must be to get the Dart VM (integrated with chrome?) running on Android.  This has twin benefits for users: better application performance, and longer battery life (as there is less work done).<br />
+<br />
+By making use of advance chip technologies, such as SIMD (Single Instruction, Multiple Data) the Dart VM is able to leverage the maximum power available.  A great demo of this was the 3d demo of monsters - only around 35 were visible with SIMD turned off in the VM (at 60fps), but when SIMD turned on, 60fps was maintained with ~120 monsters.<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><img alt="enter image description here" src="http://i.i.com.com/cnwk.1d/i/tim2/2013/05/16/20130516_Dart_Google_IO_005_610x368.jpg" style="margin-left: auto; margin-right: auto;" title="" /></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Image courtesy&nbsp;<span style="background-color: white; color: #222222; font-family: arial, sans-serif; text-align: left; white-space: nowrap;"><a href="https://plus.google.com/+StephenShankland">Stephen Shankland</a> / <a href="https://www.google.co.uk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;ved=0CDAQFjAA&amp;url=http%3A%2F%2Fnews.cnet.com%2F8301-1023_3-57584979-93%2Fgoogle-dart-will-rescue-browsers-from-javascript%2F&amp;ei=HTqeUcjXDKLg7QbKuoDYAg&amp;usg=AFQjCNHQ9ojKAwV4VtEoPUx7b1lVsC3vvQ&amp;sig2=jPz9avSaBpQNmXUfiNUmYw&amp;bvm=bv.46865395,d.ZGU">cnet</a></span></td></tr>
+</tbody></table>
+<h2>
+</h2>
+<h2>
+Win 2: Great experience for developers.</h2>
+I also spent some time on the Dart stand in the sandbox talking to web developers about Dart, and went to the Dart codelab.  As a developer, it's awesome to be able to leverage Web Components combined with Dart's well known language features (libraries, functional, unsurprising and familiar classes, optional typing), all wrapped up with with great tools such as package management, IDE, Debugger and type checker.  Developers that I was talking to at the Dart stand seemed suitably impressed with what Dart currently had to offer (especially as many hadn't looked at it since its initial release).<br />
+<blockquote>
+"It can't really be this easy?"</blockquote>
+In the <a href="https://developers.google.com/events/io/sessions/384097044">Codelab</a>, which used Web Components to build a multi-file, offline document editor, the other developers sat around me had positive views, with one even saying "It can't really be this easy? - It almost feels like cheating." - Yes, Dart really is productive.  Give the codelab a try and see for yourself.<br />
+<br />
+That quote summed up the current state of Dart for me, when I go around doing talks on Dart, and showing Dart to fellow developers, they are often surprised to see the great developer story and productivity gains.  When combined with the improved performance of apps with the Dart VM, they start to see how it can help to <strong>move web applications on to the next level</strong>.<br />
+<h2>
+</h2>
+<h2>
+On JavaScript future.</h2>
+Because Dart also targets JavaScript, any advances made in JavaScript to allow better JavaScript optimizations will also benefit developers and users.  Developers still get the same great Dart development story, and users will benefit from increased performance of their JavaScript version of the Dart app.  Of course, browsers that contain the Dart VM will likely to continue to remain faster running native Dart than the equivalent JavaScript.<br />
+<h2>
+</h2>
+<h2>
+The Sessions from I/O</h2>
+<ul>
+<li><a href="https://developers.google.com/events/io/sessions/384097044">Codelab: Mobile web apps with Dart and Web Components</a></li>
+<li><a href="http://www.blogger.com/Today!%5Dhttps://developers.google.com/events/io/sessions/325433525">Dart: The Future of HTML</a></li>
+<li><a href="https://developers.google.com/events/io/sessions/325475052">What's new in Dart: Your First Class Upgrade to Web Development</a></li>
+<li><a href="https://developers.google.com/events/io/sessions/324431687">Web Languages and VMs: Fast code is always in fashion</a></li>
+</ul>
+<div>
+Images from cnet article "<a href="http://news.cnet.com/8301-1023_3-57584979-93/google-dart-will-rescue-browsers-from-javascript/">Dart will rescue browsers from JavaScript</a>"</div>
+<div class="feedflare">
+<a href="http://feeds.feedburner.com/~ff/Dartwatch?a=BhtbPUiSGuA:R7AhF71sDkE:yIl2AUoC8zA"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=yIl2AUoC8zA" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=BhtbPUiSGuA:R7AhF71sDkE:V_sGLiPBpWU"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=BhtbPUiSGuA:R7AhF71sDkE:V_sGLiPBpWU" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=BhtbPUiSGuA:R7AhF71sDkE:qj6IDK7rITs"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=qj6IDK7rITs" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=BhtbPUiSGuA:R7AhF71sDkE:63t7Ie-LG7Y"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=63t7Ie-LG7Y" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=BhtbPUiSGuA:R7AhF71sDkE:F7zBnMyn0Lo"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=BhtbPUiSGuA:R7AhF71sDkE:F7zBnMyn0Lo" border="0"></img></a>
+</div><img src="http://feeds.feedburner.com/~r/Dartwatch/~4/BhtbPUiSGuA" height="1" width="1"/>

@@ -1,0 +1,312 @@
+---
+title: 'Listing files with Google Drive and Dart'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2013-01-06T18:23:00-08:00'
+
+---
+
+<p>Moving forward with my curiosity of Google <a href="http://financeCoding.github.com/blog/categories/Drive/">drive</a> and <a href="http://financeCoding.github.com/blog/categories/Dart/">Dart</a>, today was spent creating a small <a href="https://github.com/financeCoding/dart_drive_files_list">sample</a> that lists files. For the most part this is a continuation of the following post <a href="http://financeCoding.github.com/blog/2012/12/30/getting-started-with-dart-and-google-drive/">getting-started-with-dart-and-google-drive</a>.</p>
+
+<p>Decided to move the loading of <a href="http://code.google.com/p/google-api-javascript-client/">client.js</a> into its own helper class for now. When dart has real support for Google client apis none of this will be needed. As of now this serves as good practice and examples of javascript/dart interop.</p>
+
+<figure class='code'><figcaption><span>dart_drive_files_list.dart</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Sample google api client loader.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="kd">class</span> <span class="nc">GoogleApiClientLoader</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">static</span> <span class="kd">const</span> <span class="kt">String</span> <span class="n">_CLIENT_ID</span> <span class="o">=</span> <span class="s1">&#39;299615367852.apps.googleusercontent.com&#39;</span><span class="p">;</span>
+</span><span class='line'>  <span class="kd">static</span> <span class="kd">const</span> <span class="kt">String</span> <span class="n">_SCOPE</span> <span class="o">=</span> <span class="s1">&#39;https://www.googleapis.com/auth/drive&#39;</span><span class="p">;</span>
+</span><span class='line'>  <span class="kd">static</span> <span class="kd">const</span> <span class="kt">String</span> <span class="n">_handleClientLoadName</span> <span class="o">=</span> <span class="s2">&quot;handleClientLoad&quot;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">static</span> <span class="kt">void</span> <span class="n">_loadScript</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Create and load script element.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="n">ScriptElement</span> <span class="n">script</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ScriptElement</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">script</span><span class="p">.</span><span class="n">src</span> <span class="o">=</span> <span class="s2">&quot;http://apis.google.com/js/client.js?onload=</span><span class="si">$</span><span class="n">_handleClientLoadName</span><span class="s2">&quot;</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">script</span><span class="p">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;text/javascript&quot;</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">document</span><span class="p">.</span><span class="n">body</span><span class="p">.</span><span class="n">children</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">script</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">static</span> <span class="kt">void</span> <span class="n">_createScopedCallbacks</span><span class="p">(</span><span class="kd">var</span> <span class="n">completer</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">((){</span>
+</span><span class='line'>      <span class="cm">/**</span>
+</span><span class='line'><span class="cm">       * handleAuthResult is called from javascript when</span>
+</span><span class='line'><span class="cm">       * the function to call once the login process is complete.</span>
+</span><span class='line'><span class="cm">       */</span>
+</span><span class='line'>      <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">handleAuthResult</span> <span class="o">=</span> <span class="k">new</span> <span class="n">js</span><span class="p">.</span><span class="n">Callback</span><span class="p">.</span><span class="n">many</span><span class="p">((</span><span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">authResult</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">Map</span> <span class="n">dartAuthResult</span> <span class="o">=</span> <span class="n">JSON</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">JSON</span><span class="p">.</span><span class="n">stringify</span><span class="p">(</span><span class="n">authResult</span><span class="p">));</span>
+</span><span class='line'>        <span class="n">completer</span><span class="p">.</span><span class="n">complete</span><span class="p">(</span><span class="n">dartAuthResult</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/**</span>
+</span><span class='line'><span class="cm">       * This javascript method is called when the client.js script</span>
+</span><span class='line'><span class="cm">       * is loaded.</span>
+</span><span class='line'><span class="cm">       */</span>
+</span><span class='line'>      <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">handleClientLoad</span> <span class="o">=</span>  <span class="k">new</span> <span class="n">js</span><span class="p">.</span><span class="n">Callback</span><span class="p">.</span><span class="n">many</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">window</span><span class="p">.</span><span class="n">setTimeout</span><span class="p">(</span><span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">checkAuth</span><span class="p">,</span> <span class="m">1</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/**</span>
+</span><span class='line'><span class="cm">       * Authorization check if the client allows this</span>
+</span><span class='line'><span class="cm">       * application to access its google drive.</span>
+</span><span class='line'><span class="cm">       */</span>
+</span><span class='line'>      <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">checkAuth</span> <span class="o">=</span> <span class="k">new</span> <span class="n">js</span><span class="p">.</span><span class="n">Callback</span><span class="p">.</span><span class="n">many</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">gapi</span><span class="p">.</span><span class="n">auth</span><span class="p">.</span><span class="n">authorize</span><span class="p">(</span>
+</span><span class='line'>            <span class="n">js</span><span class="p">.</span><span class="n">map</span><span class="p">({</span>
+</span><span class='line'>              <span class="s1">&#39;client_id&#39;</span><span class="o">:</span> <span class="n">_CLIENT_ID</span><span class="p">,</span>
+</span><span class='line'>              <span class="s1">&#39;scope&#39;</span><span class="o">:</span> <span class="n">_SCOPE</span><span class="p">,</span>
+</span><span class='line'>              <span class="s1">&#39;immediate&#39;</span><span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'>            <span class="p">}),</span>
+</span><span class='line'>            <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">handleAuthResult</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Load the google client api, future returns</span>
+</span><span class='line'><span class="cm">   * map results.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="kd">static</span> <span class="n">Future</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&gt;</span> <span class="n">load</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="n">completer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Completer</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">_createScopedCallbacks</span><span class="p">(</span><span class="n">completer</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">_loadScript</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">completer</span><span class="p">.</span><span class="n">future</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The calling of <code>load()</code> returns a future with our authentication results. Eases the process of having the google drive scope available to the client application.</p>
+
+<p>A simple dart <code>Drive</code> class created gives access to the list call from the javascript apis. The interesting point for me to learn is knowing that <code>client.js</code> has to load the drive api. In the <code>load()</code> future we call <code>js.context.gapi.client.load</code> which will take the api and version to be loaded for the client application.</p>
+
+<figure class='code'><figcaption><span>dart_drive_files_list.dart</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Sample google drive class.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="kd">class</span> <span class="nc">Drive</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">_drive</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">bool</span> <span class="kd">get</span> <span class="n">_isLoaded</span> <span class="o">=&gt;</span> <span class="n">_drive</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Load the gapi.client.drive api.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">Future</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span> <span class="n">load</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="n">completer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Completer</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">gapi</span><span class="p">.</span><span class="n">client</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;drive&#39;</span><span class="p">,</span> <span class="s1">&#39;v2&#39;</span><span class="p">,</span> <span class="k">new</span> <span class="n">js</span><span class="p">.</span><span class="n">Callback</span><span class="p">.</span><span class="n">once</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">_drive</span> <span class="o">=</span> <span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">gapi</span><span class="p">.</span><span class="n">client</span><span class="p">.</span><span class="n">drive</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">js</span><span class="p">.</span><span class="n">retain</span><span class="p">(</span><span class="n">_drive</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">completer</span><span class="p">.</span><span class="n">complete</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}));</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">completer</span><span class="p">.</span><span class="n">future</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Check if gapi.client.drive is loaded, if not</span>
+</span><span class='line'><span class="cm">   * load before executing.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">_loadederExecute</span><span class="p">(</span><span class="n">Function</span> <span class="n">function</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">_isLoaded</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">function</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">load</span><span class="p">().</span><span class="n">then</span><span class="p">((</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">function</span><span class="p">();</span>
+</span><span class='line'>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">throw</span> <span class="s2">&quot;loadedExecute failed&quot;</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * List files with gapi.drive.files.list()</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">Future</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&gt;</span> <span class="n">list</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="n">completer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Completer</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">_loadederExecute</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="n">request</span> <span class="o">=</span> <span class="n">_drive</span><span class="p">.</span><span class="n">files</span><span class="p">.</span><span class="n">list</span><span class="p">();</span>
+</span><span class='line'>        <span class="n">request</span><span class="p">.</span><span class="n">execute</span><span class="p">(</span><span class="k">new</span> <span class="n">js</span><span class="p">.</span><span class="n">Callback</span><span class="p">.</span><span class="n">once</span><span class="p">((</span><span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">jsonResp</span><span class="p">,</span> <span class="kd">var</span> <span class="n">rawResp</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">Map</span> <span class="n">m</span> <span class="o">=</span> <span class="n">JSON</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">js</span><span class="p">.</span><span class="n">context</span><span class="p">.</span><span class="n">JSON</span><span class="p">.</span><span class="n">stringify</span><span class="p">(</span><span class="n">jsonResp</span><span class="p">));</span>
+</span><span class='line'>          <span class="n">completer</span><span class="p">.</span><span class="n">complete</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}));</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">completer</span><span class="p">.</span><span class="n">future</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With the following sugar classes it was easy to just list files from my google drive account.</p>
+
+<figure class='code'><figcaption><span>dart_drive_files_list.dart</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Drive</span> <span class="n">drive</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Drive</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">GoogleApiClientLoader</span><span class="p">.</span><span class="n">load</span><span class="p">().</span><span class="n">then</span><span class="p">((</span><span class="n">result</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">drive</span><span class="p">.</span><span class="n">list</span><span class="p">().</span><span class="n">then</span><span class="p">((</span><span class="n">Map</span> <span class="n">files</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// https://developers.google.com/drive/v2/reference/files/list</span>
+</span><span class='line'>      <span class="n">files</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">].</span><span class="n">forEach</span><span class="p">((</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="n">li</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LIElement</span><span class="p">();</span>
+</span><span class='line'>        <span class="n">AnchorElement</span> <span class="n">a</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AnchorElement</span><span class="p">();</span>
+</span><span class='line'>        <span class="n">a</span><span class="p">.</span><span class="n">href</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="s1">&#39;alternateLink&#39;</span><span class="p">];</span>
+</span><span class='line'>        <span class="n">a</span><span class="p">.</span><span class="n">target</span> <span class="o">=</span> <span class="s1">&#39;_blank&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">a</span><span class="p">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">];</span>
+</span><span class='line'>        <span class="n">li</span><span class="p">.</span><span class="n">children</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">UListElement</span> <span class="n">ul</span> <span class="o">=</span> <span class="n">query</span><span class="p">(</span><span class="s1">&#39;#listmenu&#39;</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">ul</span><span class="p">.</span><span class="n">children</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">li</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://financeCoding.github.com/images/2013-01-06-listing-files-with-google-drive-and-dart/listing_files_google_drive.png"><img src="http://financeCoding.github.com/images/2013-01-06-listing-files-with-google-drive-and-dart/listing_files_google_drive.png" alt="listing-files-drive" /></a></p>
+
+<p>Hopefully this helps with developers interested in google drive &amp; dart! Sample can be found on github <a href="https://github.com/financeCoding/dart_drive_files_list">dart_drive_files_list</a></p>
+

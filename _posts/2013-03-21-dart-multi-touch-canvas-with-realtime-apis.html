@@ -1,0 +1,113 @@
+---
+title: 'Dart Multi Touch Canvas With Realtime APIs'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2013-03-21T18:19:00-07:00'
+
+---
+
+<p><a href="https://developers.google.com/drive/">Google</a> has made the <a href="https://developers.google.com/drive/realtime/">realtime</a> api available for developers. Realtime api provides <a href="http://en.wikipedia.org/wiki/Operational_transformation">operational transformation</a> on <a href="https://developers.google.com/drive/realtime/reference/gapi.drive.realtime.CollaborativeString">strings</a>, <a href="https://developers.google.com/drive/realtime/reference/gapi.drive.realtime.CollaborativeList">lists</a>, <a href="https://developers.google.com/drive/realtime/reference/gapi.drive.realtime.CollaborativeMap">maps</a> and custom <a href="https://developers.google.com/drive/realtime/reference/gapi.drive.realtime.CollaborativeObject">objects</a>. The application data gets stored on Google Drive and is available from any supported browser. This is going to be the tooling of the future for collaborative applications.</p>
+
+<p>I took some time to see what it would take for implementing a sample realtime application in dart. Also wanted to make sure my sample could run on mobile chrome.</p>
+
+<p>Since realtime api is new, dart bindings don&#8217;t really exist. Lucky for us we have <a href="http://pub.dartlang.org/packages/js">js-interop</a> library. The <a href="http://pub.dartlang.org/packages/js">js-interop</a> library provides communications to existing javascript code from dart. I consider this mostly a quick hack to get started with the realtime api until a more native interface exists.</p>
+
+<p>The sample <a href="http://financecoding.github.com/realtime_touch_canvas/web/index.html">realtime_touch_canvas</a> demonstrates a multi touch canvas surface that updates in realtime with all clients that have the application open.</p>
+
+<iframe width="560" height="315" src="http://www.youtube.com/embed/xArfJdOb55Q" frameborder="0" allowfullscreen></iframe>
+
+
+<p>Most of the heavy lifting is done by <a href="https://github.com/financeCoding/realtime_touch_canvas"><code>rtclient.dart</code></a>. I ported the <a href="https://github.com/googledrive/realtime-playground/blob/master/js/realtime-client-utils.js">code</a> from the javascript version. Its enough code to get started right away but a more structured solution should be done. The main class is <code>RealTimeLoader</code> used for realtime loading.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'>  <span class="n">rtl</span> <span class="o">=</span> <span class="k">new</span> <span class="n">RealTimeLoader</span><span class="p">(</span><span class="nl">clientId:</span> <span class="s1">&#39;CLIENTID.apps.googleusercontent.com&#39;</span><span class="p">,</span> <span class="nl">apiKey:</span> <span class="s1">&#39;KEY&#39;</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">rtl</span><span class="p">.</span><span class="n">start</span><span class="p">().</span><span class="n">then</span><span class="p">((</span><span class="kt">bool</span> <span class="n">isComplete</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* RealTimeLoader has authenticated the application and is ready to load a file */</span>
+</span><span class='line'>    <span class="n">loadRealTimeFile</span><span class="p">(</span><span class="n">fileId</span><span class="p">,</span> <span class="n">model</span><span class="p">.</span><span class="n">onFileLoaded</span><span class="p">,</span> <span class="n">model</span><span class="p">.</span><span class="n">initializeModel</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>model.onFileLoaded</code> and <code>model.initializeModel</code> handle the creating of model data and loading of model data.</p>
+
+<p>In the <a href="http://financecoding.github.com/realtime_touch_canvas/web/index.html">realtime_touch_canvas</a>, model data was a simple list of json strings. The ticky part here is you need to remember that your working with the realtime api within the javascript vm. So an array needs to be allocated from <a href="http://pub.dartlang.org/packages/js">js-interop</a>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'>  <span class="kt">void</span> <span class="n">_createNewModel</span><span class="p">(</span><span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">model</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="n">list</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">createList</span><span class="p">(</span><span class="n">js</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">_defaultLines</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">model</span><span class="p">.</span><span class="n">getRoot</span><span class="p">().</span><span class="kd">set</span><span class="p">(</span><span class="n">_linesName</span><span class="p">,</span> <span class="n">list</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After the model is created we then get called to load the file. Loading the file for our purposes is binding the collaborative objects. Some tricky things to note here is we are retaining the javascript objects so we can access them after exit of the callback. Also the callbacks have to be wrapped within <a href="http://pub.dartlang.org/packages/js">js-interop</a> <code>js.Callback.many</code> proxy object. The callbacks <code>_linesOnAddValuesChangedEvent</code> and <code>_linesOnRemovedValuesChangedEvent</code> are fired off when the collaborative list object has items added or removed.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'>  <span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">_doc</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="n">_linesName</span> <span class="o">=</span> <span class="s2">&quot;lines&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">_lines</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">_bindModel</span><span class="p">(</span><span class="n">js</span><span class="p">.</span><span class="n">Proxy</span> <span class="n">doc</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">_doc</span> <span class="o">=</span> <span class="n">doc</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">js</span><span class="p">.</span><span class="n">retain</span><span class="p">(</span><span class="n">_doc</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">_lines</span> <span class="o">=</span> <span class="n">doc</span><span class="p">.</span><span class="n">getModel</span><span class="p">().</span><span class="n">getRoot</span><span class="p">().</span><span class="kd">get</span><span class="p">(</span><span class="n">_linesName</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">_lines</span><span class="p">.</span><span class="n">addEventListener</span><span class="p">(</span><span class="n">gapi</span><span class="p">.</span><span class="n">drive</span><span class="p">.</span><span class="n">realtime</span><span class="p">.</span><span class="n">EventType</span><span class="p">.</span><span class="n">VALUES_ADDED</span><span class="p">,</span> <span class="k">new</span> <span class="n">js</span><span class="p">.</span><span class="n">Callback</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">_linesOnAddValuesChangedEvent</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">_lines</span><span class="p">.</span><span class="n">addEventListener</span><span class="p">(</span><span class="n">gapi</span><span class="p">.</span><span class="n">drive</span><span class="p">.</span><span class="n">realtime</span><span class="p">.</span><span class="n">EventType</span><span class="p">.</span><span class="n">VALUES_REMOVED</span><span class="p">,</span> <span class="k">new</span> <span class="n">js</span><span class="p">.</span><span class="n">Callback</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">_linesOnRemovedValuesChangedEvent</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">js</span><span class="p">.</span><span class="n">retain</span><span class="p">(</span><span class="n">_lines</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When the callback is called the data would be in the javascript virtual machine so we can parse it and store in our native dart code. This is more of a convenience then a must do, that way we can expose plan old dart objects to our other parts of the dart application.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'>  <span class="kt">void</span> <span class="n">_linesOnAddValuesChangedEvent</span><span class="p">(</span><span class="n">addedValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="n">insertedLine</span> <span class="o">=</span> <span class="n">_lines</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="n">addedValue</span><span class="p">.</span><span class="n">index</span><span class="p">);</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="n">line</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Line</span><span class="p">.</span><span class="n">fromJson</span><span class="p">(</span><span class="n">insertedLine</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">realtimeTouchCanvas</span><span class="p">.</span><span class="n">move</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">line</span><span class="p">.</span><span class="n">moveX</span><span class="p">,</span> <span class="n">line</span><span class="p">.</span><span class="n">moveY</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>Now when we want to store a line in the application we simply convert it to json and push it into the collaborative list. The little tick here is to make sure we are <code>scoped</code> when accessing the <code>_lines</code> object since it lives in the javascript virtual machine.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'>  <span class="kt">void</span> <span class="n">addLine</span><span class="p">(</span><span class="n">Line</span> <span class="n">line</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">js</span><span class="p">.</span><span class="n">scoped</span><span class="p">(()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">_lines</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">line</span><span class="p">.</span><span class="n">toJson</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <a href="http://financecoding.github.com/realtime_touch_canvas/web/index.html">realtime_touch_canvas</a> is live on github gh-pages and <a href="https://github.com/financeCoding/realtime_touch_canvas">realtime_touch_canvas source</a> is available.</p>
+

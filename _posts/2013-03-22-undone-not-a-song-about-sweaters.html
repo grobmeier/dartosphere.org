@@ -1,0 +1,94 @@
+---
+title: 'Undone, Not a Song About Sweaters'
+layout: post
+tags: {  }
+category: futureperfect.info
+published: '2013-03-22T00:00:00+00:00'
+
+---
+
+
+<p>“If you want to destroy my sweater”… Yup, that was a great <a href="http://www.youtube.com/watch?v=LHQqqM5sr7g">song</a>.<br />But this post is about other greatness: the <a href="http://en.wikipedia.org/wiki/Command_pattern">command pattern</a>. More specifically, its application to undo and redo.</p>
+
+<p>I’ve implemented undo and redo a few times. The idea is pretty simple to grasp, but there are some subtleties that can lead to problematic implementations.<br />When I started to think about it again in <a href="http://www.dartlang.org">Dart</a>, I decided to develop the functionality in a standalone <a href="http://pub.dartlang.org/packages/undone">Pub package</a> from the start so that I could share my experience and get collaborators to help me improve upon it.</p>
+
+<h2 id="why_asynchronous">Why Asynchronous?</h2>
+
+<p>Most of the implementations of undo and redo that I have seen have been purely synchronous. Undone deviates from that norm. User interfaces need to remain responsive, which means expensive work needs to be offloaded from the ui thread.<br />In Dart there can be only one… thread per isolate. This is true in any Dart environment, not just the browser. Undone is written to use the facilities provided in the platform-agnostic <code>dart:async</code> library.</p>
+
+<p>Authors of synchronous undo would likely argue that ui actions should be very fast and that there is no need to perform them asynchronously. I agree wholeheartedly with that principle, but my experience has been that you will inevitably encounter an expensive operation that you need to wrap in an undoable action. Also, if you start to consider using your undo system for something <em>other</em> than ui actions, you will very likely encounter things that are asynchronous in nature. We are, after all, in the browser here!</p>
+
+<p>Okay, so we may need to do some actions asynchronously, what are the ramifications? The thing about async code is that as soon as one thing is async, it tends to have a ripple effect on everything around it. This holds true for undo. Let’s look closer at how undone works to understand.</p>
+
+<p>One of the core concepts in undo and redo is that of a history list, also known as an undo stack, etc… This is a data structure that keeps track of your undoable actions and the order in which they are done. In a sychronous world, the code to manage such a data structure can be quite minimal. When things go async, it is another beast. Undone is designed around the notion of a <a href="http://futureperfect.info/undone/undone/Schedule.html">schedule</a>.</p>
+
+<p>The goal of the schedule is to minimize the impact of the async world on the user of the undo library. Just like how the word ‘schedule’ is both a noun and a verb, the <code>Schedule</code> type is both a class and a <a href="http://www.dartlang.org/articles/emulating-functions/">function</a>. As a class, it is the type that contains the history of actions and as a function, it can be called to do an action.</p>
+
+<p>Undone provides a top-level <a href="http://futureperfect.info/undone/undone.html">schedule</a> getter. <a href="http://futureperfect.info/undone/undone/Action.html">Actions</a> are also functions, and if you call an action it will call itself on the top-level schedule. That probably sounds complicated to you now, but the end result is that it makes your life easy. Let’s look at some fictional example code:</p>
+<div class='highlight'><pre><code class='dart'><span class='p'>...</span>
+<span class='n'>incrementAsync</span><span class='p'>();</span>
+<span class='n'>square</span><span class='p'>();</span>
+<span class='p'>...</span>
+</code></pre>
+</div>
+<p>Above, we assume that we have two action instances named <code>incrementAsync</code> and <code>square</code> that perform calculations on a shared argument. Since they are functions, we can call them using <code>()</code> just like any Dart function. The first action <code>incrementAsync</code> will perform its work asynchronously, and the second action <code>square</code> will perform its work synchronously. Both calls are sent to the top-level schedule, and <code>square</code> will be queued internally while <code>incrementAsync</code> executes, and then executed after. In a synchronous implementation, <code>square</code> would likely be executed immediately when it is called, which is <em>during</em> the executon of <code>incrementAsync</code>. The result would be a corrupt history list, an incorrect calculation, and any number of other problems. The asynchronous schedule allows this to be a valid program, and abstracts away a lot of the pain.</p>
+
+<p>If I’ve managed to convince you of <em>why</em> I’ve built in support for async actions, I hope that you may now appreciate how the schedule helps alleviate some of the pain. The schedule is implemented as a state machine; as a user of the schedule you should not need to care about that often. Actions can be scheduled at any time (during any state) and the schedule will take care of making sure things are done in the right order. Much of the API returns futures, and this allows you to chain continuations onto method calls. The schedule will make sure your continuations happen at all the right times. Let’s look again at our fictional example:</p>
+<div class='highlight'><pre><code class='dart'><span class='p'>...</span>
+<span class='kd'>var</span> <span class='n'>arg</span> <span class='o'>=</span> <span class='p'>{</span> <span class='s1'>&#39;value&#39;</span> <span class='o'>:</span> <span class='m'>42</span><span class='p'>};</span>
+<span class='kd'>var</span> <span class='n'>incrementAsync</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Increment</span><span class='p'>(</span><span class='n'>arg</span><span class='p'>);</span>
+<span class='kd'>var</span> <span class='n'>square</span> <span class='o'>=</span> <span class='k'>new</span> <span class='n'>Square</span><span class='p'>(</span><span class='n'>arg</span><span class='p'>);</span>
+<span class='p'>...</span>
+<span class='n'>incrementAsync</span><span class='p'>().</span><span class='n'>then</span><span class='p'>((</span><span class='n'>result</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>$</span><span class='n'>result</span><span class='s1'>&#39;</span><span class='p'>));</span>
+<span class='n'>square</span><span class='p'>.</span><span class='n'>then</span><span class='p'>((</span><span class='n'>result</span><span class='p'>)</span> <span class='o'>=&gt;</span> <span class='n'>print</span><span class='p'>(</span><span class='s1'>&#39;</span><span class='si'>$</span><span class='n'>result</span><span class='s1'>&#39;</span><span class='p'>));</span>
+<span class='p'>...</span>
+</code></pre>
+</div>
+<p>We see now that <code>incrementAsync</code> and <code>square</code> are both action instances that we construct from custom action types. Both instances take the same argument, and let’s assume that they are both implemented to manipulate the argument’s ‘value’ in a manner their names suggest. When the above program is run, the printed output will be:</p>
+
+<pre><code>43
+1849</code></pre>
+
+<p>Everything happens at the time you naturally expect. You may call new actions from within the continuations and the schedule will make sure to execute them in the order you call them.</p>
+
+<p>The schedule will always report that it is <code>busy</code> in a continuation, or at any time when it is not idle. Although you may always call a new action on a schedule at any time, it is important to know that you may <em>not</em> call methods such as <code>undo</code> that modify the schedule if it is <code>busy</code>. In the above example, we cannot allow the continuation on <code>incrementAsync</code> to perform an <code>undo</code>, because we need to make sure that the <code>square</code> gets done first.</p>
+
+<h2 id="binding_to_undo_and_redo">Binding to Undo and Redo</h2>
+
+<p>Most of the code in your program will only care about calling actions, and the schedule will make sure to execute them in the order you call them.</p>
+
+<p>Invoking <code>undo</code> and <code>redo</code> is really an entirely separate path in your code. Typically, you will want to bind these methods to user gestures such as the keyboard input <code>ctrl+z</code> and <code>ctrl+y</code>:</p>
+<div class='highlight'><pre><code class='dart'><span class='c1'>// Bind undo / redo to keyboard events.</span>
+<span class='n'>document</span><span class='p'>.</span><span class='n'>onKeyUp</span><span class='p'>.</span><span class='n'>listen</span><span class='p'>((</span><span class='n'>e</span><span class='p'>)</span> <span class='p'>{</span>    
+  <span class='k'>if</span> <span class='p'>(</span><span class='n'>e</span><span class='p'>.</span><span class='n'>ctrlKey</span><span class='p'>)</span> <span class='p'>{</span>
+    <span class='k'>if</span> <span class='p'>(</span><span class='n'>e</span><span class='p'>.</span><span class='n'>keyCode</span> <span class='o'>==</span> <span class='n'>KeyCode</span><span class='p'>.</span><span class='n'>Z</span><span class='p'>)</span>           <span class='n'>undo</span><span class='p'>();</span>
+    <span class='k'>else</span> <span class='k'>if</span> <span class='p'>(</span><span class='n'>e</span><span class='p'>.</span><span class='n'>keyCode</span> <span class='o'>==</span> <span class='n'>KeyCode</span><span class='p'>.</span><span class='n'>Y</span><span class='p'>)</span>      <span class='n'>redo</span><span class='p'>();</span>
+  <span class='p'>}</span>
+<span class='p'>});</span>
+</code></pre>
+</div>
+<p>The <code>Schedule</code> type also provides getters for <code>canUndo</code> and <code>canRedo</code>. If you are using a data-binding framework such as <a href="http://pub.dartlang.org/packages/web_ui">web-ui</a>, you can use these directly in bindings to enable button controls, etc… If you don’t have data-binding, then this is one scenario when you may want to observe the <code>states</code> of a schedule, in order to refresh your controls:</p>
+<div class='highlight'><pre><code class='dart'><span class='c1'>// Listen to state changes in the schedule to refresh the ui.</span>
+<span class='n'>schedule</span><span class='p'>.</span><span class='n'>states</span><span class='p'>.</span><span class='n'>listen</span><span class='p'>((</span><span class='n'>state</span><span class='p'>)</span> <span class='p'>{</span>
+  <span class='k'>if</span> <span class='p'>(</span><span class='n'>state</span> <span class='o'>==</span> <span class='n'>Schedule</span><span class='p'>.</span><span class='n'>STATE_IDLE</span><span class='p'>)</span> <span class='p'>{</span>
+    <span class='n'>undoButton</span><span class='p'>.</span><span class='n'>disabled</span> <span class='o'>=</span> <span class='o'>!</span><span class='n'>schedule</span><span class='p'>.</span><span class='n'>canUndo</span><span class='p'>;</span>
+    <span class='n'>redoButton</span><span class='p'>.</span><span class='n'>disabled</span> <span class='o'>=</span> <span class='o'>!</span><span class='n'>schedule</span><span class='p'>.</span><span class='n'>canRedo</span><span class='p'>;</span>
+  <span class='p'>}</span>
+<span class='p'>});</span>
+</code></pre>
+</div>
+<h2 id="transactions_made_simple">Transactions made Simple</h2>
+
+<p>Another common scenario is to <em>merge</em> together more than one action into a <a href="http://futureperfect.info/undone/undone/Transaction.html">Transaction</a>. All of the actions in the transaction will be done and undone together as a single ‘atomic’ unit. This library provides an easy way to build transactions using the top-level <code>transact</code> method:</p>
+<div class='highlight'><pre><code class='dart'><span class='n'>transact</span><span class='p'>(()</span> <span class='p'>{</span>
+  <span class='n'>cut</span><span class='p'>();</span>
+  <span class='n'>paste</span><span class='p'>();</span>
+<span class='p'>});</span>
+</code></pre>
+</div>
+<p>In the example above, the calls to the actions <code>cut</code> and <code>paste</code> occur within an anonymous closure. The <code>transact</code> function will invoke this closure, and all actions that are called within its scope are added to a new <code>Transaction</code>.<br />After the anonymous function returns, the <code>Transaction</code> will be called on the top-level schedule. Cut and paste is a real world example, as you normally want these actions to be executed together as one. If something goes awry during paste, you want to rollback to the initial state by undoing the cut.</p>
+
+<h2 id="call_me_back">Call me Back!</h2>
+
+<p>Undone is in the early stages. I’m trying to tailor it to dart, and to the real needs of modern ui applications. I would love to get feedback from others in the community and to get people using it and collaborating. Please drop me a note with your feedback!</p>
+

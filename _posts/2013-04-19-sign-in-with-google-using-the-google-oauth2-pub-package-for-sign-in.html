@@ -1,0 +1,334 @@
+---
+title: 'Sign in with Google - Using the Google OAuth2 pub package for sign-in'
+layout: post
+tags:
+    - article
+category: dartwatch
+published: '2013-04-19T20:16:00+01:00'
+
+---
+
+<blockquote class="tldr-embed-widget" data-show-title="true" data-align="center"><p><a href="http://tldr.io/tldrs/517198f0d4b260c60c00007d/sign-in-with-google-using-darts-google-oauth2-pub-package-for-sign-in" class="link-to-tldr-page" target="_blank">Summary of "Sign in with Google - Using Dart's Google OAuth2 pub package for sign-in"</a> (via <a href="http://tldr.io" target="_blank">tldr.io</a>)<ul><li style="margin-bottom: 10px; line-height: 130%;">Using OAuth2 in Dart is easy, but you need to register for APIs first on at the Google API Console site and create a Client ID</li><li style="margin-bottom: 10px; line-height: 130%;">Then import the Oauth2 pub package into your google project and use your Client ID</li><li style="margin-bottom: 10px; line-height: 130%;">When you call the login() function, the user gets prompted for Google Login details, and you get an oauth2 token and the users email.</li><li style="margin-bottom: 10px; line-height: 130%;">You can use this info in your application, but make sure you verify the token on the server-side as well</li><li style="margin-bottom: 10px; line-height: 130%;">To retrieve other info, use the token to call other Google APIs, such as Google Plus profile API.</li></ul></p></blockquote><script async src="//tldr.io/embed/widget-embed.js" charset="utf-8"></script>
+
+Adam Singer and Gervin Sturm have been updating their Dart Google APIs for Milestone 4, so I thought I'd take this opportunity to show how use the <a href="http://pub.dartlang.org/packages/google_oauth2_client" target="_blank">OAuth2 pub package</a> to authenticate your browser app with Google.<br />
+<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://4.bp.blogspot.com/-9kV1Sf--Mqg/UXEgqKAG39I/AAAAAAAAEQU/zPmadeACD30/s1600/loggedin1.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" height="267" src="http://4.bp.blogspot.com/-9kV1Sf--Mqg/UXEgqKAG39I/AAAAAAAAEQU/zPmadeACD30/s320/loggedin1.png" width="320" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Signed in to our application.</td></tr>
+</tbody></table>
+<br />
+<h3>
+Use case</h3>
+This is a simple use-case: When a user visits my web app, I want the user to "register" get access to some of the features, mainly so that I can show unique content for that user and send occasional emails. All I really need is the user's (verified) email and their name - once I have that information, I can do what I want with it, including sending it to my server, showing custom content etc.<br />
+<br />
+The OAuth2 pub package lets you authenticate a user, without needing to worry about managing or storing passwords on your own website. &nbsp; Once the user is authenticated (and you have an oauth2 token), you can use that token to access other Google services on behalf of that user.<br />
+<br />
+<b>Note:&nbsp;</b>This post only follows the happy path for example only - there is no error handling in here. &nbsp;You should ensure that you add error handling as appropriate for your application.<br />
+<div>
+<br /></div>
+<h3>
+Registering for APIs</h3>
+<div>
+Before you can start playing with OAuth2, you need to register for a Google API.</div>
+<div>
+Head over to&nbsp;<a href="https://code.google.com/apis/console/">https://code.google.com/apis/console/</a>&nbsp;and you should see something like the image below:</div>
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://4.bp.blogspot.com/-vLbX3VC1I1M/UXEEUf7EkeI/AAAAAAAAEPE/HhfKSfTW9ag/s1600/apis1.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" height="293" src="http://4.bp.blogspot.com/-vLbX3VC1I1M/UXEEUf7EkeI/AAAAAAAAEPE/HhfKSfTW9ag/s320/apis1.png" width="320" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Google API console</td></tr>
+</tbody></table>
+<div>
+You should choose "<b>Create</b>" to create a new API Project. I'm calling this project "Dartwatch OAuth Blogpost". &nbsp; Once you've entered a project name, go to the API Access screen shown below:</div>
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://1.bp.blogspot.com/-Az8WQnomzME/UXEFC-pKTQI/AAAAAAAAEPM/jpWp_rDAIpU/s1600/apis2.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" height="280" src="http://1.bp.blogspot.com/-Az8WQnomzME/UXEFC-pKTQI/AAAAAAAAEPM/jpWp_rDAIpU/s640/apis2.png" width="640" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Create an OAuth 2 client Id</td></tr>
+</tbody></table>
+<div>
+</div>
+<div>
+Clicking on the big button, and you'll start the two-step wizard for creating your client ID. &nbsp;On the first screen, the only mandatory field is the project name (you can edit the other fields later). &nbsp;</div>
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://1.bp.blogspot.com/-ID1jUJXFtx8/UXEGtm_yXTI/AAAAAAAAEPU/G3Rsp46WRXQ/s1600/apis3.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" height="285" src="http://1.bp.blogspot.com/-ID1jUJXFtx8/UXEGtm_yXTI/AAAAAAAAEPU/G3Rsp46WRXQ/s400/apis3.png" width="400" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Step 1</td></tr>
+</tbody></table>
+On the second step, shown below, you need to enter your site's hostname. &nbsp;Because we're going to be building this locally using the Dart Editor, for now, just make sure it says http://127.0.0.1:3030 (which is the URL that the Dart Editor uses to launch web-apps. &nbsp;You can add more later.<br />
+<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://2.bp.blogspot.com/-tGOWzuOa4x0/UXEGt_o6qfI/AAAAAAAAEPc/iUK1dhZcjkU/s1600/apis4.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" height="310" src="http://2.bp.blogspot.com/-tGOWzuOa4x0/UXEGt_o6qfI/AAAAAAAAEPc/iUK1dhZcjkU/s400/apis4.png" width="400" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Step 2</td></tr>
+</tbody></table>
+<br />
+Once you've done that, you'll be presented with a screen that shows your <b>Client ID</b>. &nbsp;Keep this screen open, because we'll use that value in a minute.<br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://4.bp.blogspot.com/-hsSvWPLn5T4/UXEGtlaaugI/AAAAAAAAEPY/8Ye7O1uQIJ0/s1600/apis5.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="468" src="http://4.bp.blogspot.com/-hsSvWPLn5T4/UXEGtlaaugI/AAAAAAAAEPY/8Ye7O1uQIJ0/s640/apis5.png" width="640" /></a></div>
+<div>
+<br /></div>
+<h3>
+Creating a project</h3>
+<div>
+Start up the Dart Editor, and create a new "Web Application", (I'm calling my project "signin" and clear out the existing sample code from "signin.dart" (you can leave the sample html as-is).</div>
+<div>
+<br /></div>
+<h3>
+Using the OAuth2 pub package</h3>
+<div>
+Open your <b>pubspec.yaml</b> file, and add the <b><span style="font-family: Courier New, Courier, monospace;"><a href="http://pub.dartlang.org/packages/google_oauth2_client" target="_blank">google_oauth2_client</a></span></b> with a <b>version</b> value of <b><span style="font-family: Courier New, Courier, monospace;">&gt;=0.2.2</span></b>&nbsp;</div>
+<div>
+<br /></div>
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://4.bp.blogspot.com/-qui9svHD5us/UXELivV4mGI/AAAAAAAAEPs/BHyZvBMfs3g/s1600/pubspec1.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="122" src="http://4.bp.blogspot.com/-qui9svHD5us/UXELivV4mGI/AAAAAAAAEPs/BHyZvBMfs3g/s400/pubspec1.png" width="400" /></a></div>
+<div>
+<br /></div>
+<div>
+<br /></div>
+<div>
+The Dart Editor will run pub and import that package. &nbsp;Now you add the package import into your code, shown below:</div>
+<div>
+<br /></div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:html'</span>;
+import <span style="color: blue;">'package:google_oauth2_client/google_oauth2_browser.dart'</span>;
+
+<span style="color: navy; font-weight: bold;">void</span> main() {
+
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<div>
+<br /></div>
+<div>
+Let's make use of the OAuth client by adding it into our code. &nbsp;We'll create an <span style="font-family: Courier New, Courier, monospace;">auth</span> variable initialized with our oauth Client ID that we registered earlier. &nbsp;We're going to pass in an <span style="font-family: Courier New, Courier, monospace;">oauthReady</span> function callback that is called once we have the oauth token (and just <span style="font-family: Courier New, Courier, monospace;">print</span> that token for the moment).<br />
+<br />
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">'dart:html'</span>;
+import <span style="color: blue;">'package:google_oauth2_client/google_oauth2_browser.dart'</span>;
+
+<span style="color: navy; font-weight: bold;">void</span> main() {
+
+}
+
+<span style="color: navy; font-weight: bold;">final</span> auth = <span style="color: navy; font-weight: bold;">new</span> GoogleOAuth2(
+    <span style="color: blue;">"4xxxxxxxxxxx.apps.googleusercontent.com"</span>, <span style="color: #008800; font-style: italic;">// Client ID</span>
+    [<span style="color: blue;">"openid"</span>, <span style="color: blue;">"email"</span>],
+    tokenLoaded:oauthReady);
+
+<span style="color: navy; font-weight: bold;">void</span> oauthReady(Token token) {
+  print(token);
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+The values <span style="font-family: Courier New, Courier, monospace;">["openid", "email"]</span> represent "scopes" that we want to access. &nbsp;You need at-least the <span style="font-family: Courier New, Courier, monospace;">openid</span> scope, if you need to access the users email, then also request the <span style="font-family: Courier New, Courier, monospace;">email</span> scope, these scopes affect what the oauth token is valid for (later, we'll add a Google+ Profile scope).<br />
+<br />
+A scope is often a URI, such as <span style="font-family: Courier New, Courier, monospace;">https://www.googleapis.com/auth/plus.me</span> or <span style="font-family: Courier New, Courier, monospace;">https://www.googleapis.com/auth/drive</span><span style="font-family: inherit;">&nbsp;- you can checkout <a href="https://developers.google.com/oauthplayground/" target="_blank">the oauth2 playground</a> for a more complete list of scopes.</span><br />
+<span style="font-family: inherit;"><br /></span>
+<br />
+<h3>
+<span style="font-family: inherit;">Let's login.</span></h3>
+<span style="font-family: inherit;">To start with, I'm going to add a "Sign in with Google" button, and display the logged in users email address. &nbsp;In the main function, we need to call </span><span style="font-family: Courier New, Courier, monospace;">auth.login();</span><span style="font-family: inherit;"> &nbsp;(which will be inside a button click).</span></div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6
+7
+8
+9</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">void</span> main() {
+  <span style="color: navy; font-weight: bold;">var</span> signIn = <span style="color: navy; font-weight: bold;">new</span> ButtonElement();
+  signIn.text = <span style="color: blue;">"Sign in with Google"</span>;
+  signIn.onClick.listen((_) {   
+    auth.login();
+  });
+
+  document.body.children.add(signIn);
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+
+<br />
+<div>
+<br /></div>
+<div>
+When the user clicks this button, they will be prompted with a Google Login screen, shown below (If they use 2 factor authentication, then it will also prompt them for the passcode). <br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://2.bp.blogspot.com/-ZF-Lo2MyGTU/UXEWjTOQ1RI/AAAAAAAAEP4/42FhFlmLFrQ/s1600/signin1.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="217" src="http://2.bp.blogspot.com/-ZF-Lo2MyGTU/UXEWjTOQ1RI/AAAAAAAAEP4/42FhFlmLFrQ/s320/signin1.png" width="320" /></a></div>
+<br />
+They will be asked to grant access to your application, and given a summary of the information that you want to get (based upon the scopes asked for).<br />
+<br />
+Once signed in, the <span style="font-family: Courier New, Courier, monospace;">oauthReady(token)</span> function is called, and you have an oauth token. The print statement in our oauthReady function outputs text similar to that shown below (I've formatted it for readability and x'd out some of the info):<br />
+<br />
+<span style="font-family: Courier New, Courier, monospace;">[Token&nbsp;</span><br />
+<span style="font-family: Courier New, Courier, monospace;">&nbsp; type=Bearer,&nbsp;</span><br />
+<span style="font-family: Courier New, Courier, monospace;">&nbsp; data=yxxx.AxxxxxxxxxxxxB-6xxxxxM_xxx-Ixxxxxxxxxxxxxxxxxxb, &nbsp;</span><br />
+<span style="font-family: Courier New, Courier, monospace;">&nbsp; expired=false,&nbsp;</span><br />
+<span style="font-family: Courier New, Courier, monospace;">&nbsp; expiry=2013-04-19 20:25:39.513,&nbsp;</span><br />
+<span style="font-family: Courier New, Courier, monospace;">&nbsp; email=cxxxxxxxxxxx@gmail.com,&nbsp;</span><br />
+<span style="font-family: Courier New, Courier, monospace;">&nbsp; userId=xxxxxxxxx5xxxxxxxxxxx</span><br />
+<span style="font-family: Courier New, Courier, monospace;">]</span><br />
+<br />
+The token is valid for about an hour, and contains the users email address and a user id. The userId can be used as a unique key for this user.<br />
+<br />
+<h3>
+Using the token</h3>
+From this point, it depends upon how you want to use this information. &nbsp;You could send the userId and email address to your server to determine if the user has already registered. &nbsp;If not, your UI could prompt them to gather extra details, or display alternate content.<br />
+<br />
+<blockquote class="tr_bq">
+<b>Important warning: &nbsp;</b>If you are sending token data from the client to the server, you must ensure that you validate the token on the server - otherwise you cannot be sure that has not been modified en-route. &nbsp;Google provide a service that lets you validate the <span style="font-family: Courier New, Courier, monospace;">token.data</span>:<br />
+<span style="font-family: Courier New, Courier, monospace;">https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=yxxx.AxxxxxxxxxxxxB-6xxxxxM_xxx-Ixxxxxxxxxxxxxxxxxxb</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: inherit;">This returns a block of JSON data containing the email address, the userId, the scope's that the token is valid for, and how long until it is expired. &nbsp;</span></blockquote>
+<h3>
+Pulling information from Google+</h3>
+I'm going to use that token to access Google+ Profile data and display the users full name (note, you can also get this from the users Google profile rather than Google+).<br />
+<br />
+To access Google+, you need to enable API access. &nbsp;Head back over to the API Console again, and bring up the<br />
+<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://3.bp.blogspot.com/-zNCQCeO9ukw/UXEbp2RSK5I/AAAAAAAAEQA/WTmu8_cKJnY/s1600/apis6.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" height="422" src="http://3.bp.blogspot.com/-zNCQCeO9ukw/UXEbp2RSK5I/AAAAAAAAEQA/WTmu8_cKJnY/s640/apis6.png" width="640" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Enable Google+ API Access</td></tr>
+</tbody></table>
+Then head to the API access screen and create a "Simple API Access" browser key (if there's not one there already):<br />
+<br />
+<table align="center" cellpadding="0" cellspacing="0" class="tr-caption-container" style="margin-left: auto; margin-right: auto; text-align: center;"><tbody>
+<tr><td style="text-align: center;"><a href="http://1.bp.blogspot.com/-VoVe4GG469s/UXEcqLtTVEI/AAAAAAAAEQI/4bf1QL0Yg4o/s1600/apis7.png" imageanchor="1" style="margin-left: auto; margin-right: auto;"><img border="0" height="346" src="http://1.bp.blogspot.com/-VoVe4GG469s/UXEcqLtTVEI/AAAAAAAAEQI/4bf1QL0Yg4o/s400/apis7.png" width="400" /></a></td></tr>
+<tr><td class="tr-caption" style="text-align: center;">Create simple API access</td></tr>
+</tbody></table>
+You'll need to use the API key that's created in the next step.<br />
+<br />
+<h3>
+Adding the Google+ API Pub Package</h3>
+</div>
+<div>
+Head back over to your <b>pubspec.yaml</b>, and add&nbsp;<a href="http://pub.dartlang.org/packages/google_plus_v1_api" style="font-family: 'Courier New', Courier, monospace;" target="_blank">google_plus_v1_api</a><span style="font-family: inherit;">&nbsp;with a version of </span><span style="font-family: Courier New, Courier, monospace;">any</span><span style="font-family: inherit;">.</span></div>
+<div>
+<span style="font-family: inherit;">Then we need to import that package in our code, and add the scope URI (which is handily provided as a constant within the package).</span></div>
+<div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;">1
+2
+3
+4
+5
+6</pre>
+</td><td><pre style="line-height: 125%; margin: 0;">import <span style="color: blue;">"package:google_plus_v1_api/plus_v1_api_browser.dart"</span> as plusclient;
+
+<span style="color: navy; font-weight: bold;">final</span> auth = <span style="color: navy; font-weight: bold;">new</span> GoogleOAuth2(
+    <span style="color: blue;">"333043597260.apps.googleusercontent.com"</span>,
+    [<span style="color: blue;">"openid"</span>, <span style="color: blue;">"email"</span>, <strong>plusclient.Plus.PLUS_ME_SCOPE</strong>],
+    tokenLoaded:oauthReady);
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<!-- end -->
+<span style="font-family: inherit;"><br /></span></div>
+<div>
+<span style="font-family: inherit;">In our </span><span style="font-family: Courier New, Courier, monospace;">oauthReady()</span><span style="font-family: inherit;"> function, we'll add more code to set our API key and the OAuth token, and us the Google+ API to&nbsp;get information about "me" (me being the person&nbsp;</span>authorized<span style="font-family: inherit;">). &nbsp;<a href="https://developers.google.com/+/api/latest/people" target="_blank">The structure of this API call is documented here</a>, but the person.name output looks like this:</span><br />
+<span style="font-family: Courier New, Courier, monospace;">{"familyName":"Buckett","givenName":"Chris"}</span><br />
+<span style="font-family: inherit;"><br /></span>
+<span style="font-family: inherit;">Here's the code for the modified </span><span style="font-family: Courier New, Courier, monospace;">oauthReady()</span><span style="font-family: inherit;"> function:</span></div>
+<!-- HTML generated using hilite.me --><br />
+<div style="background: #ffffff; background: white; border-width: .1em .1em .1em .8em; border: solid gray; color: black; overflow: auto; padding: .2em .6em; width: auto;">
+<table><tbody>
+<tr><td><pre style="line-height: 125%; margin: 0;"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11</pre>
+</td><td><pre style="line-height: 125%; margin: 0;"><span style="color: navy; font-weight: bold;">void</span> oauthReady(Token token) {
+  <span style="color: #008800; font-style: italic;">// get the users full name</span>
+  <span style="color: navy; font-weight: bold;">var</span> plus = <span style="color: navy; font-weight: bold;">new</span> plusclient.Plus(auth);
+  <span style="color: #008800; font-style: italic;">// set the API key</span>
+  plus.key = <span style="color: blue;">"Axxxxxxxxxxxxxxxxxxx-x-xxxxxxxxx-x"</span>;
+  plus.oauth_token = auth.token.data;
+  plus.people.<span style="color: navy; font-weight: bold;">get</span>(<span style="color: blue;">"me"</span>).then((person) {
+    <span style="color: #008800; font-style: italic;">// log the users full name to the console</span>
+    print(<span style="color: blue;">"Hello ${</span>person.name.givenName<span style="color: blue;">} ${</span>person.name.familyName<span style="color: blue;">}"</span>);
+  });  
+}
+</pre>
+</td></tr>
+</tbody></table>
+</div>
+<br />
+<br />
+And that's pretty much it - we can display this info back in our UI as a nice welcome message, or use it elsewhere to provide a richer experience for the user. <br />
+<br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://3.bp.blogspot.com/-9kV1Sf--Mqg/UXEgqKAG39I/AAAAAAAAEQQ/9SKiFYgOCjI/s1600/loggedin1.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="267" src="http://3.bp.blogspot.com/-9kV1Sf--Mqg/UXEgqKAG39I/AAAAAAAAEQQ/9SKiFYgOCjI/s320/loggedin1.png" width="320" /></a></div>
+<br />
+<br />
+<b>Hint: </b>If you want to provide a way for the user to logout, you can call <span style="font-family: Courier New, Courier, monospace;">auth.logout()</span><br />
+<span style="font-family: Courier New, Courier, monospace;"><br /></span>
+<br />
+<h3>
+Resources:</h3>
+<div>
+Dart OAuth2 Client pub package:&nbsp;<a href="http://pub.dartlang.org/packages/google_oauth2_client">http://pub.dartlang.org/packages/google_oauth2_client</a></div>
+<div>
+Dart Google+ pub package:&nbsp;<a href="http://pub.dartlang.org/packages/google_plus_v1_api">http://pub.dartlang.org/packages/google_plus_v1_api</a></div>
+<div>
+API Console Help:&nbsp;<a href="https://developers.google.com/console/help/">https://developers.google.com/console/help/</a></div>
+<div>
+Using OAuth2 for login:&nbsp;<a href="https://developers.google.com/accounts/docs/OAuth2Login">https://developers.google.com/accounts/docs/OAuth2Login</a></div>
+<div>
+Google+ People API:&nbsp;<a href="https://developers.google.com/+/api/latest/people">https://developers.google.com/+/api/latest/people</a></div>
+<div>
+Google API discovery service:&nbsp;<a href="https://developers.google.com/discovery/">https://developers.google.com/discovery/</a></div>
+<div>
+Google OAuth2 service playground:&nbsp;<a href="https://developers.google.com/oauthplayground/">https://developers.google.com/oauthplayground/</a></div>
+<div>
+<br /></div>
+<div>
+As ever, comments are welcome, and if you find any errors with this post, please contact <a href="https://plus.google.com/117571249567635877826/posts" target="_blank">me via my Google+ profile</a></div><div class="feedflare">
+<a href="http://feeds.feedburner.com/~ff/Dartwatch?a=NOS76Q5Y75M:GcNDjVcFFUA:yIl2AUoC8zA"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=yIl2AUoC8zA" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=NOS76Q5Y75M:GcNDjVcFFUA:V_sGLiPBpWU"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=NOS76Q5Y75M:GcNDjVcFFUA:V_sGLiPBpWU" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=NOS76Q5Y75M:GcNDjVcFFUA:qj6IDK7rITs"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=qj6IDK7rITs" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=NOS76Q5Y75M:GcNDjVcFFUA:63t7Ie-LG7Y"><img src="http://feeds.feedburner.com/~ff/Dartwatch?d=63t7Ie-LG7Y" border="0"></img></a> <a href="http://feeds.feedburner.com/~ff/Dartwatch?a=NOS76Q5Y75M:GcNDjVcFFUA:F7zBnMyn0Lo"><img src="http://feeds.feedburner.com/~ff/Dartwatch?i=NOS76Q5Y75M:GcNDjVcFFUA:F7zBnMyn0Lo" border="0"></img></a>
+</div><img src="http://feeds.feedburner.com/~r/Dartwatch/~4/NOS76Q5Y75M" height="1" width="1"/>

@@ -1,0 +1,53 @@
+---
+title: 'Polymer and Route'
+layout: post
+tags:
+    - Dart
+    - Polymer
+    - route
+category: null
+published: '2013-10-21T20:32:12+00:00'
+
+---
+
+<p>I&#8217;ve seen a number of different requests for examples of how to use the route package with Polymer. As it so happens, I also needed this functionality for one of my own projects. After getting it working for my use case, I decided to write a little mini sample.</p>
+<p>For the impatient of you, you can go <a href="https://github.com/butlermatt/routes_example" title="Polymer Routes Example" target="_blank">right to the source</a>.</p>
+<p><span id="more-45"></span></p>
+<p>The method I use in my sample is just one way of accomplishing the same result.  As we go through the code I&#8217;ll point out a couple areas where we could take a different approach. My approach will not work for everyone, however with a little trial you may be able to get it to fit your use case.</p>
+<p>To begin with, we will start with our custom elements that we will display. In this case I went with <code>one-element</code>, <code>two-element</code> and a special default element called <code>help-me</code>. The contents are very simple with a header saying element one, element two and some basic help information in each element respectively. Due to an issue with the <code>noscript</code> attribute, I also included an empty default class for each of the components.</p>
+<aside>
+<p>The issue with the <code>noscript</code> attribute is that for some reason only the content of the last import would be displayed, regardless of which tag was actually being displayed. See the concern I raised on the <a href="https://groups.google.com/a/dartlang.org/d/topic/web-ui/15sZSS0LVYM/discussion" title="Dartlang Web-ui discussion" target="_blank">discussion group</a>. After being able to replicate this in Polymer 0.8.4, I also raised <a href="http://dartbug.com/14274" title="Dart - Issue 14274" target="_blank">Issue 14274</a>.</p>
+</aside>
+<p>Next we have our <code>example-app</code> custom element. This will be the container for all of our custom elements and will be essentially the only tag in our main HTML file. First we import the 3 custom element&#8217;s we&#8217;ve created. Next we add a couple of buttons, each with a on-click event handler which calls the <code>updatePage</code> method and each with a data field <code>data-name</code> which contains the page it should load. Finally we add a container div which our content will be loaded into. </p>
+<p>Our <code>ExampleApp</code> class first declares <code>@published String page = '';</code> This will be the attribute which indicates which custom element we should have loaded in our container div. As we should all know by know, the <code>@published</code> annotation makes the variable an attribute on our custom element, as well as making the variable observable. Because of the magic that is Observables, we also have a method with the signature <code>void pageChanged(oldValue)</code>, this method is called any time the page variable changes. With observables, we can automatically bind a method to be called any time the observable variable is changed just by creating a method which has the same name as the variable appended with <code>Changed</code> and which takes the old value of the variable as an argument. How cool is that!</p>
+<p>Our <code>pageChanged</code> method is where most of the magic happens. First we made a redundant check to make sure that the page variable is not set to the same variable it was before. This is redundant as the observe library should handle that properly for us. Next if the page is blank, we want to remove anything from our container. Finally we need to determine which custom element should be inserted into the container. In this case I used a simple switch to allow for multiple possible values. Either <code>one</code> or <code>1</code> to load the <code>one-element</code>. Similar for the <code>two-element</code>. And finally in this case I decided that anything else set for the page should load the <code>help-me</code> element to display help information. Chances are you&#8217;ll want to generate an error  or 404 page instead.</p>
+<p>Once we determine which element should be loaded, we pass it to the private <code>_addElement</code> method where we actually create the element and add it to the page. Both this method and the <code>pageChanged</code> use the new automatic node finding property <code>$[]</code> to query for the div with an id of <code>container</code>. A little easier than using the old method of <code>shadowRoot.query('container');</code></p>
+<aside>
+<p>An alternative to procedurally determining which custom element to load, and loading as we did above, is to use conditional templates to determine which element to load within our container. This could be done with a check on the page variable itself or some other getter wrapping it. Our div could look something like this:</p>
+<pre>&lt;div id="container"&gt;
+&lt;template if="{{page == "one"}}&gt;
+  &lt;one-element&gt;&lt;/one-element&gt;
+&lt;/template&gt;
+&lt;template if="{{page == "two"}}&gt;
+  &lt;two-element&gt;&lt;/two-element&gt;
+&lt;/template&gt;
+&lt;/div&gt;</pre>
+<p>This method is okay for a few elements, but as we get into more exhaustive logic it starts to feel a little more cumbersome.</p>
+</aside>
+<p>Finally, the <code>updatePage</code> event handler very simply pulls the <code>name</code> out of the data field and passes it to the window&#8217;s location hash fragment. It does not directly interact with the <code>page</code> variable or the container itself. Only updates the location. We&#8217;ll see why in a second.</p>
+<p>Our main HTML file is <code>routes_example.html</code>, consider this our index page. All our page contains is the import for our example-app tag, the tag itself and its own script. The script is where the routing happens. In <code>routes_example.dart</code> the first line is our route matcher to use. In this case we have to use the full path as the route package doesn&#8217;t easily support relative paths. This also means that we will probably have to change the matcher in the event we deploy the app. We have one group to match in our simple sample, which will be any alpha-numeric characters after the hash in the address. This works out great, since earlier in our <code>updatePage</code> method only modifies the hash of the current location. Additionally, using the has means we do not require any server side support for http rewrites.</p>
+<aside>
+<p>As an alternative, we could have specified a number of static routes and required that the route matched one of those static methods using the <code>matchAny</code> function of the Route package. However since we have the power of RegExp included with the Route package, we might as well use it!</p>
+</aside>
+<p>In our main function we just create our router, add a route handler based on our URL and just start listening for connections. The <code>route_hander</code> function will receive the full path that matches our particular route. From this we want to retrieve the first (and only) matching group from the pattern. We then grab the model associated with our example-app custom tag and pass the matching group from our URL to the <code>page</code> variable.</p>
+<p>The flow of the program thus is basically as follows:</p>
+<ul>
+<li>Button click.</li>
+<li>Update location hash in the <code>updatePage</code> handler.</li>
+<li>Route detects change to location hash and updates the <code>page</code> variable in the ExampleApp class.</li>
+<li>Update of the page variable triggers the <code>pageChanged</code> handler which determines correct custom element.</li>
+<li><code>_addElement</code> creates the custom element and adds it into the content div (after clearing existing children).</li>
+</ul>
+<p>While a little circular, this prevents updating the page variable twice with the same value if we did so directly in the updatePage handler. This also allows us to not just use navigational buttons but to also enter the address manually in the address bar (or bookmark a page). It&#8217;s certainly not the optimal usage but for our sample it serves its purpose.</p>
+<p>There are a number of changes that can be made to extend the sample further such as additional matching groups to our UrlPattern. Additionally its important to keep in mind that a location can only contain one hash (#). Any further hashes should be converted to a forward slash. The Route package is very forgiving on converting between hashes and forward slashes. Hopefully this information can at least help get your started on using route for at least basic capabilities in your projects.</p>
+

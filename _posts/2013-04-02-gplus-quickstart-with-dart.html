@@ -1,0 +1,322 @@
+---
+title: 'gplus quickstart with dart'
+layout: post
+tags: {  }
+category: random-posts-about-coding
+published: '2013-04-02T19:25:00-07:00'
+
+---
+
+<p>Tonights mash-up was taking the <a href="https://github.com/Scarygami/gplus-quickstart-dart">gplus-quickstart-dart</a> and wiring it up for server side support. Similar to the <a href="https://github.com/googleplus/gplus-quickstart-java">gplus-quickstart-java</a>, the client will use the <a href="https://developers.google.com/+/web/+1button/">gplus login button</a> to do the <a href="https://developers.google.com/accounts/docs/OAuth2WebServer">OAuth2WebServer</a> flow and send the code over to the server. The server can then verify and make calls on behalf of the client since an &#8216;offline&#8217; token was requested. This demo just features the server side and what was used to put it together. <a href="https://plus.google.com/u/0/109130932502535286138/">Yulian Kuncheff</a> has been the primary developer behind <a href="https://github.com/Daegalus/fukiya">fukiya</a> which is an express like framework for dart. The thing I liked most about <a href="https://github.com/Daegalus/fukiya">fukiya</a> was how simple and easy it was to setup URL handlers.</p>
+
+<p>First off, setting up some dependencies.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>dependencies:
+</span><span class='line'>  google_plus_v1_api: any
+</span><span class='line'>  browser: any
+</span><span class='line'>  fukiya: '&gt;=0.0.11'
+</span><span class='line'>  html5lib: "&gt;=0.4.1 &lt;0.4.2"
+</span><span class='line'>  logging: "&gt;=0.4.3+5"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A quick outline of what URLs fukiya handles. Dead simple to setup!</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">new</span> <span class="n">Fukiya</span><span class="p">()</span>
+</span><span class='line'>  <span class="p">..</span><span class="kd">get</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">getIndexHandler</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">..</span><span class="kd">get</span><span class="p">(</span><span class="s1">&#39;/index.html&#39;</span><span class="p">,</span> <span class="n">getIndexHandler</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">..</span><span class="kd">get</span><span class="p">(</span><span class="s1">&#39;/index&#39;</span><span class="p">,</span> <span class="n">getIndexHandler</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/connect&#39;</span><span class="p">,</span> <span class="n">postConnectDataHandler</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">..</span><span class="kd">get</span><span class="p">(</span><span class="s1">&#39;/people&#39;</span><span class="p">,</span> <span class="n">getPeopleHandler</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/disconnect&#39;</span><span class="p">,</span> <span class="n">postDisconnectHandler</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">staticFiles</span><span class="p">(</span><span class="s1">&#39;./web&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">use</span><span class="p">(</span><span class="k">new</span> <span class="n">FukiyaJsonParser</span><span class="p">())</span>
+</span><span class='line'>  <span class="p">..</span><span class="n">listen</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="m">3333</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The index handler is special cause we needed to inject a state token into the page and HTTP session. The state token is then verified on the <code>/connect</code> post. The one-time token helps avoid any <a href="http://en.wikipedia.org/wiki/Confused_deputy_problem">Confused_deputy_problem</a>s.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">getIndexHandler</span><span class="p">(</span><span class="n">FukiyaContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// Create a state token. </span>
+</span><span class='line'>  <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;state_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_createStateToken</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// Readin the index file and add state token into the meta element. </span>
+</span><span class='line'>  <span class="kd">var</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="n">INDEX_HTML</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">file</span><span class="p">.</span><span class="n">exists</span><span class="p">().</span><span class="n">then</span><span class="p">((</span><span class="kt">bool</span> <span class="n">exists</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">exists</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">file</span><span class="p">.</span><span class="n">readAsString</span><span class="p">().</span><span class="n">then</span><span class="p">((</span><span class="kt">String</span> <span class="n">indexDocument</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">Document</span> <span class="n">doc</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Document</span><span class="p">.</span><span class="n">html</span><span class="p">(</span><span class="n">indexDocument</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">Element</span> <span class="n">metaState</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Element</span><span class="p">.</span><span class="n">html</span><span class="p">(</span><span class="s1">&#39;&lt;meta name=&quot;state_token&quot; content=&quot;</span><span class="si">${</span><span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;state_token&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&quot;&gt;&#39;</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">doc</span><span class="p">.</span><span class="n">head</span><span class="p">.</span><span class="n">children</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">metaState</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">writeBytes</span><span class="p">(</span><span class="n">doc</span><span class="p">.</span><span class="n">outerHtml</span><span class="p">.</span><span class="n">codeUnits</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">done</span><span class="p">.</span><span class="n">catchError</span><span class="p">((</span><span class="n">e</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">serverLogger</span><span class="p">.</span><span class="n">fine</span><span class="p">(</span><span class="s2">&quot;File Response error: </span><span class="si">${</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">));</span>
+</span><span class='line'>        <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">},</span> <span class="nl">onError:</span> <span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">serverLogger</span><span class="p">.</span><span class="n">fine</span><span class="p">(</span><span class="s2">&quot;error = </span><span class="si">$</span><span class="n">error</span><span class="s2">&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">=</span> <span class="m">404</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On the <code>/connect</code> post we will expect a gplus id to be passed to the query parameters and some token data posted. We can then verify the state token and use the token data for accessing the Google APIs.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">postConnectDataHandler</span><span class="p">(</span><span class="n">FukiyaContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">serverLogger</span><span class="p">.</span><span class="n">fine</span><span class="p">(</span><span class="s2">&quot;postConnectDataHandler&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="n">tokenData</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s2">&quot;access_token&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">// TODO: handle missing token</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="n">stateToken</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s2">&quot;state_token&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;state_token&quot;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="n">queryStateToken</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">queryParameters</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s2">&quot;state_token&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">queryParameters</span><span class="p">[</span><span class="s2">&quot;state_token&quot;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// Check if the token already exists for this session. </span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="n">tokenData</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;Current user is already connected.&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// Check if any of the needed token values are null or mismatched.</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="n">stateToken</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">queryStateToken</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">stateToken</span> <span class="o">!=</span> <span class="n">queryStateToken</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">=</span> <span class="m">401</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;Invalid state parameter.&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// Normally the state would be a one-time use token, however in our</span>
+</span><span class='line'>  <span class="c1">// simple case, we want a user to be able to connect and disconnect</span>
+</span><span class='line'>  <span class="c1">// without reloading the page.  Thus, for demonstration, we don&#39;t</span>
+</span><span class='line'>  <span class="c1">// implement this best practice.</span>
+</span><span class='line'>  <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;state_token&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">String</span> <span class="n">gPlusId</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">queryParameters</span><span class="p">[</span><span class="s2">&quot;gplus_id&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="kt">String</span><span class="n">Buffer</span> <span class="n">sb</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">String</span><span class="n">Buffer</span><span class="p">();</span>
+</span><span class='line'>  <span class="c1">// Read data from request.</span>
+</span><span class='line'>  <span class="n">context</span><span class="p">.</span><span class="n">request</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">transform</span><span class="p">(</span><span class="k">new</span> <span class="kt">String</span><span class="n">Decoder</span><span class="p">())</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">listen</span><span class="p">((</span><span class="n">data</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">sb</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nl">onDone:</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">serverLogger</span><span class="p">.</span><span class="n">fine</span><span class="p">(</span><span class="s2">&quot;context.request.listen.onDone = </span><span class="si">${</span><span class="n">sb</span><span class="p">.</span><span class="n">toString</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">Map</span> <span class="n">requestData</span> <span class="o">=</span> <span class="n">JSON</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">sb</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Map</span> <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>              <span class="s2">&quot;grant_type&quot;</span><span class="o">:</span> <span class="s2">&quot;authorization_code&quot;</span><span class="p">,</span>
+</span><span class='line'>              <span class="s2">&quot;code&quot;</span><span class="o">:</span> <span class="n">requestData</span><span class="p">[</span><span class="s2">&quot;code&quot;</span><span class="p">],</span>
+</span><span class='line'>              <span class="c1">// http://www.riskcompletefailure.com/2013/03/postmessage-oauth-20.html</span>
+</span><span class='line'>              <span class="s2">&quot;redirect_uri&quot;</span><span class="o">:</span> <span class="s2">&quot;postmessage&quot;</span><span class="p">,</span>
+</span><span class='line'>              <span class="s2">&quot;client_id&quot;</span><span class="o">:</span> <span class="n">CLIENT_ID</span><span class="p">,</span>
+</span><span class='line'>              <span class="s2">&quot;client_secret&quot;</span><span class="o">:</span> <span class="n">CLIENT_SECRET</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">http</span><span class="p">.</span><span class="n">Client</span> <span class="n">_httpClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">http</span><span class="p">.</span><span class="n">Client</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">_httpClient</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="n">TOKEN_ENDPOINT</span><span class="p">,</span> <span class="nl">fields:</span> <span class="n">fields</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">http</span><span class="p">.</span><span class="n">Response</span> <span class="n">response</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// At this point we have the token and refresh token.</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="n">credentials</span> <span class="o">=</span> <span class="n">JSON</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">body</span><span class="p">);</span>
+</span><span class='line'>      <span class="n">_httpClient</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">var</span> <span class="n">verifyTokenUrl</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">${</span><span class="n">TOKENINFO_URL</span><span class="si">}</span><span class="s1">?access_token=</span><span class="si">${</span><span class="n">credentials</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">new</span> <span class="n">http</span><span class="p">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span class='line'>      <span class="p">..</span><span class="kd">get</span><span class="p">(</span><span class="n">verifyTokenUrl</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">http</span><span class="p">.</span><span class="n">Response</span> <span class="n">response</span><span class="p">)</span>  <span class="p">{</span>
+</span><span class='line'>        <span class="n">serverLogger</span><span class="p">.</span><span class="n">fine</span><span class="p">(</span><span class="s2">&quot;response = </span><span class="si">${</span><span class="n">response</span><span class="p">.</span><span class="n">body</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kd">var</span> <span class="n">verifyResponse</span> <span class="o">=</span> <span class="n">JSON</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">body</span><span class="p">);</span>
+</span><span class='line'>        <span class="kt">String</span> <span class="n">userId</span> <span class="o">=</span> <span class="n">verifyResponse</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="n">verifyResponse</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="kt">String</span> <span class="n">accessToken</span> <span class="o">=</span> <span class="n">credentials</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s2">&quot;access_token&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="n">credentials</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">userId</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">userId</span> <span class="o">==</span> <span class="n">gPlusId</span> <span class="o">&amp;&amp;</span> <span class="n">accessToken</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">accessToken</span><span class="p">;</span>
+</span><span class='line'>          <span class="n">context</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;POST OK&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">=</span> <span class="m">401</span><span class="p">;</span>
+</span><span class='line'>          <span class="n">context</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;POST FAILED </span><span class="si">${</span><span class="n">userId</span><span class="si">}</span><span class="s2"> != </span><span class="si">${</span><span class="n">gPlusId</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now the HTTP session has the full ability to make calls on behalf of the user. The <code>/people</code> method will be called from the client to retrieve the list of visible friends of that user.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">getPeopleHandler</span><span class="p">(</span><span class="n">FukiyaContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="n">accessToken</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s2">&quot;access_token&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">SimpleOAuth2</span> <span class="n">simpleOAuth2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleOAuth2</span><span class="p">()..</span><span class="n">credentials</span> <span class="o">=</span> <span class="k">new</span> <span class="n">console_auth</span><span class="p">.</span><span class="n">Credentials</span><span class="p">(</span><span class="n">accessToken</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">plus</span><span class="p">.</span><span class="n">Plus</span> <span class="n">plusclient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">plus</span><span class="p">.</span><span class="n">Plus</span><span class="p">(</span><span class="n">simpleOAuth2</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">plusclient</span><span class="p">.</span><span class="n">makeAuthRequests</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">plusclient</span><span class="p">.</span><span class="n">people</span><span class="p">.</span><span class="n">list</span><span class="p">(</span><span class="s2">&quot;me&quot;</span><span class="p">,</span> <span class="s2">&quot;visible&quot;</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">plus</span><span class="p">.</span><span class="n">PeopleFeed</span> <span class="n">people</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">serverLogger</span><span class="p">.</span><span class="n">fine</span><span class="p">(</span><span class="s2">&quot;/people = </span><span class="si">$</span><span class="n">people</span><span class="s2">&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">people</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>The final responsibility we can bestow upon the server is allowing the client to disconnect by revoking OAuth access.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='dart'><span class='line'><span class="kt">void</span> <span class="n">postDisconnectHandler</span><span class="p">(</span><span class="n">FukiyaContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">String</span> <span class="n">tokenData</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">containsKey</span><span class="p">(</span><span class="s2">&quot;access_token&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="n">tokenData</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">response</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">=</span> <span class="m">401</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;Current user not connected.&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">final</span> <span class="kt">String</span> <span class="n">revokeTokenUrl</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">${</span><span class="n">TOKEN_REVOKE_ENDPOINT</span><span class="si">}</span><span class="s2">?token=</span><span class="si">${</span><span class="n">tokenData</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;access_token&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">new</span> <span class="n">http</span><span class="p">.</span><span class="n">Client</span><span class="p">()..</span><span class="kd">get</span><span class="p">(</span><span class="n">revokeTokenUrl</span><span class="p">).</span><span class="n">then</span><span class="p">((</span><span class="n">http</span><span class="p">.</span><span class="n">Response</span> <span class="n">response</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;state_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_createStateToken</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">Map</span> <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>                <span class="s2">&quot;state_token&quot;</span><span class="o">:</span> <span class="n">context</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;state_token&quot;</span><span class="p">],</span>
+</span><span class='line'>                <span class="s2">&quot;message&quot;</span> <span class="o">:</span> <span class="s2">&quot;Successfully disconnected.&quot;</span>
+</span><span class='line'>                <span class="p">};</span>
+</span><span class='line'>    <span class="n">context</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">JSON</span><span class="p">.</span><span class="n">stringify</span><span class="p">(</span><span class="n">data</span><span class="p">));</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>Thats about it, Happy Dart Hacking! Special thanks to <a href="https://plus.google.com/112336147904981294875">Gerwin Sturm</a> for putting together the original example for client side. Full source code can be found at <a href="https://github.com/Scarygami/gplus-quickstart-dart">gplus-quickstart-dart</a> in the server folder. Please replace your own keys cause mine will be removed at some point.</p>
+

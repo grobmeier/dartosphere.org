@@ -1,0 +1,71 @@
+---
+title: 'string concatenation in dart'
+layout: post
+tags: {  }
+category: shailen-tulis-blog-dart
+published: '2012-11-13T17:33:00-08:00'
+
+---
+
+<p>Let us start with a simple helloworld.dart example and use it to see how string concatenation works in Dart.</p>
+
+<pre><code>void main() {
+  print("hello, world!");
+}
+</code></pre>
+
+<p>The above works, obviously. Now, if we were given this greeting as two strings, &#8220;hello, &#8221; and &#8220;world!&#8221;, and asked
+to join them together, we might be tempted to do:</p>
+
+<pre><code>"hello, " + "world!"
+</code></pre>
+
+<p>This works in lots of languages, but not in Dart. The + operator has not been overloaded in the String class, the above code throws
+a <code>NoSuchMethodError</code>.</p>
+
+<p>Not a problem: Dart gives us lots of ways to contcatenate strings. I list the most common ways
+below. <em>Above the examples you will see some <strong>crude</strong> benchmarks that I calculated by running each example a million
+times on my MacBook. These can give a <strong>general</strong> sense of the relative efficiency of each method</em>.</p>
+
+<p>The easiest, most efficient way to concat strings is by using adjacent string literals:</p>
+
+<pre><code>.041 seconds
+String a = "hello, " "world!";
+</code></pre>
+
+<p>This still works if the adjacent strings are on different lines:</p>
+
+<pre><code>.040 seconds
+String b = "hello, "
+    'world!';
+</code></pre>
+
+<p>Dart also has a <code>StringBuffer</code> class, and this can be used to build up a <code>StringBuffer</code> object
+and convert it to a string by calling <code>toString()</code> on it:</p>
+
+<pre><code>.689 seconds
+var sb = new StringBuffer();
+["hello, ", "world!"].forEach((item) {
+  sb.add(item);
+  });
+String c = sb.toString();
+</code></pre>
+
+<p>The <code>Strings</code> class (notice the plural) gives us 2 methods, <code>join()</code> and <code>concatAll()</code> that
+can also be used. <code>Strings.join()</code> takes a delimiter as a second argument:</p>
+
+<pre><code>.408 seconds
+String d = Strings.join(["hello", "world!"], ", ");
+
+.385 seconds
+String e = Strings.concatAll(["hello", "world"]);
+</code></pre>
+
+<p>All of the above work, but if you are looking for a <code>+</code> substitute, use adjacent string literals;
+if you need to join a list of strings using a delimiter,
+use <code>Strings.join()</code>. If you plan on building a very long string, the
+<code>StringBuffer</code> class can gather the components quite efficiently and convert them to a string only
+when needed.</p>
+
+<p>You can also use string interpolation; that will be the subject of my next post.</p>
+
