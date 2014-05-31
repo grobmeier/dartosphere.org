@@ -1,13 +1,35 @@
 ---
 layout: default
-title: Your New Jekyll Site
+title: "Dartosphere | Dart lang community"
+slider: true
 ---
 
-<div id="home">
-  <h1>Blog Posts</h1>
-  <ul class="posts">
-    {% for post in site.posts %}
-      <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ post.url }}">{{ post.title }}</a></li>
-    {% endfor %}
-  </ul>
-</div>
+<section class="pure-u-18-24 content">
+	 	<h2>Latest Blog posts:</h2>
+
+	 	<div class="posts">
+        {% for post in site.posts offset:0 limit:5 %}
+        <section class="post">
+            <header class="post-header">
+                <h3 class="post-title"><a href="{{ post.url }}">{{ post.title }}</a></h3>
+            </header>
+
+            <div class="post-description">
+                <p>
+                    {{ post.author.name }}, on {{ post.date | date_to_string }}: 
+					{{ post.content | strip_html | truncatewords: 100 }}
+
+					<a href="{{ post.url }}" title="read more">read more</a>
+                </p>
+            </div>
+        </section><!--end /.post-->
+        {% endfor %}
+
+        <div class="show-all-posts">
+          <a href="/blog.html" title="Show all blog posts" class="trans">Show all blog posts</a>	
+        </div><!--end /.show-all-posts-->
+
+    </div>
+</section>
+
+

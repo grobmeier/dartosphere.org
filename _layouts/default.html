@@ -1,44 +1,218 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>{{ page.title }}</title>
-        <meta name="viewport" content="width=device-width">
+<!--[if IE 8 ]>    <html dir="ltr" lang="en-US" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html dir="ltr" lang="en-US" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--><html dir="ltr" lang="en-US" class="no-js"> <!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<title>{{ page.title }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="" />
+<meta name="keywords" content="" />
+<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.4.2/pure-min.css" />
+<link rel="stylesheet" href="/css/style.css" media="screen"  />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link href="https://plus.google.com/105232322999658861548" rel="publisher" />
 
-        <!-- syntax highlighting CSS -->
-        <link rel="stylesheet" href="/css/syntax.css">
+<!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
 
-        <!-- Custom CSS -->
-        <link rel="stylesheet" href="/css/main.css">
+{% if page.link %}
+  <link rel="canonical" href="{{ page.link }}" />
+{% endif %}
 
-    </head>
-    <body>
+</head>
+<body>
+  
+   <header class="pageheader">
+       
+       <div class="container">
 
-        <div class="site">
-          <div class="header">
-            <h1 class="title"><a href="/">{{ site.name }}</a></h1>
-            <a class="extra" href="/">home</a>
-          </div>
+         <div class="pure-g">
+
+           <div class="pure-u-6-24">
+            <a href="/index.html" title="Dartosphere" class="logo pure-menu-heading">
+                 <img src="/img/logo.png" alt="Dartosphere" />
+               </a>
+           </div>
+
+           <div class="pure-u-13-24">
+             <nav class="navigation">
+                 <ul id="menu">
+                  <li><a href="/blog.html" title="Dart Blog Posts">Blog posts</a></li>
+                  <!--<li><a href="/what-is-dart" title="What is dart?">What is dart?</a></li>-->
+                  <li><a href="/books" title="Books">Books</a></li>
+                  <li><a href="/resources" title="Resources">Resources</a></li>
+                  <li><a href="/participate" title="Participate">Participate</a></li>
+                  <li><a href="/about" title="About us">About us</a></li>
+                 </ul>                        
+              </nav><!--end /.navigation-->
+           </div>
+
+           <div class="pure-u-5-24 last">
+            
+            <!--
+            <form action="#" method="get" class="search-form">
+                   <input class="searchText" type="text" name="s" placeholder="Search" />
+        </form>--><!--end /.search-->
+
+                <div class="social">
+                  <a href="http://feeds.feedburner.com/dartosphere" title="RSS" class="icon rss"></a>
+                  <a href="https://plus.google.com/105232322999658861548" title="Google Plus" class="icon google"></a>
+                  <a href="https://twitter.com/dartosphere" title="Twitter" class="icon twitter"></a>
+                  <a href="http://www.facebook.com/pages/Dartosphere/165291166911774" title="Facebook" class="icon facebook"></a>
+                </div><!--end /.rss-->
+
+           </div>
+          
+         </div><!--end /.pure-g-r-->
+          
+
+       </div><!-- /.container-->
+
+   </header><!-- /.pageheader-->
+
+{% if page.slider %}
+   <div class="featured">
+      <ul class="bxslider">
+      <li><img src="/img/slider.jpg" alt="Your no. 1 reference for dart!" />
+            <div class="bx-caption">
+               <div class="container">
+                  <h1>Your no. 1 reference for dart!</h1>
+                <p>Dartosphere is an independant resource for anything connected with dart language.<br/> All the current blog posts, publications and news ... you name it, we have it!</p>
+                <a href="#" title="Read more">Read more</a>
+               </div><!--end /.container-->
+            </div><!--end /.caption-->
+      </li>
+      <li><img src="/img/slider-img-2.jpg" alt="Your no. 1 reference for dart!" />
+            <div class="bx-caption">
+                <div class="container">
+                  <h1>The latest dart news at a glance!</h1>
+                <p>Catch all the actual blog posts of dart developers from all over the planet.<br/>
+                 Dart language is growing, here is the information... stacked and just one click away!  
+                </p>
+              <a href="#" title="Read more">Read more</a>
+               </div><!--end /.container-->
+            </div><!--end /.caption-->
+      </li>
+      <li><img src="/img/slider.jpg" alt="Your no. 1 reference for dart!" />
+            <div class="bx-caption">
+               <div class="container">
+                  <h1>Your no. 1 reference for dart!</h1>
+                <p>Dartosphere is an independant resource for anything connected with dart language.<br/> All the current blog posts, publications and news ... you name it, we have it!</p>
+                <a href="#" title="Read more">Read more</a>
+               </div><!--end /.container-->
+            </div><!--end /.caption-->
+      </li>
+      <li><img src="/img/slider-img-2.jpg" alt="Your no. 1 reference for dart!" />
+            <div class="bx-caption">
+                <div class="container">
+                  <h1>The latest dart news at a glance!</h1>
+                <p>Catch all the actual blog posts of dart developers from all over the planet.<br/>
+                 Dart language is growing, here is the information... stacked and just one click away!  
+                </p>
+              <a href="#" title="Read more">Read more</a>
+               </div><!--end /.container-->
+            </div><!--end /.caption-->
+      </li>
+      <li><img src="/img/slider.jpg" alt="Your no. 1 reference for dart!" />
+            <div class="bx-caption">
+               <div class="container">
+                  <h1>Your no. 1 reference for dart!</h1>
+                <p>Dartosphere is an independant resource for anything connected with dart language.<br/> All the current blog posts, publications and news ... you name it, we have it!</p>
+                <a href="#" title="Read more">Read more</a>
+               </div><!--end /.container-->
+            </div><!--end /.caption-->
+      </li>
+    </ul>
+      
+   </div><!-- /.featured-->
+   {% endif %}
+   
+   <div class="container content_wrap">
+
+      <div class="pure-g">
+
+         <aside class="pure-u-6-24 sidebar">
+          
+            <div class="newsletter">
+
+              <form  action="http://grobmeier.us2.list-manage1.com/subscribe/post?u=0824398f58160d8279dbcdc04&amp;id=ea4b0840f2" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="pure-form pure-form-stacked">
+                <fieldset>
+                    <h4>Weekly dart updates</h4>
+                    <label for="email">Subscribe and get weekly updates with post from the Dartosphere</label>
+                    <input id="mce-EMAIL" name="EMAIL" type="email" placeholder="email address" required />
+                    <button value="Subscribe" name="subscribe" id="mc-embedded-subscribe"  type="submit" class="pure-button pure-button-primary trans">Subscribe</button>
+                </fieldset>
+              </form>
+
+            </div><!-- /.newsletter-->
+
+            <div class="share-us">
+                <!-- AddThis Button BEGIN -->
+        <div class="addthis_toolbox addthis_default_style">
+        <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+        </div>
+        <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4e68aeba5aa5f5e1"></script>
+        <!-- AddThis Button END -->
+            </div><!-- /.share-us-->
+
+         </aside><!-- /.sidebar-->
 
           {{ content }}
 
-          <div class="footer">
-            <div class="contact">
-              <p>
-                Your Name<br />
-                What You Are<br />
-                you@example.com
-              </p>
-            </div>
-            <div class="contact">
-              <p>
-                <a href="https://github.com/yourusername">github.com/yourusername</a><br />
-                <a href="https://twitter.com/yourusername">twitter.com/yourusername</a><br />
-              </p>
-            </div>
-          </div>
-        </div>
+        
+      </div><!-- /.pure-g-r-->
+    
+   </div><!-- /.container-->
 
-    </body>
+   <footer class="pagefooter">
+       
+      <div class="container inner">
+
+        <div class="pure-g">
+          <div class="pure-u-6-24">
+            <h6>Discussion</h6>
+            <ul>
+               <li><a href="https://groups.google.com/a/dartlang.org/forum/#!forum/misc" rel="nofollow" title="Offical Dart Group">Offical Dart Group</a></li>
+               <li><a href="https://www.xing.com/net/dartlang" rel="nofollow" title="Dart Xing (German)">Dart Xing (German)</a></li>
+            </ul>
+          </div>
+
+          <div class="pure-u-6-24">
+            <h6>Socialice</h6>
+            <ul>
+               <li><a href="http://feeds.feedburner.com/dartosphere" title="RSS">RSS</a></li>
+               <li><a href="https://twitter.com/dartosphere" title="Twitter">Twitter</a></li>
+               <li><a href="https://plus.google.com/105232322999658861548" title="Google+">Google</a></li>
+               <li><a href="http://www.facebook.com/pages/Dartosphere/165291166911774" title="Facebook">Facebook</a></li>
+            </ul>
+          </div>
+          <div class="pure-u-6-24">
+           <h6>Contact</h6>
+            <ul>
+               <li><a href="/participate" title="Join this planet">Join this planet</a></li>
+               <li><a href="/imprint.html" title="Impressum">Impressum</a></li>
+               <li><a href="/disclaimer.html" title="Disclaimer">Disclaimer</a></li>
+            </ul>
+          </div>
+
+          <div class="pure-u-6-24">&nbsp;</div>
+        </div>
+      </div><!-- /.container-->
+
+      <div class="siteby">
+         <div class="container">
+          Maintained by <a href="http://www.grobmeier.de">Christian Grobmeier</a>
+         </div>
+      </div>
+
+   </footer><!-- /.pagefooter-->
+
+<!--js /includes-->
+<script src="/js/libs/jquery-1.10.2.min.js"></script>
+<script src="/js/libs/jquery.bxslider.min.js"></script>
+<script src="/js/libs/tinynav.min.js"></script>
+<script src="/js/custom.js"></script>
+</body>
 </html>

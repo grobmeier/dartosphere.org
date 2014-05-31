@@ -1,9 +1,45 @@
 ---
 layout: default
 ---
-<h2>{{ page.title }}</h2>
-<p class="meta">{{ page.date | date_to_string }}</p>
 
-<div class="post">
-{{ content }}
-</div>
+<section class="pure-u-18-24 content post-detail">
+	<h2>Dart Blog</h2>
+
+	<div class="posts">
+	   <div class="meta-post">
+	   	  {{ page.date | date_to_string }} | 
+
+	   	  {% if page.author.url contains 'https://plus.google.com/' %} 
+  			<a href="{{page.author.url}}" rel="author">{{ page.author.name }}</a> - <a rel="canonical" href="{{page.link}}">Source</a>
+  		  {% else %}
+  		    <a href="{{page.link}}">{{ page.author.name }}</a>
+		  {% endif %} 
+	   </div><!--end /.meta-post-->
+
+		<!-- A single blog post -->
+		<section class="post">
+		    <header class="post-header">
+		        <h2 class="post-title"><a href="#">{{ page.title }}</a></h2>
+		    </header>
+
+		    <div class="post-description">
+		        {{ content }}
+
+		        <!--<div class="post-meta-info">
+		           	
+		        </div>--><!--end /.post-->
+		    </div>
+		</section><!--end /.post-->
+
+		<div class="post-navigation">
+			{% if page.next %} 
+		  		<a href="{{page.next.url}}" title="Newer blog posts" class="trans">Newer blog posts</a> 
+		  	{% endif %}
+		  	{% if page.next and page.previous %} | {% endif %}
+		  	{% if page.previous %} 
+		  		<a href="{{page.previous.url}}" title="Older blog posts" class="trans">Older blog posts</a>
+		  	{% endif %}
+		</div><!--end /.show-all-posts-->
+
+	</div>
+</section>

@@ -1,3 +1,11 @@
-name: Your New Jekyll Site
+name: Dartosphere - A blog on Dartlang
+url: http://www.dartosphere.org
 markdown: redcarpet
-pygments: true
+highlighter: pygments
+paginate: 15
+paginate_path: posts/page:num
+description: Dartosphere - A planet and resource for the Dartlang community
+author: Dartosphere.org
+copyright: Dartosphere and the respective authors
+rss_path: /
+rss_name: rss20.xml
