@@ -8,6 +8,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="" />
 <meta name="keywords" content="" />
+
+<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+
 <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.4.2/pure-min.css" />
 <link rel="stylesheet" href="/css/style.css" media="screen"  />
 <link rel="shortcut icon" href="/favicon.ico" />
@@ -75,58 +79,57 @@
 {% if page.slider %}
    <div class="featured">
       <ul class="bxslider">
-      <li><img src="/img/slider.jpg" alt="Your no. 1 reference for dart!" />
+      <li><img src="/img/slider/slider-1.jpg" alt="Your no. 1 reference for dart!" />
             <div class="bx-caption">
                <div class="container">
                   <h1>Your no. 1 reference for dart!</h1>
-                <p>Dartosphere is an independant resource for anything connected with dart language.<br/> All the current blog posts, publications and news ... you name it, we have it!</p>
-                <a href="#" title="Read more">Read more</a>
-               </div><!--end /.container-->
-            </div><!--end /.caption-->
+                  <p>Dartosphere is an independant resource for anything connected to the Dart language.<br/> We do Blog syndication, but also publish exclusive articles.</p>
+                <a href="/blog.html" class="trans" title="Read more">Read more</a>
+               </div>
+            </div>
       </li>
-      <li><img src="/img/slider-img-2.jpg" alt="Your no. 1 reference for dart!" />
+      <li style="display:none"><img src="/img/slider/slider-2.jpg" alt="Your no. 1 reference for dart!" />
             <div class="bx-caption">
                 <div class="container">
-                  <h1>The latest dart news at a glance!</h1>
-                <p>Catch all the actual blog posts of dart developers from all over the planet.<br/>
-                 Dart language is growing, here is the information... stacked and just one click away!  
+                  <h1>We love Dart books.</h1>
+                  <p>We try to read all Dart books we can get. Check out, what we already read, or send in your own!</p>
                 </p>
-              <a href="#" title="Read more">Read more</a>
-               </div><!--end /.container-->
-            </div><!--end /.caption-->
+              <a href="/books" class="trans" title="Read more">Read more</a>
+               </div>
+            </div>
       </li>
-      <li><img src="/img/slider.jpg" alt="Your no. 1 reference for dart!" />
+      <li style="display:none"><img src="/img/slider/slider-2.jpg" alt="Your no. 1 reference for dart!" />
             <div class="bx-caption">
                <div class="container">
-                  <h1>Your no. 1 reference for dart!</h1>
-                <p>Dartosphere is an independant resource for anything connected with dart language.<br/> All the current blog posts, publications and news ... you name it, we have it!</p>
-                <a href="#" title="Read more">Read more</a>
-               </div><!--end /.container-->
-            </div><!--end /.caption-->
+                  <h1>Your first steps with Dart</h1>
+                <p>Visit our Resource-center to find other fantastic links to learn more about Dart.</p>
+                <a href="/resources" class="trans" title="Read more">Read more</a>
+               </div>
+            </div>
       </li>
-      <li><img src="/img/slider-img-2.jpg" alt="Your no. 1 reference for dart!" />
+      <li style="display:none"><img src="/img/slider/slider-3.jpg" alt="Your no. 1 reference for dart!" />
             <div class="bx-caption">
                 <div class="container">
-                  <h1>The latest dart news at a glance!</h1>
-                <p>Catch all the actual blog posts of dart developers from all over the planet.<br/>
-                 Dart language is growing, here is the information... stacked and just one click away!  
+                  <h1>Join us!</h1>
+                <p>We are looking for you!<br/>We'd love to publish your Dart related post or add your feed to the planet!</p>
                 </p>
-              <a href="#" title="Read more">Read more</a>
-               </div><!--end /.container-->
-            </div><!--end /.caption-->
+              <a href="/participate" class="trans" title="Read more">Read more</a>
+               </div>
+            </div>
       </li>
-      <li><img src="/img/slider.jpg" alt="Your no. 1 reference for dart!" />
+      <li style="display:none"><img src="/img/slider/slider-4.jpg" alt="Your no. 1 reference for dart!" />
             <div class="bx-caption">
                <div class="container">
-                  <h1>Your no. 1 reference for dart!</h1>
-                <p>Dartosphere is an independant resource for anything connected with dart language.<br/> All the current blog posts, publications and news ... you name it, we have it!</p>
-                <a href="#" title="Read more">Read more</a>
-               </div><!--end /.container-->
-            </div><!--end /.caption-->
+                  <h1>Get in touch!</h1>
+                <p>We are looking for professionals, trainers and other disciplines to build
+                  up a large database for others who need your help. Send your details!</p>
+                <a href="/participate" class="trans" title="Read more">Read more</a>
+               </div>
+            </div>
       </li>
     </ul>
       
-   </div><!-- /.featured-->
+   </div>
    {% endif %}
    
    <div class="container content_wrap">
@@ -135,6 +138,16 @@
 
          <aside class="pure-u-6-24 sidebar">
           
+          {% if page.subnavigation %}
+          <div class="sub-menu">
+             <ul>
+              {% for nav in page.subnavigation %}
+                 <li>{{nav}}</li>
+              {% endfor %}
+             </ul>
+          </div><!--end /.sublinks-->
+          {% endif %}
+
             <div class="newsletter">
 
               <form  action="http://grobmeier.us2.list-manage1.com/subscribe/post?u=0824398f58160d8279dbcdc04&amp;id=ea4b0840f2" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="pure-form pure-form-stacked">

@@ -1,9 +1,4 @@
 /* Custom css style */
-
-/* @font-face/Googoe font social icons _____________________________________________*/
-@import url('http://fonts.googleapis.com/css?family=Montserrat:400,700');
-@import url('http://fonts.googleapis.com/css?family=Open+Sans:400,700');
-
 @font-face {
     font-family: 'socialicoregular';
     src: url('fonts/socialico-webfont.eot');
@@ -52,11 +47,13 @@ html, body { height: 100%; }
 img { max-width: 100%; height: auto; }
 .trans, .content a, .navigation ul li a,
 .social a  { -webkit-transition: all .3s ease; -moz-transition: all .3s ease; -o-transition: all .3s ease; -ms-transition: all .3s ease; transition: all .3s ease; }
+.featured .trans:hover { color: #4b5050; background: #f4f4f4; }
 
 /*.pure-g-r > div { border:1px solid red; }*/
 
 /* Header */
-.pageheader { background-color: #4b5050; height: 60px; }
+.pageheader { background-color: #4b5050; height: 60px; position:fixed;z-index:1000; width:100%; top:0; }
+.pageheader + div { margin-top:60px; }
 .logo { float: left; margin-top: 13px; }
 
 /* Navigation */
@@ -126,6 +123,7 @@ img { max-width: 100%; height: auto; }
 .pagefooter { height: 240px; background-color: #0582c8; color: #fff;  }
 .pagefooter .inner { height: 200px; }
 .pagefooter .inner a, .pagefooter .inner h6 { color: #fff; }
+.pagefooter .inner a:hover { color: #4b5050; }
 .pagefooter .inner > div { padding-top: 3%; }
 .pagefooter .inner h6 { font-size: 1.150em; margin-bottom: .85em; }
 .pagefooter ul li { margin-bottom: 5px; }
@@ -188,6 +186,7 @@ body {
 @media screen and (max-width: 1024px) {
    .container { width: 800px; }
    .pageheader { height: auto; padding: 5px 0 15px; text-align: center; }
+   .pageheader + div { margin-top:120px; }
    .pageheader .pure-g>.pure-u, .pageheader .pure-g>[class *="pure-u-"] { width: 100%; float: none; clear: both; }
    .navigation { margin: 1.80% 0 2%; text-align: center; }
    .navigation ul li a { float: none; display: inline-block; }
@@ -207,6 +206,9 @@ body {
 @media screen and (max-width: 840px) {
    .container { width: 640px; /*border:1px solid red;*/ }
    .logo { margin-left: 30%; }
+   .pageheader + div { margin-top:120px; }
+   .social { text-align: center; }
+   .social a { float:inherit;}   
    .bx-wrapper .bx-caption h1 { font-size: 2.10em; margin-bottom: .15em; line-height: 1; }
    .bx-wrapper .bx-caption p {font-size: 1em;}
    .content_wrap .pure-g>.pure-u, .content_wrap .pure-g>[class *="pure-u-"] { width: 100%; float: none; clear: both; }
@@ -230,6 +232,9 @@ body {
 @media screen and (max-width: 670px) {
    .container { width: 480px; /*border:1px solid red;*/ }
    .logo { margin-left: 25%; }
+   .content_wrap { margin-top:120px; }
+   .social { text-align: center; }
+   .social a { float:inherit;}   
    .featured { display: none; }
    .navigation { padding-bottom: 5px; }
    .navigation .tinynav { display: block; }
@@ -240,6 +245,7 @@ body {
 
 @media screen and (max-width: 515px) {
    .container { width: 400px; }
+   .content_wrap { margin-top:160px; }
    .logo { margin-left: 20%; }
    .content h2 { font-size: 1.70em; }
    .content .post .post-title { font-size: 1.30em; margin-bottom: .50em; }
@@ -254,6 +260,8 @@ body {
    .book-item a { font-size: 1em; padding: 8px 10px; }
    .book-item .meta-info { font-size: 1.050em;  }
    .list-books .pure-g>.pure-u, .list-books .pure-g>[class *="pure-u-"]  { margin: 0 3% 3% 0; width: 46%; }
+   .social { text-align: center; }
+   .social a { float:inherit;}   
 }
 
 @media screen and (max-width: 440px) {
@@ -262,6 +270,8 @@ body {
    .pagefooter .pure-g>.pure-u, .pagefooter .pure-g>[class *="pure-u-"] { width: 100%; float: none; clear: both; margin-bottom: 3%; text-align: center; border-bottom: 1px solid #006eac; }
    .pagefooter .pure-g>.last { border-bottom: 0; }
    .resource h3 { font-size: 1.450em; }
+   .social { text-align: center; }
+   .social a { float:inherit;}   
 }
 
 @media screen and (max-width: 440px) {
