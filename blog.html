@@ -4,15 +4,14 @@ title: All Dart Blog Posts
 ---
 
 <section class="pure-u-18-24 content">
-	 	<h2>All Dart Blog Posts:</h2>
+	 	<h2>All Dart Posts:</h2>
 
 	 	<div class="posts">
         {% for post in site.posts %}
         <section class="post">
-            <header class="post-header">
-                <h3><a href="{{ post.url }}">{{ post.title }}</a></h3> 
-                <span>{{ post.author.name }}, on {{ post.date | date_to_string }}</span>
-            </header>
+            
+            <div>{{ post.date | date_to_string }}: <b><a href="{{ post.url }}">{{ post.title }}</a></b> by {{ post.author.name }}</div>
+            
         </section><!--end /.post-->
         {% endfor %}
     </div>
