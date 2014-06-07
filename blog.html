@@ -1,18 +1,13 @@
 ---
 layout: default
 title: All Dart Blog Posts
+description: All posts from the Dartlang planet, sorted by date.
 ---
-
 <section class="pure-u-18-24 content">
-	 	<h2>All Dart Posts:</h2>
-
-	 	<div class="posts">
+ 	<h2>All Dart Posts:</h2>
+ 	<div class="posts">
         {% for post in site.posts %}
-        <section class="post">
-            
-            <div>{{ post.date | date_to_string }}: <b><a href="{{ post.url }}">{{ post.title }}</a></b> by {{ post.author.name }}</div>
-            
-        </section><!--end /.post-->
+            <p>{{ post.date | date_to_string }}: <b><a href="{{ post.url }}">{{ post.title }}</a></b> ({{ post.author.name }})</p>
         {% endfor %}
     </div>
 </section>
