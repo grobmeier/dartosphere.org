@@ -6,25 +6,26 @@
 <meta charset="utf-8">
 <title>{{ page.title }}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="" />
-<meta name="keywords" content="" />
-
+{% if page.description %}
+<meta name="description" content="{{page.description}}" />
+{% endif %}
+{% if page.tags %}
+<meta name="keywords" content="{{page.tags | join: ','}}" />
+{% else %}
+<meta name="keywords" content="dart, blog, how-to, dartlang, google, javascript" />
+{% endif %}
 <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-
 <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.4.2/pure-min.css" />
 <link rel="stylesheet" href="/css/style.css" media="screen"  />
 <link rel="shortcut icon" href="/favicon.ico" />
 <link href="https://plus.google.com/105232322999658861548" rel="publisher" />
-
 <!--[if lt IE 9]>
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 <![endif]-->
-
 {% if page.link %}
   <link rel="canonical" href="{{ page.link }}" />
 {% endif %}
-
 </head>
 <body>
   
@@ -76,11 +77,11 @@
 
    </header><!-- /.pageheader-->
 
-{% if page.slider %}
+  {% if page.slider %}
     {% include teaser.html %} 
-   {% endif %}
+  {% endif %}
    
-   <div class="container content_wrap">
+  <div class="container content_wrap">
 
       <div class="pure-g">
 
