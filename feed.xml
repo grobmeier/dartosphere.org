@@ -11,6 +11,7 @@ layout: none
     {% for post in site.posts limit:10 %}
       <item>
         <title>{{ post.title | xml_escape }}</title>
+        <author>{{ post.author.name }}{% if post.author.email %} ({{post.author.email}}){% endif %}</author>
         <description>{{ post.content | xml_escape | truncatewords: 100 }}</description>
         <pubDate>{{ post.date | date: "%a, %d %b %Y %H:%M:%S %z" }}</pubDate>
         <link>{{ post.url | prepend: site.baseurl | prepend: site.url }}</link>
