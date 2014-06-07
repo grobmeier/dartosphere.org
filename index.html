@@ -16,7 +16,7 @@ slider: true
 
             <div class="post-description">
                 <p>
-                    {{ post.author.name }}, on {{ post.date | date_to_string }}: 
+                    <i>{{ post.author.name }}, on {{ post.date | date_to_string }}</i><br/>
 					{{ post.content | strip_html | truncatewords: 100 }}
 
 					<a href="{{ post.url }}" title="read more">read more</a>
