@@ -21,7 +21,7 @@ develop business applications with dartlang.
 
 One of the chapters which many of the readers will be interested in are
 the pages about DOM manipulation. Actually this chapter is packed with lots of information.
-After reading it, you'll be read to kick off. However "Learning Dart" expects
+After reading it, you'll be ready to kick off. However "Learning Dart" expects
 you know what DOM is and also what CSS is. The examples are pretty interesting:
 in chapter 5 you are writing a ping-pong game.
 
@@ -68,32 +68,32 @@ to databases like MySQL were not well-known before. The book shows whats
 available and then moves on to explain how to deal with MySQL. The chapter
 actually comes with a lot of code as well. If you are a little patient
 and willing to try to understand by yourself, you should be settled.
-In addition the book covers MongoDB which I didn't read as I am more into
+In addition, the book covers MongoDB which I didn't read as I am more into
 CouchDB.
 
 ### Conclusion
 
 The book covers a lot of material and is pretty much good for anybody
 who really wants to dig deep into Dart. However the PacktPub editors
-didn't do a good job actually. The general formatting is sometimes
+didn't do their job very well. The general formatting is sometimes
 pretty tough to read. A few glitches here and there which should have
 been identified took away some fun from reading it. If the editors
-would have reported these issues the book would be much, much better.
+would have reported these issues, the book would be much, much better.
 But well, we are developers and for that reason we maybe can live
 with that.
 
 The content itself is interesting and shows quite a couple of great things.
-While the books title is "Learning Dart" it's not a book focused
+While the book's title is "Learning Dart" it's not a book focused
 on the language itself. It's a book covering many aspects to
 learn to use Dart for daily programming. You should not be a total
 programming newbie to read this book.
 
-After all I think one needs some patience with this book. If you focus
+After all, I think one needs some patience with this book. If you focus
 on the content you'll be happy; if you love Shakespeare and do programming
 only in prime time you might not like it very much.
 
 There were two very competent programmers writing this book and they
-give you a lot of inspiration here. With the right editing, this would
+give you a lot of inspiration. With the right editing, this would
 have been a great book. Now I need to take away a few points - unfortunately.
 
 The book is available on <a href="http://www.amazon.com/gp/product/1849697426/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1849697426&linkCode=as2&tag=christgrobme-20&linkId=NLPKWD22YJMQUI5D">Amazon.com</a> and
