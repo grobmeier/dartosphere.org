@@ -15,4 +15,4 @@ And if you already noticed, we still have JavaScript running here. We are sorry,
 
 Thanks for visiting the Dartosphere and enjoy you trip!
 
-If you have any more questions, please [get in touch](imprint.html).
+If you have any more questions, please [get in touch](/imprint.html).
