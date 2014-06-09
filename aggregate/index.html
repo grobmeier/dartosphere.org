@@ -1,0 +1,50 @@
+---
+layout: default
+title: "Last 10 posts on a single page"
+---
+
+<section class="pure-u-18-24 content">
+	 	<h2>Dartosphere Aggregate</h2>
+
+	 	<div class="posts">
+        {% for post in site.posts offset:0 limit:10 %}
+
+
+<section class="pure-u-18-24 content post-detail">
+    
+
+    <div class="posts">
+       <div class="meta-post">
+          {{ post.date | date_to_string }} | 
+
+          {% if post.author.url contains 'https://plus.google.com/' %} 
+            <a href="{{post.author.url}}" rel="author">{{ post.author.name }}</a> - <a rel="canonical" href="{{post.link}}">Source</a>
+          {% else %}
+            <a href="{{post.link}}">{{ post.author.name }}</a>
+          {% endif %} 
+       </div><!--end /.meta-post-->
+
+        <!-- A single blog post -->
+        <section class="post">
+            <header class="post-header">
+                <h2 class="post-title"><a href="#">{{ post.title }}</a></h2>
+            </header>
+
+            <div class="post-description">
+                {{ post.content }}
+           </div>
+        </section><!--end /.post-->
+    </div>
+</section>
+
+
+        {% endfor %}
+
+        <div class="show-all-posts">
+          <a href="/blog.html" title="Show all blog posts" class="trans">Show all blog posts</a>	
+        </div><!--end /.show-all-posts-->
+
+    </div>
+</section>
+
+
