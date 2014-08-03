@@ -140,7 +140,7 @@ img { max-width: 100%; height: auto; }
 .post-detail .meta-post { font-weight: 700; margin-bottom: 10px; font-size: 1.150em; }
 .post-detail .post { background: #fff; padding: 2%; border:1px solid #b4b4b4; margin-bottom: 2%; }
 .post-detail .post-title { margin-bottom: .65em; }
-.post-detail .post-description p { padding-bottom: 1em; }
+.post-detail .post-description p { font-family: 'Open Sans', serif; padding-bottom: 1em; }
 .post-detail .post-description p span { background: #fee9cc; display: inline-block; padding: 3px 8px; line-height: 1; }
 .post-detail .post-navigation { font-size: 1.10em; font-weight: 700; }
 .post-detail code { background: #f4f4f4; border:1px solid #cecece; display: block; padding: 2%; margin-bottom: 15px; }
@@ -166,6 +166,12 @@ img { max-width: 100%; height: auto; }
 
 .list-books { margin-bottom: 4%; }
 
+/* Interview */
+.i-question .i-person img, .i-answer .i-person img {
+   /*float:left;*/
+   max-width: 50px;
+   margin: 0.5em;
+}
 
 /* @Responsive design(Media queries) _____________________________________________*/
 
