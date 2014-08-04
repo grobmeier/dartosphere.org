@@ -114,7 +114,7 @@ that I learned first and get a job?
 
 {% answer sethladd.jpg %}
 You should learn Dart and Web Components! Learning Dart means you are learning core concepts (e.g. classes, inheritance, closures, etc) that you will find in all of the popular technology stacks. Developers today need to know how to build great apps on multiple platforms and with multiple languages, and an investment in Dart means
-you're learning skills you can use anyway. Web Components fundamentally change the way you think about building web experiences, learning all about them now means you'll be on the cutting edge and ready for the modern web.
+you're learning skills you can use everywhere. Web Components fundamentally change the way you think about building web experiences, learning all about them now means you'll be on the cutting edge and ready for the modern web.
 {% endanswer %}
 
 All questions were asked by <a href="http://plus.google.com/102440702937210603575?prsrc=3" rel="author">Christian Grobmeier</a>.
