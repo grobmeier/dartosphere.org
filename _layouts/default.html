@@ -18,6 +18,7 @@
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css">
 <link rel="stylesheet" href="/css/style.css?20140803" media="screen"  />
+<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 <link rel="shortcut icon" href="/favicon.ico" />
 <link href="https://plus.google.com/105232322999658861548" rel="publisher" />
 <!--[if lt IE 9]>
@@ -197,5 +198,10 @@
 </script>
 <noscript><p><img src="http://stats.grobmeier.de/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
 <!-- End Piwik Code -->
+{% if page.js %}
+  {% for js in page.js %}
+    <script src="{{js}}"></script>
+  {% endfor %}
+{% endif %}
 </body>
 </html>

@@ -1,0 +1,80 @@
+---
+layout: default
+---
+
+
+<section class="pure-u-18-24 content post-detail">
+	<h1>{{page.developer.name}}</h1>
+
+	{% if page.developer.bio %} 
+		Bio:
+		<p>{{page.developer.bio}}</p>
+	{% endif %} 
+
+	{% if page.developer.service %} 
+		Services: <p>{{page.developer.service}}</p>
+	{% endif %} 
+
+	{% if page.developer.country %} 
+		Location:
+		<p>{% if page.developer.city %}{{page.developer.city}}, {% endif %}{{page.developer.country}}</p>
+	{% endif %} 
+
+	<div class="pure-g">
+		<div class="pure-u-1-4">
+			{% if page.developer.img %} 
+  				<img src="/img/developers/{{page.developer.img}}" alt="Photo from {{page.developer.name}}" />
+  		  	{% else %}
+  		    	<img src="/img/developers/dartosphere.jpg" alt="{{page.developer.name}} didn't add a photo." />
+		  	{% endif %} 
+		</div>
+		<div class="pure-u-3-4">
+			<ul>
+			{% if page.developer.website %} 
+				<li><i class="fa fa-home fa-fw"></i> <a href="{{page.developer.website}}" rel="nofollow">{{page.developer.website}}</a></li>
+			{% endif %} 
+			{% if page.developer.github %} 
+				<li><i class="fa fa-github fa-fw"></i> <a href="http://www.github.com/{{page.developer.github}}" rel="nofollow">{{page.developer.github}}</a></li>
+			{% endif %} 
+			{% if page.developer.plus %} 
+				<li><i class="fa fa-google-plus fa-fw"></i> <a href="https://plus.google.com/{{page.developer.plus}}" rel="nofollow">{{page.developer.plus}}</a></li>
+			{% endif %} 
+			{% if page.developer.twitter %} 
+				<li><i class="fa fa-twitter fa-fw"></i> <a href="https://www.twitter.com/{{page.developer.twitter}}" rel="nofollow">{{page.developer.twitter}}</a></li>
+			{% endif %} 
+			{% if page.developer.email %} 
+				<li><i class="fa fa-envelope fa-fw"></i> {{page.developer.email}}</li>
+			{% endif %} 
+			</ul>
+		</div>
+		{% if page.developer.geo %} 
+		<div id="map-canvas" class="pure-u-1" style="height: 300px;"></div>
+		<script>
+		function initialize() {
+		  var myLatlng = new google.maps.LatLng({{page.developer.geo}});
+		  var mapOptions = {
+		    zoom: 10,
+		    center: myLatlng
+		  }
+		  var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+		  var marker = new google.maps.Marker({
+		      position: myLatlng,
+		      map: map,
+		      title: '{{page.developer.name}}'
+		  });
+		}
+
+		function loadScript() {
+		  var script = document.createElement('script');
+		  script.type = 'text/javascript';
+		  script.src = 'https://maps.googleapis.com/maps/api/js?v=3.exp&callback=initialize';
+		  document.body.appendChild(script);
+		}
+
+		window.onload = loadScript;		
+		</script>
+		{% endif %}
+	</div>	
+</section>
+

@@ -1,0 +1,296 @@
+- name: Steve Hamblett
+  github: shamblett
+  email: steve.hamblett@linux.com
+  plus: +SteveHamblett
+  twitter: shamblett1
+  website: 
+  bio: Avid Dart developer, browser and server side
+  service: Training, Hire
+  country: UK
+  city: Manchester
+  geo: 53.553596,-2.325075  
+- name: Anton Moiseev
+  github: antonmoiseev
+  email: a@antonmoiseev.com
+  plus: +AntonMoiseev
+  twitter: antonmoiseev
+  website: http://antonmoiseev.com
+  bio: Works with Dart full-time. Contributes to the Dart project, creates OSS pub packages. Authored and taught trainings on developing Web apps. Presented Dart talks at JEEConf and NYC Dart Users Group.
+  service: Training, Hire, Talks
+  country: Russia
+  city: Saratov
+  geo: 51.5313683,46.0113716
+  img: antonmoiseev-120x120.png
+- name: Florian Hirsch
+  github: lefloh
+  plus: +FlorianHirsch13
+  twitter: lefloh
+  service: Talks
+  country: Germany
+  city: Zirndorf
+  geo: 49.444555,10.9550183
+  img: florianhirsch-120x120.jpg
+- name: Zdeněk Mlčoch
+  github: Thiltal
+  email: mlcoch.zdenek@gmail.com
+  plus: +ZdeněkMlčoch
+  twitter: Thiltal
+  bio: Dart developer, UHK
+  service: Training, Talks
+  country: Czech republic
+  city: Zábřeh
+  geo: 49.8865906,16.8799208
+  img: zdenekmlcoch-120x120.png
+- name: Jose Angel Espinoza Portillo
+  github: onlyangel
+  email: jose@ngel.es
+  plus: https://plus.google.com/u/0/110427613009310139126/about
+  twitter: onlyangel
+  website: http://a.ngel.es
+  bio: Tok3n CTO, part time writer of HTML5WithDart (https://github.com/onlyangel/HTML5WithDart) and GDG Mexico City Manager
+  service: Talks
+  country: Mexico
+  city: Mexico City
+  geo: 19.3200988,-99.1521845
+- name: Kevin Segaud
+  github: Kleak
+  email: segaud.kevin@gmail.com
+  plus: +KevinSegaud
+  bio: I'm passionate by dart, I work every day with and it's always a pleasure :)
+  service: Training, Hire, Talks
+  country: Sweden
+  city: Stockholm
+  geo: 59.3445021,18.0300389
+- name: David Kopec
+  github: davecom
+  email: dartbook at oaksnow dot com
+  plus: +DavidKopec09
+  twitter: davekopec
+  website: http://www.oaksnow.com
+  bio: Startup Consultant & Author Dart for Absolute Beginners
+  service: Training, Hire, Talks
+  country: United States of America
+  city: New York City
+  geo: 40.7820015,-73.8317032
+- name: Thuan Hu
+  github: nunobaba
+  email: nunobaba@gmail.org
+  plus: +nunobaba
+  twitter: nunobaba
+  website: http://www.traduwiki.org
+  bio: Passionated by turning state of the art technologies into fine tools that could benefits the whole society.
+  service: Training, Hire
+  country: France
+  city: Paris
+  geo: 48.8569298,2.3412001
+- name: James Hurford
+  github: terrasea
+  email: terrasea@gmail.com
+  plus: +JamesHurford
+  twitter: terrasea
+  service: Training, Hire
+  country: New Zealand
+  city: Whanganui
+  geo: -39.946269,175.0229502
+- name: Luiz Mineo
+  github: luizmineo
+  email: luiz.mineo@gmail.com
+  plus: 112869608698337579825
+  website: http://redstonedart.org
+  bio: Luiz is a brazilian software developer who is using Dart to build web applications. He is also the author of the Redstone.dart framework.
+  service: Hire, Talks
+  country: Brasil
+  city: Uberlândia / Minas Gerais
+  geo: -18.9190693,-48.2783585
+- name: Antonín Slejška
+  github: AntoninSlejska
+  email: antonin@slejska.de
+  plus: +AntoninSlejska
+  twitter: AntoninSlejska
+  website: http://dart.slejska.net
+  bio: Antonín is a Web developer specialised to Dart
+  service: Hire
+  country: Germany
+  city: Garbsen
+  geo: 52.40384,9.61476
+  img: antoninslejska-120x120.png
+- name: Frank Pepermans
+  github: frankpepermans
+  email: frank@igindo.com
+  plus: +FrankPepermans
+  bio: "Frank is a freelance developer with a main focus on Dart applications. Contact him for: enterprise software, mobile apps, game apps, ..."
+  service: Training, Hire, Talks
+  country: Belgium
+  city: Antwerpen
+  geo: 51.2168197,4.4001481
+- name: Adrián Avila
+  email: adrian.avila.mtz@gmail.com
+  bio: Adrián develops software since 2001 using best practices and modern technology. He works with Dart since MS1 and developed Dart code which interacts with .NET/Ruby. For him, Dart is the future of web.
+  service: Training, Talks
+  country: México
+  city: Los Mochis
+  geo: 25.7904657,-108.985882  
+- name: Giovanni Laquidara
+  github: joaobiriba
+  email: glaquidara@gmail.com
+  plus: +GiovanniLaquidara
+  twitter: joaolaq
+  website: http://www.laquysoft.com
+  bio: Giovanni is a Software Engineer working in Java, C++, Android from GDG Rome and is a passionate Dart explorer developer.
+  service: Training, Talks
+  country: Italy
+  city: Tivoli
+  geo: 41.9607697,12.80303
+- name: Dzenan Ridjanovic
+  github: dzenanr
+  email: dzenanr@gmail.com
+  plus: +DzenanRidjanovic
+  twitter: dzenanr
+  website: http://ondart.me/
+  bio: Dzenan Ridjanovic is a retired professor who is focusing on the development of web applications with Dart, HTML5, web components and databases. He is the author of the Dartling framework.
+  service: Training, Hire, Talks
+  country: Canada
+  city: Quebec
+  geo: 46.8122800,-71.2145400
+- name: Tomasz Kubacki
+  github: tomaszkubacki
+  email: tomasz.kubacki@gmail.com
+  plus: +TomaszKubacki
+  twitter: tomaszkubacki
+  service: Training, Hire, Talks
+  country: Poland
+  city: Poznań
+  geo: 52.406374,16.9251681
+- name: Ruud Poutsma
+  github: generateui
+  email: rtimon@gmail.com
+  plus: +RuudPoutsma
+  twitter: generateui
+  website: generateui.github.com
+  bio: Ruud is a passionated dev, using .NET C# mostly in his prime time and Dart heavily for a large hobby project
+  service: Training, Hire, Talks
+  country: The Netherlands
+  city: Arnhem
+  geo: 51.978944,5.910055
+- name: Jakub Škvára
+  email: jskvara@gmail.com
+  plus: +JakubSkvara
+  twitter: skvaros
+  website: http://www.jakubskvara.cz/
+  bio: JavaScript, CoffeeScript and Dart developer interested in front end frameworks and libraries. Happy event organiser in GDG Prague.
+  service: Training, Talks, Events, Book Reviews
+  country: Czech Republic 
+  city: Prague 
+  geo: 50.0835494,14.4341414
+- name: Andreas Ölund
+  github: andreasolund
+  email: andreas@dartvoid.com
+  plus: AndreasOlund
+  twitter: andreasolund
+  website: http://www.dartvoid.com
+  bio: Andreas is a Dart enthusiast and works as a DevOps Engineer at DartVoid. He's also the host of a weekly hangout called Dartout.
+  service: Hosting, Training, Talks, Consulting
+  country: Sweden
+  city: Umeå
+  geo: 63.8257149,20.2650392
+- name: Matthew Butler 
+  github: butlermatt 
+  email: contact@butlermatt.me 
+  plus: +MatthewButler 
+  twitter: butlermatt
+  website: http://blog.butlermatt.me 
+  bio: Matthew is an Early Adopter of Dart, and has contributed source and documentation to the language.
+  service: Training, Hire, Talks
+  country: Canada 
+  city: Glace Bay 
+  geo: 46.1968689,-59.9577103
+- name: Jana Moudrá
+  email: jana.moudra@gmail.com
+  plus: +JanaMoudrá
+  twitter: janamou
+  website: http://www.janamoudra.blogspot.com
+  bio: Juicymo Co-founder, interested in Dart, HTML5, WebGL, Android and design. Happy event organizer in GDG Prague.
+  service: Training, Talks, Events Organizing, Book Reviews
+  country: Czech Republic
+  city: Prague
+  geo: 50.0755381,14.4378005
+  img: janamoudra-120x120.png
+- name: Andrey Petrov
+  github: andreynpetrov
+  email: andreynpetrov@gmail.com
+  plus: +andreynpetrov
+  twitter: andreynpetrov
+  website: http://blog.july.me
+  service: Training, Hire, Talks
+  country: Russia
+  city: Moscow
+  geo: 55.7569695,37.6150208
+- name: Roberto Tassi
+  github: fromlabs
+  email: roberto.tassi@fromlabs.org
+  website: https://www.linkedin.com/in/robertotassi
+  bio: Roberto is a software engineer, specialized in the Java/J2EE, Dart/Javascript/HTML5 and Flex/AIR platforms, with a childhood passion for computer programming.
+  service: Training, Hire, Talks
+  country: Italy
+  city: Rimini
+  geo: 44.0567017,12.5453997
+  img: robertotassi-120x120.png
+- name: Mathieu Breton
+  github: mbreton
+  email: mathieubre@gmail.com
+  plus: +MathieuBreton
+  twitter: matbreton
+  service: Training, Talks
+  country: France
+  city: Paris
+  geo: 48.912571,2.300006
+  img: mathieubreton-120x120.png
+- name: Gérald Reinhart
+  github: GeReinhart
+  email: gerald.reinhart@gmail.com
+  twitter: GeReinhart
+  website: http://www.la-boussole.info/
+  bio: Dart dev at night, Java dev during the day
+  service: Talks
+  country: France
+  city: Grenoble
+  geo: 45.15683,5.73278
+- name: Erik Feucht
+  github: TheNetBird
+  email: ErikFeucht@gmail.com
+  plus: +ErikFeucht
+  bio: Erik has a passion for web and games development with Dart.
+  service: Hire
+  country: Switzerland
+  city: Zurich
+  geo: 47.3528709,8.5764799
+- name: Monty Rasmussen
+  github: montyr75
+  email: montyr75@gmail.com
+  plus: 116541855412533294641
+  website: https://googledrive.com/host/0BwUuFubLEn3zTzZ0Z3VDRWRaTHM
+  bio: A long-time developer who is now passionate about Dart being the best language for the future of web development.
+  service: Training, Hire, Talks
+  country: United States
+  city: Orem, UT
+  geo: 40.2968979,-111.6946475
+  img: montyrasmussen-120x120.jpg
+- name: Oskar Börjesson
+  github: oskbor
+  email: oskar@esprima.se
+  plus: 107617149422325715917
+  bio: Dart developer available for hire
+  service: Training, Hire, Talks
+  country: Sweden
+  city: Lund
+  geo: 55.6748889,13.1339991
+- name: Ole Martin Gjersvik
+  github: gjersvik
+  email: olem@olem.org
+  plus: +OleMartinGjersvik
+  bio: Ole Martin is hobby dart dev that loves to learn and teach others.
+  service: Training, Hire, Talks
+  country: Norway
+  city: Nærbø
+  geo: 58.668534, 5.632480​
+  img: olemartingjersvik-120x120.png  
