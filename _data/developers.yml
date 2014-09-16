@@ -44,7 +44,7 @@
 - name: Jose Angel Espinoza Portillo
   github: onlyangel
   email: jose@ngel.es
-  plus: https://plus.google.com/u/0/110427613009310139126/about
+  plus: 110427613009310139126
   twitter: onlyangel
   website: http://a.ngel.es
   bio: Tok3n CTO, part time writer of HTML5WithDart (https://github.com/onlyangel/HTML5WithDart) and GDG Mexico City Manager
@@ -293,4 +293,16 @@
   country: Norway
   city: Nærbø
   geo: 58.668534, 5.632480​
-  img: olemartingjersvik-120x120.png  
+  img: olemartingjersvik-120x120.png
+- name: Pierre Reliquet
+  github: PierreReliquet
+  email: pierre.reliquet@gmail.com
+  plus: +PierreReliquet
+  twitter: preliquet
+  website: 
+  bio: Passionate web developer loving Angular & Dart
+  service: Training, Talks
+  country: France
+  city: Nantes
+  geo: 47.2113991,-1.54693
+  img: pierrereliquet-120x120.jpg
