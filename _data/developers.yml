@@ -305,3 +305,38 @@
   city: Nantes
   geo: 47.2113991,-1.54693
   img: pierrereliquet-120x120.jpg
+- name: Alexey Salnikov
+  github: iamsalnikov 
+  email: me@iamsalnikov.ru
+  service: Training, Hire, Talks
+  country: Russia 
+  geo: 61.52401,105.318756
+- name: Markus Ritberger
+  github: Slemgrim
+  twitter: slemgrim
+  website: http://www.slemgrim.com
+  service: Training, Hire
+  country: Austria
+  city: Linz
+  geo: 48.306142,14.286206
+  img: markusritberger-120x120.png
+- name: Tóth Róbert
+  github: StrykerKKD
+  email: kkdstryker@gmail.com
+  plus: +RóbertTóthKKD
+  bio: Robert develops HTML5 games and an open source 2D game engine in Dart. Robert has used other programming languages, but Dart is his most favourite language to use.
+  service: Training, Hire, Talks
+  country: Hungary
+  city: Szeged
+  geo: 46.2609596,20.2052803
+- name: Federico Di Gregorio
+  github: fogzot
+  email: fog@dndg.it
+  plus: +FedericoDiGregorio
+  twitter: fogzot
+  website: http://dndg.it/
+  bio: "Just a programmer. And the language doesn't matter. (But some languages don't matter more or less than others.)"
+  service: Talks
+  country: Italia
+  city: Torino
+  geo: 45.0754013,7.6462002
