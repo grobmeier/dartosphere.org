@@ -340,3 +340,46 @@
   country: Italia
   city: Torino
   geo: 45.0754013,7.6462002
+- name: Gerald Leeb
+  github: gerald24
+  email: gerald@g-24.net
+  plus: +GeraldLeeb
+  twitter: gl_4
+  website: http://g-24.net
+  bio: Gerald is a freelance developer and a Smalltalk and Dart enthusiast.
+  service: Hire
+  country: Austria
+  city: Vienna
+  geo: 48.19730,16.36368
+- name: Jesse Warden
+  github: https://github.com/JesterXL
+  email: jesse@jessewarden.com
+  plus: +JesseWarden
+  twitter: jesterxl
+  website: http://jessewarden.com/
+  bio: JavaScript consultant by day, Dartisan by night.
+  service: talks
+  country: USA
+  city: Richmond
+  geo: 37.540699,-77.4336472  
+  img: jessewarden-120x120.png
+- name: Xavier Guzman
+  github: xaguzman
+  email: xaguzman@gmail.com
+  plus: +XavierGuzmanMX
+  twitter: arkalain
+  website: http://blog.xaguzman.com
+  bio: "Xavier is a passionated Dart dev, using it mostly in his personal projects and experiments, since he's tied to C# on his daily job"
+  service: Training, Hire, Talks
+  country: Mexico
+  city: Guadalajara
+  geo: 20.673792,-103.3354131
+- name: Sergey Akopkokhyants
+  github: akserg
+  email: akserg@gmail.com
+  plus: +SergeyAkopkokhyants
+  twitter: aksergey
+  service: Training, Hire, Talks
+  country: South Africa
+  city: Cape Town
+  geo: -33.9205017,18.4211998
