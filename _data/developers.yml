@@ -383,3 +383,25 @@
   country: South Africa
   city: Cape Town
   geo: -33.9205017,18.4211998
+- name: Adam Singer
+  github: financeCoding
+  email: financeCoding@gmail.com
+  plus: +AdamSinger1
+  twitter: printf
+  website: financeCoding.github.com
+  bio: Open Source Dart Developer 
+  service: Training, Talks
+  country: USA
+  city: San Francisco
+  geo: 37.7785537,-122.4167681
+- name: George Moschovitis
+  github: gmosx
+  email: george.moschovitis@gmail.com
+  plus: +GeorgeMoschovitis
+  twitter: gmosx
+  website: http://www.gmosx.com
+  bio: George loves using Dart on both server and client-side.
+  service: Software development
+  country: Cyprus
+  city: Larnaca
+  geo: 34.916617,33.632895
