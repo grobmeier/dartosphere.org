@@ -405,3 +405,15 @@
   country: Cyprus
   city: Larnaca
   geo: 34.916617,33.632895
+- name: Tais Plougmann Hansen
+  github: taisph
+  email: taishansen@gmail.com
+  plus: +TaisPlougmannHansen
+  twitter: taisph
+  website: http://www.osd.dk
+  bio: "Open source consultant specializing in web application and business process automation development primarily using Dart and Go."
+  service: Hire
+  country: Denmark
+  city: Solrød Strand
+  geo: 55.516667,12.216667
+  img: taisplougmannhansen-120x120.png
