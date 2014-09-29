@@ -426,4 +426,14 @@
   service: Hire
   country: USA
   city: Chattanooga
-  geo: 35.0315132,-85.1551285  
+  geo: 35.0315132,-85.1551285
+- name: Jan Voráček
+  github: janvoracek
+  email: jan@voracek.net
+  twitter: JanVoracek
+  website: http://blog.voracek.net
+  bio: "Cheerful developer (PHP, JS, Java, C#, Dart) interested in isomorphic applications in Dart. Also PhD student, clean code evangelist and GDG Pardubice member."
+  service: Talks, Hire
+  country: Czech Republic
+  city: Prague
+  geo: 50.076198,14.435068
