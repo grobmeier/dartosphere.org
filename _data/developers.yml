@@ -401,7 +401,7 @@
   twitter: gmosx
   website: http://www.gmosx.com
   bio: George loves using Dart on both server and client-side.
-  service: Software development
+  service: Hire
   country: Cyprus
   city: Larnaca
   geo: 34.916617,33.632895
@@ -417,3 +417,14 @@
   city: Solrød Strand
   geo: 55.516667,12.216667
   img: taisplougmannhansen-120x120.png
+- name: Greg Lusk
+  github:
+  email: integragreg@gmail.com
+  plus: +GregLusk
+  twitter: integragreg
+  website: http://www.selinc.com
+  bio: "Greg is an OEM software developer and manager, writing client-side real-time web apps in Dart."
+  service: Hire
+  country: USA
+  city: Chattanooga
+  geo: 35.0315132,-85.1551285  
