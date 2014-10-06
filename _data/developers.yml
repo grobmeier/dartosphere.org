@@ -3,12 +3,12 @@
   email: steve.hamblett@linux.com
   plus: +SteveHamblett
   twitter: shamblett1
-  website: 
+  website:
   bio: Avid Dart developer, browser and server side
   service: Training, Hire
   country: UK
   city: Manchester
-  geo: 53.553596,-2.325075  
+  geo: 53.553596,-2.325075
 - name: Anton Moiseev
   github: antonmoiseev
   email: a@antonmoiseev.com
@@ -129,7 +129,7 @@
   service: Training, Talks
   country: México
   city: Los Mochis
-  geo: 25.7904657,-108.985882  
+  geo: 25.7904657,-108.985882
 - name: Giovanni Laquidara
   github: joaobiriba
   email: glaquidara@gmail.com
@@ -179,8 +179,8 @@
   website: http://www.jakubskvara.cz/
   bio: JavaScript, CoffeeScript and Dart developer interested in front end frameworks and libraries. Happy event organiser in GDG Prague.
   service: Training, Talks, Events, Book Reviews
-  country: Czech Republic 
-  city: Prague 
+  country: Czech Republic
+  city: Prague
   geo: 50.0835494,14.4341414
 - name: Andreas Ölund
   github: andreasolund
@@ -193,16 +193,16 @@
   country: Sweden
   city: Umeå
   geo: 63.8257149,20.2650392
-- name: Matthew Butler 
-  github: butlermatt 
-  email: contact@butlermatt.me 
-  plus: +MatthewButler 
+- name: Matthew Butler
+  github: butlermatt
+  email: contact@butlermatt.me
+  plus: +MatthewButler
   twitter: butlermatt
-  website: http://blog.butlermatt.me 
+  website: http://blog.butlermatt.me
   bio: Matthew is an Early Adopter of Dart, and has contributed source and documentation to the language.
   service: Training, Hire, Talks
-  country: Canada 
-  city: Glace Bay 
+  country: Canada
+  city: Glace Bay
   geo: 46.1968689,-59.9577103
 - name: Jana Moudrá
   email: jana.moudra@gmail.com
@@ -306,10 +306,10 @@
   geo: 47.2113991,-1.54693
   img: pierrereliquet-120x120.jpg
 - name: Alexey Salnikov
-  github: iamsalnikov 
+  github: iamsalnikov
   email: me@iamsalnikov.ru
   service: Training, Hire, Talks
-  country: Russia 
+  country: Russia
   geo: 61.52401,105.318756
 - name: Markus Ritberger
   github: Slemgrim
@@ -361,7 +361,7 @@
   service: talks
   country: USA
   city: Richmond
-  geo: 37.540699,-77.4336472  
+  geo: 37.540699,-77.4336472
   img: jessewarden-120x120.png
 - name: Xavier Guzman
   github: xaguzman
@@ -389,7 +389,7 @@
   plus: +AdamSinger1
   twitter: printf
   website: financeCoding.github.com
-  bio: Open Source Dart Developer 
+  bio: Open Source Dart Developer
   service: Training, Talks
   country: USA
   city: San Francisco
@@ -437,3 +437,14 @@
   country: Czech Republic
   city: Prague
   geo: 50.076198,14.435068
+- name: Austin Cummings
+  github: austincummings
+  email: austincummings95@gmail.com
+  plus: +AustinCummings95
+  twitter: austincummings1995
+  website: http://austincummings.com
+  bio: "Austin is a developer on the OSIRIS-REx NASA mission, uses Dart for tools and on side projects."
+  service: Training, Hire, Talks
+  country: USA
+  city: Tucson
+  geo: 32.22155,-110.9697571
