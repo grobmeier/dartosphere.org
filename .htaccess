@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteCond %{HTTP_HOST} !=www.dartosphere.org
+RewriteRule (.*) http://www.dartosphere.org/$1 [R=301,L]
