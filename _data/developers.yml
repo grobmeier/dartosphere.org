@@ -448,3 +448,15 @@
   country: USA
   city: Tucson
   geo: 32.22155,-110.9697571
+- name: Sandro Bilbeisi
+  github: sandrobilbeisi
+  email: sandro.bilbeisi@gmail.com
+  plus: +SandroBilbeisi
+  twitter: sandrobilbeisi
+  website: http://sandrobilbeisi.net
+  bio: Sandro is a veteran software developer who has discovered the Holy Grail that is Dart !
+  service: Training, Hire, Talks
+  country: Italy
+  city: Rome
+  geo: 41.845165,12.489182
+  img: sandrobilbeisi-120x120.png
