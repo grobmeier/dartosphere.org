@@ -460,3 +460,14 @@
   city: Rome
   geo: 41.845165,12.489182
   img: sandrobilbeisi-120x120.png
+- name: Ivo Balbaert
+  github: ivo-balbaert
+  email: ivo.balbaert@telenet.be
+  plus: +IvoBalbaert
+  twitter:
+  website: http://learningdart.org
+  bio: "Ivo is a teacher and a passioned Dart dev, wrote 2 books on Dart \"Learning Dart\" and \"Dart Cookbook\""
+  service: Training, Hire, Talks
+  country: Belgium
+  city: Antwerp
+  geo: 51.177021, 4.4513402  
