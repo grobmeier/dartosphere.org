@@ -470,4 +470,12 @@
   service: Training, Hire, Talks
   country: Belgium
   city: Antwerp
-  geo: 51.177021, 4.4513402  
+  geo: 51.177021,4.4513402
+- ​​name: Suraj Maher
+  email: surajmaher@gmail.com
+  plus: +surajmaher
+  bio: Dart enthusiast
+  service: Training, Hire, Talks
+  country: India
+  city: Pune
+  geo: 18.5867193,73.8154394
