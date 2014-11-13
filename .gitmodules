@@ -1,6 +1,6 @@
 [submodule "_posts/generated"]
 	path = _posts/generated
 	url = git@bitbucket.org:dartosphere/feedcontent.git
-[submodule "_data/generated"]
-        path = _data/generated
-        url = git@bitbucket.org:dartosphere/datacontent.git    
+[submodule "datacontent"]
+	path = datacontent
+	url = git@bitbucket.org:dartosphere/datacontent.git
