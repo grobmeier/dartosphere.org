@@ -1,0 +1,26 @@
+---
+layout: simple
+title: Latest releases from the Dart community
+---
+
+<h2>Recent releases from the Dart community</h2>
+
+<p>
+    <a href="http://pub.dartlang.org" rel="nofollow">Pub is the official repository</a>
+    for Dartlang packages. You can easily host your own there for free.
+</p>
+
+<h3>Recent updates</h3>
+<ul>
+    {% assign releases = site.data.generated.releases %}
+    {% for release in releases reversed %}
+    <li>
+        <h4><a href="{{ release.id }}">{{ release.package_name }} ({{ release.package_version }})</a></h4>
+        <p>
+            <a href="{{ release.link }}">Package Info</a><br/>
+            Last updated: {{ release.published | date: "%-d %B %Y %H:%M" }}<br/>
+            Author: {{ release.author}}
+        </p>
+    </li>
+    {% endfor %}
+</ul>
