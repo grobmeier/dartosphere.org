@@ -15,11 +15,10 @@ title: Latest releases from the Dart community
     {% assign releases = site.data.generated.releases %}
     {% for release in releases reversed %}
     <li>
-        <h4><a href="{{ release.id }}">{{ release.package_name }} ({{ release.package_version }})</a></h4>
+        <h4><a href="{{ release.link }}">{{ release.package_name }} ({{ release.package_version }})</a></h4>
         <p>
-            <a href="{{ release.link }}">Package Info</a><br/>
             Last updated: {{ release.published | date: "%-d %B %Y %H:%M" }}<br/>
-            Author: {{ release.author}}
+            Author: {{ release.author }}
         </p>
     </li>
     {% endfor %}
