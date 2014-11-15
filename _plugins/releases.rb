@@ -21,7 +21,11 @@ module Jekyll
         html = html + "<a href=\"" + release["link"] + "\">"
         html = html + release["package_name"] + ": " + release["package_version"]
         html = html + "</a> - "
-        html = html + "<i>" + release["author"] +  "</i>"
+
+        html = html + "<i>"
+        html = html + release["author"].join(", ")
+        html = html + "</i>"
+
         html = html + "</li>"
 
         i = i + 1

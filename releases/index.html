@@ -18,7 +18,7 @@ title: Latest releases from the Dart community
         <h4><a href="{{ release.link }}">{{ release.package_name }} ({{ release.package_version }})</a></h4>
         <p>
             Last updated: {{ release.published | date: "%-d %B %Y %H:%M" }}<br/>
-            Author: {{ release.author }}
+            Author(s): {{ release.author | join: ", " }}
         </p>
     </li>
     {% endfor %}
