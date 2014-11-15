@@ -18,7 +18,7 @@ module Jekyll
       site.data["generated"]["releases"].reverse.each do |release|
 
         html = html + "<li>"
-        html = html + "<a href=\"" + release["id"] + "\">"
+        html = html + "<a href=\"" + release["link"] + "\">"
         html = html + release["package_name"] + ": " + release["package_version"]
         html = html + "</a> - "
         html = html + "<i>" + release["author"] +  "</i>"
