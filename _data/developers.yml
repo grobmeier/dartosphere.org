@@ -479,3 +479,24 @@
   country: India
   city: Pune
   geo: 18.5867193,73.8154394
+- name: ​Karan Goel
+  github: ​karan​
+  email: ​karan@goel.io​
+  plus: +​KaranGoel​
+  twitter: ​karangoel​
+  website: http://www.​goel.io​
+  bio: ​Karan is a passionate developer and student at the University of Washington.
+  service: Training, Talks
+  country: ​USA
+  city: ​Seattle​
+  geo: 47.658158,-122.315643  
+- name: Tercio Gaudencio Filho
+  email: terciofilho@gmail.com
+  plus: +TercioGaudencioFilho
+  twitter: 0x3333
+  website: http://www.epic-ti.com/
+  bio: "Tercio is a passionate and experienced software engineer. He's worked with several programming languages, Java (including GWT), Javascript and Dart to start. His passion for computer programming comes since his childhood."
+  service: Training, Hire, Talks
+  country: Brazil
+  city: Vinhedo
+  geo: -23.03067,-46.98376
