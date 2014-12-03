@@ -10,16 +10,16 @@ module Jekyll
     	params = @params
 
     	params.strip!
-      html.strip!
+      #html.strip!
 
       <<-MARKUP.strip
 <div class="i-answer pure-g">
 <div class="i-person pure-u-1-12">
 <img src="/img/interviews/#{params}" />
 </div>
-<p class=\"i-answer-text pure-u-11-12\">
+<div class=\"i-answer-text pure-u-11-12\">
 #{html} 
-</p>
+</div>
 </div>
       MARKUP
     end
