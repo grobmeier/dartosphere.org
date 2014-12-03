@@ -23,11 +23,11 @@ What are your main developing interests?
 {% answer bobnystrom.jpg %}
 <p>I'm interested in a lot of different kinds of software, but one main theme is that I like writing "tools"—programs, libraries, APIs, and architectures that let other people be creative. Before coming to Google, I was a game developer, and I spent much of that time working on game authoring tech. It's really satisfying seeing my work magnify someone else's creativity. For similar reasons, I also really love user interface work—I like seeing people use my stuff.
 </p>
-<p>In the six years, I've also realized how enamored I am of programming languages. They have a lot of overlap with tools and user experience (I tend to consider a programming language a user interface to its semantics), but they're also deeply technical and challenging to work on.</p>
+<p>In the past six years, I've also realized how enamored I am of programming languages. They have a lot of overlap with tools and user experience (I tend to consider a programming language a user interface to its semantics), but they're also deeply technical and challenging to work on.</p>
 
 <p>I also really really like working in the open. I like being able to talk publicly about my work and share my code with other people. I get a lot of satisfaction out of communicating with people and building a community.
 </p>
-<p>The Dart project basically scratches all of these itches, and it's full of people that are a ton of fun to work on, so it's basically my dream project.
+<p>The Dart project basically scratches all of these itches, and it's full of people that are a ton of fun to work with, so it's basically my dream project.
 </p>{% endanswer %}
 
 {% question dartosphere.jpg %}
@@ -91,7 +91,7 @@ more about the idea behind and what problem(s) it will solve?
 {% endquestion %}
 
 {% answer bobnystrom.jpg %}
-<p>If you look at other web ecosystems, build steps are a necessary component for most real-world apps. You need to compile your SASS or LESS to CSS. You need to sprite your images. You need to minify your HTML and JavaScript. Often, these get pipelined together, you compile your SASS to CSS then minify that. Of course, users don't want to manually have to invoke a build system every time they touch a file, so they invariably end up with some file-watching system that automatically triggers builds when source files change.
+<p>If you look at other web ecosystems, build steps are a necessary component for most real-world apps. You need to compile your SASS or LESS to CSS. You need to sprite your images. You need to minify your HTML and JavaScript. Often, these get pipelined together — you compile your SASS to CSS then minify that. Of course, users don't want to have to manually invoke a build system every time they touch a file, so they invariably end up with some file-watching system that automatically triggers builds when source files change.
 </p>
 <p>We wanted a good solution for this—and in particular one that also worked with dart2js. We had another goal that packages should be able to encapsulate their use of build steps. If I make package like bootstrap, you shouldn't care if I developed it internally using SASS or LESS. You should just see the final CSS files generated from those.
 </p>
@@ -134,7 +134,7 @@ miss in any project?
 {% endquestion %}
 
 {% answer bobnystrom.jpg %}
-<p>Well, I'm terribly biased since I wrote these, but I find path and args to be indispensable for most command-line apps I write. I also use the unittest package all the time, and often scheduled_test, it's async testing big brother.</p>
+<p>Well, I'm terribly biased since I wrote these, but I find path and args to be indispensable for most command-line apps I write. I also use the unittest package all the time, and often scheduled_test, its async testing big brother.</p>
 {% endanswer %}
 
 {% question dartosphere.jpg %}
