@@ -1,3 +1,21 @@
+- name: Peter Stefanov
+  email: regardingscot@gmail.com 
+  plus: +PeterStJ 
+  bio: Peter is a front-end developer and loves the enormous benefits that Dart brings to the web development process.
+  service: Hire
+  country: Bulgaria 
+  city: Varna 
+  geo: 43.209714,27.910787
+- name: Jack Murphy
+  github: rightisleft
+  email: jack@rightisleft.com
+  twitter: rightisleft
+  website: http://www.rightisleft.com
+  bio: I build kick ass web products
+  service: Talks, Hire, Meetups
+  country: USA
+  city: New York
+  geo: 40.7838371,-73.9778176  
 - name: Steve Hamblett
   github: shamblett
   email: steve.hamblett@linux.com
