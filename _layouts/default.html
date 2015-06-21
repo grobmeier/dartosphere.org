@@ -16,7 +16,12 @@
 {% endif %}
 <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css">
+<!--[if lte IE 8]>
+  <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.6.0/base-min.css&pure/0.6.0/grids-min.css&pure/0.6.0/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.6.0/base-min.css&pure/0.6.0/grids-min.css&pure/0.6.0/grids-responsive-min.css">
+<!--<![endif]-->
 <link rel="stylesheet" href="/css/style.css?20141203" media="screen"  />
 <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 <link rel="shortcut icon" href="/favicon.ico" />
@@ -87,7 +92,7 @@
   <div class="container content_wrap">
       <div class="pure-g">
          <aside class="pure-u-6-24 sidebar">
-          
+          <label><small>Advertising</small></label>
 <script type="text/javascript">
     google_ad_client = "ca-pub-9833599478636271";
     google_ad_slot = "8878435531";

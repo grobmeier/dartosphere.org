@@ -518,3 +518,15 @@
   country: Brazil
   city: Vinhedo
   geo: -23.03067,-46.98376
+- name: David Liedle
+  github: MacDaddy
+  email: david.liedle@gmail.com
+  plus: +DavidLiedle
+  twitter: spiderbyte
+  website: http://davidcanhelp.me
+  bio: David is a Senior Developer with over 27 years of programming experience
+  service: Training, Hire, Talks
+  country: USA
+  city: Denver
+  geo: 39.739154,-104.984703
+  img: davidliedle-120x120.png
