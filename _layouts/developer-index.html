@@ -11,16 +11,16 @@ title: Dart Developers
 <p>Are you a developer coding in Dart? Please consider <a href="/developers/how-to-join.html">joining this map</a>.</p>
 
 {% for developer in page.developers %}
-<div class="pure-g" style="height:25px">
-	<div class="pure-u-1-24">
+<div class="pure-g" style="margin-bottom: 1em">
+	<div class="pure-u-1-4 pure-u-md-1-24">
 		{% if developer.img %} 
-			<a href="{{ developer.developerSlug }}.html"><img src="/img/developers/{{developer.img}}" alt="Photo from {{developer.name}}" style="height:20px"/></a>	
+			<a href="{{ developer.developerSlug }}.html"><img src="/img/developers/{{developer.img}}" alt="Photo from {{developer.name}}" /></a>	
   		{% endif %} 	
 	</div>
-	<div class="pure-u-11-24">
-		 <a href="{{ developer.developerSlug }}.html">{{ developer.name }}</a>	
+	<div class="pure-u-3-4 pure-u-md-11-24">
+		 &nbsp;<a href="{{ developer.developerSlug }}.html">{{ developer.name }}</a>	
 	</div>
-	<div class="pure-u-12-24">
+	<div class="pure-u-1 pure-u-md-12-24">
 		{{ developer.country }}	
 	</div>
 </div>
