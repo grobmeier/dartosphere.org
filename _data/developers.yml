@@ -1,10 +1,10 @@
 - name: Peter Stefanov
-  email: regardingscot@gmail.com 
-  plus: +PeterStJ 
+  email: regardingscot@gmail.com
+  plus: +PeterStJ
   bio: Peter is a front-end developer and loves the enormous benefits that Dart brings to the web development process.
   service: Hire
-  country: Bulgaria 
-  city: Varna 
+  country: Bulgaria
+  city: Varna
   geo: 43.209714,27.910787
 - name: Jack Murphy
   github: rightisleft
@@ -15,7 +15,7 @@
   service: Talks, Hire, Meetups
   country: USA
   city: New York
-  geo: 40.7838371,-73.9778176  
+  geo: 40.7838371,-73.9778176
 - name: Steve Hamblett
   github: shamblett
   email: steve.hamblett@linux.com
@@ -507,7 +507,7 @@
   service: Training, Talks
   country: ​USA
   city: ​Seattle​
-  geo: 47.616237,-122.313933  
+  geo: 47.616237,-122.313933
 - name: Tercio Gaudencio Filho
   email: terciofilho@gmail.com
   plus: +TercioGaudencioFilho
@@ -530,3 +530,13 @@
   city: Denver
   geo: 39.739154,-104.984703
   img: davidliedle-120x120.png
+- name: Hadrien Lejard
+  github: lejard-h
+  email: hadrien.lejard@gmail.com
+  plus: +HadrienLejard
+  twitter: HadrienLejard
+  bio: Epitech student
+  service: Training, Talks
+  country: France
+  city: Rennes
+  geo: 48.111359,-1.680009
