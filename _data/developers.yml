@@ -540,3 +540,22 @@
   country: France
   city: Rennes
   geo: 48.111359,-1.680009
+- name: Lambros Petrou
+  github: lambrospetrou
+  email: lambrospetrou@gmail.com
+  plus: +LambrosPetrou
+  twitter: lambrospetrou
+  website: https://www.lambrospetrou.com
+  service: Training, Hire
+  country: Cyprus
+  city: Nicosia
+  geo: 35.168459,32.8765422
+- name: Hans Van den Keybus
+  github: dotdotcommadot
+  email: hans@dotdotcommadot.com
+  plus: +HansVandenKeybus
+  bio: Hans is a web application consultant, mainly focussing on Dart and TypeScript. Get in touch for Google Dart talks, jobs in cool parts of the world, ...
+  service: Training, Hire, Talks
+  country: Belgium
+  city: Antwerp
+  geo: 51.2211,4.3997 
