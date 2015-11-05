@@ -558,4 +558,14 @@
   service: Training, Hire, Talks
   country: Belgium
   city: Antwerp
-  geo: 51.2211,4.3997 
+  geo: 51.2211,4.3997
+- name: "Tomáš Rokos"
+  email: tomas.rokos@gmail.com
+  twitter: tomas_rokos
+  website: http://www.promyka.cz
+  bio: "programmer @ Autodesk (Fusion360), database and Dart enthusiast"
+  service: Training,  Talks
+  country: Czech Republic
+  city: "Děčín"
+  geo: 50.780113,14.220128
+  img: tomasrokos-120x120.png
