@@ -14,13 +14,13 @@
 {% else %}
 <meta name="keywords" content="dart, blog, how-to, dartlang, google, javascript" />
 {% endif %}
-<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
-<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+<link href='//fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+<link href='//fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
 <!--[if lte IE 8]>
-  <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.6.0/base-min.css&pure/0.6.0/grids-min.css&pure/0.6.0/grids-responsive-old-ie-min.css">
+  <link rel="stylesheet" href="/css/pure-0.6.0-old-ie.css">
 <![endif]-->
 <!--[if gt IE 8]><!-->
-  <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.6.0/base-min.css&pure/0.6.0/grids-min.css&pure/0.6.0/grids-responsive-min.css">
+  <link rel="stylesheet" href="/css/pure-0.6.0.css">
 <!--<![endif]-->
 <link rel="stylesheet" href="/css/style.css?20141203" media="screen"  />
 <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
@@ -34,9 +34,9 @@
 {% endif %}
 </head>
 <body>
-  
+
    <header class="pageheader">
-       
+
        <div class="container">
 
          <div class="pure-g">
@@ -58,12 +58,12 @@
                   <li><a href="/releases" title="Releases from the Dartlang community">Releases</a></li>
                   <li><a href="/participate" title="Participate">Help</a></li>
                   <li><a href="/about" title="About us">About</a></li>
-                 </ul>                        
+                 </ul>
               </nav><!--end /.navigation-->
            </div>
 
            <div class="pure-u-5-24 last">
-            
+
             <!--
             <form action="#" method="get" class="search-form">
                    <input class="searchText" type="text" name="s" placeholder="Search" />
@@ -77,18 +77,18 @@
                 </div><!--end /.rss-->
 
            </div>
-          
+
          </div><!--end /.pure-g-r-->
-          
+
 
        </div><!-- /.container-->
 
    </header><!-- /.pageheader-->
 
   {% if page.slider %}
-    {% include teaser.html %} 
+    {% include teaser.html %}
   {% endif %}
-   
+
   <div class="container content_wrap">
       <div class="pure-g">
          <aside class="pure-u-6-24 sidebar">
@@ -100,7 +100,7 @@
     google_ad_height = 200;
 </script>
 <script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js"></script>
-          
+
           {% if page.subnavigation %}
           <div class="sub-menu">
              <ul>
@@ -113,7 +113,7 @@
 
             <div class="newsletter">
 
-              <form  action="http://grobmeier.us2.list-manage1.com/subscribe/post?u=0824398f58160d8279dbcdc04&amp;id=ea4b0840f2" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="pure-form pure-form-stacked">
+              <form  action="https://grobmeier.us2.list-manage.com/subscribe/post?u=0824398f58160d8279dbcdc04&amp;id=ea4b0840f2" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="pure-form pure-form-stacked">
                 <fieldset>
                     <h4>Weekly dart updates</h4>
                     <label for="email">Subscribe and get weekly updates with post from the Dartosphere</label>
@@ -142,13 +142,13 @@
 
           {{ content }}
 
-        
+
       </div><!-- /.pure-g-r-->
-    
+
    </div><!-- /.container-->
 
    <footer class="pagefooter">
-       
+
       <div class="container inner">
 
         <div class="pure-g">
@@ -202,7 +202,7 @@
   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
   ga('create', 'UA-110601-21', 'auto');
-  ga('set', 'anonymizeIp', true);  
+  ga('set', 'anonymizeIp', true);
   ga('send', 'pageview');
 </script>
 {% if page.js %}
