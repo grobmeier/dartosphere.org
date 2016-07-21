@@ -9,3 +9,4 @@ author: Dartosphere.org
 copyright: Dartosphere and the respective authors
 rss_path: /
 rss_name: rss20.xml
+gems: [jekyll-paginate]
