@@ -580,4 +580,43 @@
   country: Denmark
   city: Aathus
   geo: 56.162939,10.203921
-
+- name: Herman Bergwerf
+  github: hermanbergwerf
+  email: hermanbergwerf@gmail.com
+  plus: +HermanBergwerf
+  twitter: hermanbergwerf
+  website: http://hermanbergwerf.com
+  bio: "Herman is a Nanobiology students and passionate programmer who currently uses Dart for most of his web targeted projects."
+  service: "-"
+  country: Netherlands
+  city: Delft
+  geo: 52.0116,4.3571
+- name: Athanasios Voivodas
+  github: avoivo
+  email: tvoivodas@gmail.com
+  twitter: tvoivodas
+  bio: Software engineer with more then 16 years of experience. Started with dart on 2015
+  country: Greece
+  city: Athens
+  service: Hire, Training
+  geo: 37.97464,23.71444
+- name: Stijn Van Bael
+  github: stijnvanbael
+  email: stijnvanbael@gmail.com
+  plus: +StijnVanBael
+  twitter: stijnvanbael
+  website: http://www.j4s.be/
+  bio: Passionate Java and Dart developer at Jforce
+  service: Training, Talks
+  country: Belgium
+  city: Bruges
+  geo: 51.2087073,3.2228458
+- name: Hannes Rammer
+  github: HannesRammer
+  email: hannes.rammer@gmail.com
+  plus: +HannesRammer
+  website: https://wired-strategy-112617.appspot.com/
+  bio: "a passionated Dart dev, using it mostly in his prime time"
+  service: Hire
+  country: Germany
+  city: Berlin  
