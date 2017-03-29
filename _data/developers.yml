@@ -620,3 +620,13 @@
   service: Hire
   country: Germany
   city: Berlin  
+- name: Tobe Osakwe
+  github: thosakwe
+  email: thosakwe@gmail.com
+  plus: https://plus.google.com/u/0/115442917009530960112
+  twitter: thosakwe
+  website: https://medium.com/@thosakwe
+  bio: "Author of the Angel server-side framework for Dart. 18-year-old programmer who wants to do something BIG."
+  service: Training, Talks
+  country: United States  
+  img: tobeosakwe-120x120.png
