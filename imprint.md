@@ -8,20 +8,17 @@ title: Impressumg / Legal Notice
 Angaben gemäß § 5 TMG:
 
 <p>
-	Christian Grobmeier<br />
-	Christian Grobmeier Solutions<br />
-	Forggenseestr. 2<br />
-	86836 Untermeitingen
-</p>
+Grobmeier Solutions<br/>
+Inh. Christian Grobmeier<br/>
+Wiesenring 84i<br/>
+86899 Landsberg am Lech<br/>
+Germany</p>
 
 ## Kontakt:
 <table>
 	<tr>
 		<td>Telefon:</td>
-		<td>+4982324035724</td></tr>
-	<tr>
-		<td>Telefax:</td>
-		<td>+4982329960168</td></tr>
+		<td>+4981913318186</td></tr>
 	<tr>
 		<td>E-Mail:</td>
 		<td>hello@dartosphere.org</td>
