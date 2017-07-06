@@ -9,7 +9,7 @@ You can also add exclusive stories to the Dartosphere.
 
 Meanwhile, we also publish latest Dart Pub packages. 
 
-We distribute news using our Mailinglist, [Dartospheres Twitter](https://www.twitter.com/dartosphere) and the [Dartcode Twitter](https://www.twitter.com/dartcode)
+We distribute news using our Mailinglist, [Dartospheres Twitter](https://www.twitter.com/dartosphere) and the [Dartocode Twitter](https://www.twitter.com/dartocode)
 
 ## History
 
